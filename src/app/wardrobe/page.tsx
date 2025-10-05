@@ -34,7 +34,6 @@ export default async function WardrobePage() {
         </nav>
       </header>
       <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8 space-y-8">
-        {/* Render the upload form and pass the user object */}
         <UploadForm user={user} />
 
         <div className="border-t border-gray-200 pt-8">
@@ -42,12 +41,12 @@ export default async function WardrobePage() {
             {clothingItems && clothingItems.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {clothingItems.map((item) => (
-                  <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden group">
+                  <Link href={`/wardrobe/${item.id}`} key={item.id} className="block bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition-shadow duration-200">
                     <img src={item.image_url} alt={item.category || 'Clothing item'} className="w-full h-48 object-cover" />
                     <div className="p-4">
                       <p className="text-lg font-semibold capitalize truncate group-hover:whitespace-normal">{item.category}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
