@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import UploadForm from './UploadForm' // Import the new component
 
 export default async function WardrobePage() {
   const cookieStore = cookies()
@@ -32,25 +33,30 @@ export default async function WardrobePage() {
             </Link>
         </nav>
       </header>
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {clothingItems && clothingItems.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {clothingItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden group">
-                <img src={item.image_url} alt={item.category || 'Clothing item'} className="w-full h-48 object-cover" />
-                <div className="p-4">
-                  <p className="text-lg font-semibold capitalize truncate group-hover:whitespace-normal">{item.category}</p>
-                </div>
+      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8 space-y-8">
+        {/* Render the upload form and pass the user object */}
+        <UploadForm user={user} />
+
+        <div className="border-t border-gray-200 pt-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Your Items</h2>
+            {clothingItems && clothingItems.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                {clothingItems.map((item) => (
+                  <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden group">
+                    <img src={item.image_url} alt={item.category || 'Clothing item'} className="w-full h-48 object-cover" />
+                    <div className="p-4">
+                      <p className="text-lg font-semibold capitalize truncate group-hover:whitespace-normal">{item.category}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20 px-4">
-            <h2 className="text-xl font-semibold text-gray-800">Your wardrobe is empty</h2>
-            <p className="mt-2 text-gray-500">Start by adding your first clothing item.</p>
-            {/* We will add a link to the "add item" page here later */}
-          </div>
-        )}
+            ) : (
+              <div className="text-center py-12 px-4 border-2 border-dashed border-gray-300 rounded-lg">
+                <h2 className="text-lg font-semibold text-gray-800">Your wardrobe is empty</h2>
+                <p className="mt-1 text-sm text-gray-500">Use the form above to add your first item.</p>
+              </div>
+            )}
+        </div>
       </main>
     </div>
   )
