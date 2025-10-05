@@ -1,12 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ProfileForm from './ProfileForm'
+import UserImageUpload from './UserImageUpload'
 
 export default async function ProfilePage() {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient()
 
   const {
     data: { user },
@@ -23,7 +22,7 @@ export default async function ProfilePage() {
     .eq('id', user.id)
     .single() // We expect only one row
 
-  // The trigger we created should ensure a profile exists. 
+  // The trigger we created should ensure a profile exists.
   // But as a fallback, we handle the case where it might not.
   if (error && error.code !== 'PGRST116') {
     console.error('Error fetching profile:', error)
@@ -33,14 +32,20 @@ export default async function ProfilePage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <nav className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">User Profile</h1>
-            <Link href="/" className="py-2 px-4 rounded-md no-underline bg-gray-200 hover:bg-gray-300 text-sm font-medium">
-                Back to Home
-            </Link>
+          <h1 className="text-2xl font-bold text-gray-900">User Profile</h1>
+          <Link
+            href="/"
+            className="py-2 px-4 rounded-md no-underline bg-gray-200 hover:bg-gray-300 text-sm font-medium"
+          >
+            Back to Home
+          </Link>
         </nav>
       </header>
       <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
-        <ProfileForm profile={profile} />
+        <div className="space-y-8">
+          <ProfileForm profile={profile} />
+          <UserImageUpload profile={profile} />
+        </div>
       </main>
     </div>
   )

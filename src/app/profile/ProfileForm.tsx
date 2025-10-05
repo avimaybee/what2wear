@@ -2,13 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useState, useEffect } from 'react'
-
-// Define the Profile type based on your database schema
-type Profile = {
-  id: string
-  name: string | null
-  region: string | null
-}
+import { Profile } from '@/lib/types'
 
 export default function ProfileForm({ profile }: { profile: Profile | null }) {
   const supabase = createClient()
