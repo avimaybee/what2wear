@@ -6,7 +6,7 @@ import OutfitRecommender from './wardrobe/OutfitRecommender'
 
 export default async function Home() {
   const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient(cookieStore)
 
   const {
     data: { user },

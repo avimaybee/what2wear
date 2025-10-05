@@ -94,14 +94,14 @@ type OutfitRecommendation = {
 }
 
 export async function getOutfitRecommendation(): Promise<OutfitRecommendation | { error: string }> {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { error: 'You must be logged in to get a recommendation.' };
   }
 
+  // Fetch all of the user's clothing items
   const { data: clothingItems, error: dbError } = await supabase
     .from('clothing_items')
     .select('id, category, color, style_tags')
@@ -116,25 +116,90 @@ export async function getOutfitRecommendation(): Promise<OutfitRecommendation | 
     return { error: 'Not enough clothing items to make an outfit. Please add at least one top, one bottom, and one pair of shoes.' };
   }
 
+  // --- Fetch feedback history ---
+  const { data: ratedOutfits, error: outfitsError } = await supabase
+    .from('outfits')
+    .select('id, rating')
+    .eq('user_id', user.id)
+    .in('rating', [1, -1]);
+
+  const likedOutfits: (typeof clothingItems)[] = [];
+  const dislikedOutfits: (typeof clothingItems)[] = [];
+
+  if (outfitsError) {
+    console.warn("Could not fetch user's outfit ratings.", outfitsError);
+  } else if (ratedOutfits && ratedOutfits.length > 0) {
+    const ratedOutfitIds = ratedOutfits.map(o => o.id);
+    const { data: outfitItems, error: itemsError } = await supabase
+      .from('outfit_items')
+      .select('outfit_id, clothing_item_id')
+      .in('outfit_id', ratedOutfitIds);
+
+    if (itemsError) {
+      console.warn("Could not fetch items for rated outfits.", itemsError);
+    } else if (outfitItems) {
+      const itemDetailsMap = new Map(clothingItems.map(item => [item.id, item]));
+      const outfitsMap = new Map<number, typeof clothingItems>();
+
+      for (const item of outfitItems) {
+        if (!outfitsMap.has(item.outfit_id)) {
+          outfitsMap.set(item.outfit_id, []);
+        }
+        const itemDetail = itemDetailsMap.get(item.clothing_item_id);
+        if (itemDetail) {
+          outfitsMap.get(item.outfit_id)!.push(itemDetail);
+        }
+      }
+
+      for (const ratedOutfit of ratedOutfits) {
+        const outfitDetails = outfitsMap.get(ratedOutfit.id);
+        if (outfitDetails) {
+          if (ratedOutfit.rating === 1) {
+            likedOutfits.push(outfitDetails);
+          } else if (ratedOutfit.rating === -1) {
+            dislikedOutfits.push(outfitDetails);
+          }
+        }
+      }
+    }
+  }
+
+  // --- Construct the prompt with feedback ---
+  let feedbackPrompt = '';
+  if (likedOutfits.length > 0) {
+    feedbackPrompt += `
+      Here are some examples of outfits the user has previously LIKED. Learn from these to understand the user's style:
+      ${JSON.stringify(likedOutfits, null, 2)}
+    `;
+  }
+  if (dislikedOutfits.length > 0) {
+    feedbackPrompt += `
+      And here are some examples of outfits the user has previously DISLIKED. Avoid creating combinations like these:
+      ${JSON.stringify(dislikedOutfits, null, 2)}
+    `;
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error('Gemini API key is not configured.');
     return { error: 'Gemini API key is not configured.' };
   }
-
-  // Using the specified model, but with a text-only prompt
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
 
   const prompt = `
-    Given the following list of available clothing items as a JSON array:
+    You are a fashion stylist. Your task is to create a stylish, complementary outfit for a user.
+    Select one top (category 'shirt' or 't-shirt'), one bottom (category 'pants'), and one pair of shoes (category 'shoes').
+
+    Here is the user's entire wardrobe, provided as a JSON array:
     ${JSON.stringify(clothingItems, null, 2)}
 
-    Please act as a fashion stylist. Your task is to select one top (category 'shirt' or 't-shirt'), one bottom (category 'pants'), and one pair of shoes (category 'shoes') to create a stylish, complementary outfit.
+    ${feedbackPrompt}
 
+    Please use the user's past feedback (if provided) to inform your decision. Try to create an outfit that aligns with their liked styles and avoids combinations similar to their disliked ones.
     Consider the style tags and colors to make a good match.
 
     Respond with only a single, valid JSON object in a markdown code block.
-    The JSON object should have a single key "item_ids" which is an array containing the integer IDs of the three selected items.
+    The JSON object must have a single key "item_ids" which is an array containing the integer IDs of the three selected items.
     Example response:
     {
       "item_ids": [15, 2, 8]
@@ -149,9 +214,7 @@ export async function getOutfitRecommendation(): Promise<OutfitRecommendation | 
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
     });
 
@@ -171,4 +234,70 @@ export async function getOutfitRecommendation(): Promise<OutfitRecommendation | 
     console.error('Error calling Gemini API:', error);
     return { error: 'Failed to get outfit recommendation.' };
   }
+}
+
+// --- NEW ACTIONS FOR FEEDBACK ---
+
+export async function recordOutfit(itemIds: number[]): Promise<{ data: { id: number } | null, error: { message: string } | null }> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { data: null, error: { message: 'User not authenticated.' } };
+  }
+
+  // Step 1: Create the outfit record to get an ID
+  const { data: outfitData, error: outfitError } = await supabase
+    .from('outfits')
+    .insert({ user_id: user.id, rating: 0 })
+    .select('id')
+    .single();
+
+  if (outfitError) {
+    console.error('Error creating outfit record:', outfitError);
+    return { data: null, error: { message: 'Could not create outfit record.' } };
+  }
+
+  const outfitId = outfitData.id;
+
+  // Step 2: Create the outfit_items records
+  const outfitItemsToInsert = itemIds.map(itemId => ({
+    outfit_id: outfitId,
+    clothing_item_id: itemId,
+  }));
+
+  const { error: itemsError } = await supabase
+    .from('outfit_items')
+    .insert(outfitItemsToInsert);
+
+  if (itemsError) {
+    console.error('Error linking items to outfit:', itemsError);
+    // Optional: Clean up the created outfit record if linking fails
+    await supabase.from('outfits').delete().eq('id', outfitId);
+    return { data: null, error: { message: 'Could not link items to the outfit.' } };
+  }
+
+  return { data: { id: outfitId }, error: null };
+}
+
+export async function storeOutfitFeedback(outfitId: number, rating: 1 | -1): Promise<{ error: { message: string } | null }> {
+    const supabase = await createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: { message: 'User not authenticated.' } };
+    }
+
+    const { error } = await supabase
+        .from('outfits')
+        .update({ rating })
+        .eq('id', outfitId)
+        .eq('user_id', user.id); // RLS should handle this, but explicit check is good
+
+    if (error) {
+        console.error('Error storing feedback:', error);
+        return { error: { message: 'Could not store feedback.' } };
+    }
+
+    return { error: null };
 }

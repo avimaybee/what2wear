@@ -1,12 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import ItemEditForm from './ItemEditForm'
 
 export default async function ItemDetailsPage({ params }: { params: { id: string } }) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient()
 
   const {
     data: { user },
@@ -42,7 +41,7 @@ export default async function ItemDetailsPage({ params }: { params: { id: string
       <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <div>
-                <img src={item.image_url} alt={item.category || 'Clothing item'} className="w-full rounded-lg shadow-lg" />
+                <Image src={item.image_url} alt={item.category || 'Clothing item'} width={500} height={500} className="w-full h-auto object-cover rounded-lg shadow-lg" />
             </div>
             <div className="bg-white p-6 rounded-lg shadow-lg space-y-6">
                 <div>

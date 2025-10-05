@@ -2,11 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import UploadForm from './UploadForm' // Import the new component
 
 export default async function WardrobePage() {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient()
 
   const {
     data: { user },
@@ -17,7 +17,7 @@ export default async function WardrobePage() {
   }
 
   // Fetch clothing items for the user
-  const { data: clothingItems, error } = await supabase
+  const { data: clothingItems } = await supabase
     .from('clothing_items')
     .select('*')
     .eq('user_id', user.id)
@@ -42,7 +42,7 @@ export default async function WardrobePage() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {clothingItems.map((item) => (
                   <Link href={`/wardrobe/${item.id}`} key={item.id} className="block bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition-shadow duration-200">
-                    <img src={item.image_url} alt={item.category || 'Clothing item'} className="w-full h-48 object-cover" />
+                    <Image src={item.image_url} alt={item.category || 'Clothing item'} width={192} height={192} className="w-full h-48 object-cover" />
                     <div className="p-4">
                       <p className="text-lg font-semibold capitalize truncate group-hover:whitespace-normal">{item.category}</p>
                     </div>

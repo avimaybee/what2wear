@@ -96,8 +96,9 @@ export async function POST(req: NextRequest) {
     // 5. Return the public URL to the client
     return NextResponse.json({ generatedImageUrl: publicUrl })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in render-outfit endpoint:', error)
-    return NextResponse.json({ error: error.message || 'An internal server error occurred.' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'An internal server error occurred.'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

@@ -80,8 +80,9 @@ export default function VirtualTryOn() {
 
       const { generatedImageUrl } = await response.json()
       setGeneratedImage(generatedImageUrl)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unknown error occurred.'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -95,7 +96,7 @@ export default function VirtualTryOn() {
 
       {generatedImage ? (
         <div className="flex flex-col items-center space-y-4">
-            <h4 className="text-xl font-semibold">Here's your look!</h4>
+            <h4 className="text-xl font-semibold">Here&apos;s your look!</h4>
             <Image src={generatedImage} alt="Generated virtual try-on" width={512} height={512} className="rounded-lg object-cover" />
         </div>
       ) : (
