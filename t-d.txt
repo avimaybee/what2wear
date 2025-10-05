@@ -33,12 +33,12 @@ Status Key:
 
 ### Phase 2: Daily Outfit Recommendations
 
-13. **[TODO]** Recommendation Engine Endpoint: Create a server-side endpoint that:
+13. **[DONE]** Recommendation Engine Endpoint: Create a server-side endpoint that:
     a. Fetches all of the user's clothing items from the database.
     b. Calls the Gemini API with the clothing data, user preferences, and context (e.g., season) to receive a recommended outfit (a combination of `ClothingItem` IDs).
-14. **[TODO]** Daily Outfit UI: Create a component on the main dashboard to display the outfit recommendation for the day, showing the images of the selected items.
-15. **[TODO]** Scheduler for Recommendations: Set up a daily scheduled job (e.g., using Supabase Edge Functions or a similar cron-like service) that runs the recommendation engine for every active user.
-16. **[TODO]** Save Recommended Outfit: Store the generated outfit combination in the `Outfit` table for the user for that day.
+14. **[DONE]** Daily Outfit UI: Create a component on the main dashboard to display the outfit recommendation for the day, showing the images of the selected items.
+15. **[DONE]** Scheduler for Recommendations: Set up a daily scheduled job (e.g., using Supabase Edge Functions or a similar cron-like service) that runs the recommendation engine for every active user.
+16. **[DONE]** Save Recommended Outfit: Store the generated outfit combination in the `Outfit` table for the user for that day.
 
 ---
 
