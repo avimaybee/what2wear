@@ -1,0 +1,292 @@
+📄 PRD Prompt for AI-Powered Outfit Recommendation Webapp
+
+Project Name: StyleMate (placeholder – can rename later)
+Version: v1.0
+Prepared For: AI-driven development (Gemini + Nano Banana + standard web stack)
+Prepared By: Avi
+Date: [Insert Date]
+
+1. 🌟 Product Vision
+
+To create a personal AI stylist that helps users look their best every day.
+The app lets users:
+
+Digitally catalogue their wardrobe (shirts, t-shirts, jackets, pants, shoes, accessories).
+
+Upload a realistic 3D/photorealistic model of themselves via a full-body photo.
+
+Receive season-aware, fashion-forward daily outfit recommendations that never repeat in a week.
+
+See a generated image of themselves wearing the selected outfit every night — so they’re ready for the next morning.
+
+The product merges AI styling intelligence + virtual try-on for a seamless, personalized experience.
+
+2. 🎯 Objectives
+
+Deliver highly personalized daily outfits using the user’s actual clothes.
+
+Maximize variety (no repeated outfits in a 7-day cycle).
+
+Ensure recommendations feel aesthetically curated, not random.
+
+Integrate Gemini for reasoning and styling and Nano Banana for image synthesis and try-on visuals.
+
+Provide a smooth, modern, responsive webapp experience on both desktop and mobile.
+
+3. 👤 Target Users
+
+Fashion-conscious individuals who want effortless daily styling.
+
+Busy professionals and students who don’t want to waste time deciding what to wear.
+
+People who want to make the most of their existing wardrobe rather than buying new clothes.
+
+4. 🗝️ Core Features
+4.1 Onboarding & Account Setup
+
+Sign up/login: via email, Google, Apple, or social accounts.
+
+Wardrobe photo upload: user uploads each clothing item individually against a plain background.
+
+Clothing categorization: automated categorization (shirt, t-shirt, jacket, pants, shoes, accessories) + option for manual correction.
+
+Full-body model creation:
+
+User uploads a well-lit, front-facing full-body photo.
+
+AI cleans the image (removes background, normalizes lighting).
+
+Nano Banana generates a realistic avatar of the user for outfit visualization.
+
+4.2 Wardrobe Management
+
+Item details: category, color, fabric, season suitability, style tag (e.g., casual, formal, streetwear).
+
+Season tags: automatically inferred using AI, editable by user.
+
+Image cleanup: background removal & standardization.
+
+Wardrobe analytics: show counts by category and season (e.g., 12 shirts, 4 jackets, 5 pairs of jeans).
+
+4.3 Daily Outfit Recommendations
+
+Recommendation engine:
+
+Uses Gemini to:
+
+Match complementary colors and styles.
+
+Consider current season & upcoming weather.
+
+Avoid repeating outfit combos in a 7-day window.
+
+Adapt to context (e.g., weekdays vs. weekends).
+
+User can adjust preferences (e.g., more casual, more formal, warmer, trendier).
+
+Visual presentation:
+
+Nano Banana renders the user wearing the selected outfit.
+
+Outfit is displayed in a clean, minimal layout (date + preview image).
+
+Scheduling:
+
+Generates the next day’s outfit at night (configurable time).
+
+Push/email notifications: “Your outfit for tomorrow is ready!”
+
+4.4 Outfit History & Insights
+
+Outfit timeline: scrollable past week/month view.
+
+Stats: which items are worn most/least often.
+
+User feedback loop:
+
+Like/dislike/re-rate outfits.
+
+AI refines future recommendations accordingly.
+
+4.5 Seasonal Adaptation
+
+The system checks user location (with permission) to adjust recommendations based on:
+
+Weather forecast (temperature, humidity, rain).
+
+Season-specific colors/styles.
+
+Layering guidance for colder climates.
+
+4.6 Admin & AI Training Dashboard (Internal)
+
+Monitor user interactions.
+
+Evaluate recommendation success/failure rates.
+
+Improve model styling logic via human-in-the-loop corrections.
+
+5. 📱 User Flows (Step-by-Step)
+
+Flow 1: First-Time Setup
+
+User signs up → chooses region (for seasonal data).
+
+Uploads full-body photo → AI creates clean model.
+
+Uploads wardrobe photos → AI detects categories/colors/seasons.
+
+Gets onboarding tutorial on using the app.
+
+Flow 2: Daily Outfit Cycle
+
+Each evening, app pings Gemini → selects outfit.
+
+Outfit is rendered by Nano Banana → generates image of user wearing the outfit.
+
+User gets notification → opens app → sees next day’s look.
+
+Next day: user marks “wore it” or gives feedback.
+
+Flow 3: Wardrobe Updates
+
+User adds new clothing → categorized automatically.
+
+Recommendations adapt immediately.
+
+6. 💻 Technical Architecture
+6.1 Frontend
+
+Modern webapp: React (Next.js) + Tailwind for UI.
+
+Mobile-first responsive design.
+
+Uses WebAssembly/WebGPU if needed for lightweight image processing.
+
+6.2 Backend
+
+API Layer: Python/FastAPI or Node.js
+
+Database: PostgreSQL for structured data + S3-compatible storage for images.
+
+AI Integration:
+
+Gemini: API for recommendation & reasoning.
+
+Nano Banana: API for image generation (avatars & try-on).
+
+Scheduler: CRON or managed cloud function to trigger daily outfit generation.
+
+6.3 Security
+
+Encrypted storage of user photos and models.
+
+GDPR-compliant data policies.
+
+Optional privacy mode for local-only inference (future).
+
+7. 📦 Data Model (Simplified)
+
+User
+
+ID
+
+Name, Email, Region
+
+Full-body model (ID → stored image)
+
+Preferences (style, comfort, etc.)
+
+ClothingItem
+
+ID
+
+UserID
+
+Category (enum)
+
+Color (hex/RGB)
+
+SeasonTags ([enum])
+
+StyleTags ([enum])
+
+Image (URL)
+
+LastUsedDate
+
+Outfit
+
+ID
+
+Date
+
+Items ([ClothingItemIDs])
+
+RenderedImageURL
+
+UserFeedback (like/dislike/rating)
+
+8. 🔗 AI Requirements
+
+Gemini Tasks
+
+Categorize wardrobe items from photos.
+
+Tag style, season, color, formality.
+
+Recommend 7-day outfit plans.
+
+Personalize recommendations using feedback loop.
+
+Nano Banana Tasks
+
+Generate clean product-style images of clothing.
+
+Build realistic avatar from user’s full-body photo.
+
+Render avatar wearing selected clothing.
+
+9. 🚀 MVP Scope
+
+Core wardrobe upload & management.
+
+Daily outfit recommendations (season-aware).
+
+Basic user avatar rendering with selected outfit.
+
+Simple rating/feedback loop.
+
+Webapp accessible on desktop & mobile browsers.
+
+Post-MVP (V2+)
+
+Social sharing of outfits.
+
+Advanced style modes (streetwear, minimal, classic).
+
+Integration with e-commerce (suggest new clothes to fill wardrobe gaps).
+
+Multiple models per user (e.g., “vacation body” vs. regular).
+
+10. 📊 KPIs for Success
+
+User retention after 4 weeks.
+
+% of users uploading full wardrobe.
+
+Daily active users engaging with outfit suggestions.
+
+Like/dislike ratio of recommended outfits.
+
+Time saved in daily dressing decisions (via surveys).
+
+11. 🧩 UX/UI Notes
+
+Visuals should feel elegant and minimal – neutral background, clean typography.
+
+Wardrobe grid with clear, high-res thumbnails.
+
+Outfit preview: side-by-side “Your avatar wearing the outfit” + list of items.
+
+Use soft animations for transitions (Framer Motion).
