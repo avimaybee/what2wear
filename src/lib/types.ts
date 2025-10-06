@@ -3,5 +3,5 @@ export type Profile = {
   name: string | null;
   region: string | null;
   full_body_model_url: string | null;
-  preferences: any | null; // You might want to define a more specific type for preferences
+  preferences: Record<string, unknown> | null; // You might want to define a more specific type for preferences
 };

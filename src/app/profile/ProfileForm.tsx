@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { updateUserProfile } from './actions'
 import { type Profile } from '@/lib/types'
+import Image from 'next/image'
 
 export default function ProfileForm({ profile }: { profile: Profile | null }) {
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +34,7 @@ export default function ProfileForm({ profile }: { profile: Profile | null }) {
         <label className="block text-sm font-medium text-gray-700">Your Avatar</label>
         <div className="mt-2 flex items-center space-x-4">
           {profile?.full_body_model_url ? (
-            <img src={profile.full_body_model_url} alt="Current Avatar" className="h-24 w-24 rounded-full object-cover" />
+            <Image src={profile.full_body_model_url} alt="Current Avatar" width={96} height={96} className="h-24 w-24 rounded-full object-cover" />
           ) : (
             <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
               <span className="text-sm text-gray-500">No Avatar</span>

@@ -87,7 +87,6 @@ export async function categorizeImage(imageUrl: string): Promise<CategorizationR
 // --- NEW FUNCTION ---
 
 import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
 
 type OutfitRecommendation = {
   item_ids: number[];
@@ -305,8 +304,7 @@ export async function storeOutfitFeedback(outfitId: number, rating: 1 | -1): Pro
     // --- NEW ACTION FOR VIRTUAL TRY-ON ---
     
     export async function renderOutfit(outfitId: number): Promise<{ renderedUrl: string | null; error: string | null }> {
-      const cookieStore = cookies();
-      const supabase = createClient(cookieStore);
+      const supabase = await createClient();
     
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -334,7 +332,7 @@ export async function storeOutfitFeedback(outfitId: number, rating: 1 | -1): Pro
         return { renderedUrl: null, error: 'Could not fetch items for the outfit.' };
       }
     
-      const itemImageUrls = items.map(item => item.clothing_items?.image_url).filter(Boolean) as string[];
+      const itemImageUrls = items.map(item => item.clothing_items?.[0]?.image_url).filter(Boolean) as string[];
     
       // 3. (SIMULATED) Call the Gemini API to generate the try-on image
       // In a real implementation, you would construct a complex prompt with the avatar

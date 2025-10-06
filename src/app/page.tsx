@@ -1,12 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
 import AuthButton from './AuthButton'
 import Link from 'next/link'
 import OutfitRecommender from './wardrobe/OutfitRecommender'
 
 export default async function Home() {
-  const cookieStore = cookies()
-  const supabase = await createClient(cookieStore)
+  const supabase = await createClient()
 
   const {
     data: { user },

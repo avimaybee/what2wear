@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { getOutfitRecommendation, recordOutfit, storeOutfitFeedback, renderOutfit } from './actions'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 type ClothingItem = {
   id: number;
@@ -104,15 +105,15 @@ export default function OutfitRecommender() {
           {renderedImageUrl ? (
             <div>
               <h3 className="text-xl font-semibold mb-4">Your Virtual Try-On:</h3>
-              <img src={renderedImageUrl} alt="Virtual Try-On" className="w-full max-w-md mx-auto rounded-lg shadow-lg" />
+              <Image src={renderedImageUrl} alt="Virtual Try-On" width={600} height={800} className="w-full max-w-md mx-auto rounded-lg shadow-lg" />
             </div>
           ) : (
             <div>
-              <h3 className="text-xl font-semibold mb-4">Today's Recommended Outfit:</h3>
+              <h3 className="text-xl font-semibold mb-4">Today&apos;s Recommended Outfit:</h3>
               <div className="grid grid-cols-3 gap-4">
                 {recommendedItems.map(item => (
                   <div key={item.id} className="border rounded-lg p-2 bg-gray-50">
-                    <img src={item.image_url} alt={item.category || 'Clothing item'} className="w-full h-48 object-cover rounded-md" />
+                    <Image src={item.image_url} alt={item.category || 'Clothing item'} width={192} height={192} className="w-full h-48 object-cover rounded-md" />
                     <p className="text-center mt-2 capitalize font-medium">{item.category}</p>
                   </div>
                 ))}
