@@ -299,5 +299,64 @@ export async function storeOutfitFeedback(outfitId: number, rating: 1 | -1): Pro
         return { error: { message: 'Could not store feedback.' } };
     }
 
-    return { error: null };
-}
+            return { error: null };
+    }
+    
+    // --- NEW ACTION FOR VIRTUAL TRY-ON ---
+    
+    export async function renderOutfit(outfitId: number): Promise<{ renderedUrl: string | null; error: string | null }> {
+      const cookieStore = cookies();
+      const supabase = createClient(cookieStore);
+    
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { renderedUrl: null, error: 'User not authenticated.' };
+      }
+    
+      // 1. Get the user's avatar URL
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_body_model_url')
+        .eq('id', user.id)
+        .single();
+    
+      if (profileError || !profile?.full_body_model_url) {
+        return { renderedUrl: null, error: 'User avatar not found. Please upload an avatar in your profile.' };
+      }
+    
+      // 2. Get the image URLs for the items in the outfit
+      const { data: items, error: itemsError } = await supabase
+        .from('outfit_items')
+        .select('clothing_items(image_url)')
+        .eq('outfit_id', outfitId);
+    
+      if (itemsError || !items || items.length === 0) {
+        return { renderedUrl: null, error: 'Could not fetch items for the outfit.' };
+      }
+    
+      const itemImageUrls = items.map(item => item.clothing_items?.image_url).filter(Boolean) as string[];
+    
+      // 3. (SIMULATED) Call the Gemini API to generate the try-on image
+      // In a real implementation, you would construct a complex prompt with the avatar
+      // and item images and call the appropriate Gemini model.
+      console.log('Simulating call to Gemini for outfit rendering with:', {
+        avatarUrl: profile.full_body_model_url,
+        itemImageUrls,
+      });
+    
+      // For now, we return a placeholder image.
+      const placeholderUrl = `https://placehold.co/600x800/e2e8f0/4a5568?text=Virtual+Try-On\n(Outfit+${outfitId})`;
+    
+      // 4. Save the rendered image URL to the database
+      const { error: updateError } = await supabase
+        .from('outfits')
+        .update({ rendered_image_url: placeholderUrl })
+        .eq('id', outfitId);
+    
+      if (updateError) {
+        return { renderedUrl: null, error: 'Failed to save the rendered outfit image.' };
+      }
+    
+      return { renderedUrl: placeholderUrl, error: null };
+    }
+    

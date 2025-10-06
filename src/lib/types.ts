@@ -1,6 +1,7 @@
 export type Profile = {
-  id: string
-  name: string | null
-  region: string | null
-  user_image_url: string | null
-}
+  id: string;
+  name: string | null;
+  region: string | null;
+  full_body_model_url: string | null;
+  preferences: any | null; // You might want to define a more specific type for preferences
+};

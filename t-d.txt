@@ -20,7 +20,7 @@ Status Key:
 
 ### Phase 1: Core Wardrobe Management
 
-5.  **[PARTIALLY COMPLETE]** Database Schema: Define and create the necessary tables (`ClothingItem`, `Outfit`, `UserProfile`) in Supabase based on the PRD data model.
+5.  **[DONE]** Database Schema: Define and create the necessary tables (`ClothingItem`, `Outfit`, `UserProfile`) in Supabase based on the PRD data model.
 6.  **[DONE]** Wardrobe UI: Create a dedicated page (`/wardrobe`) to display the user's clothing items in a grid format.
 7.  **[DONE]** Image Upload Logic: Implement the function to upload a clothing image file to Supabase Storage and retrieve its URL.
 8.  **[DONE]** Item Creation UI & Form: Build a form where users can upload an image and manually enter initial details for a new clothing item.
@@ -44,16 +44,16 @@ Status Key:
 
 ### Phase 3: Virtual Try-On (Visuals)
 
-17. **[TODO]** User Avatar Upload UI: Create a section in the user profile for uploading a full-body photo.
-18. **[TODO]** Avatar Generation Endpoint: Create a server-side endpoint that calls the specified Google image model (`models/gemini-2.5-flash-image`) to process the user's photo and create a clean avatar.
-19. **[TODO]** Outfit Rendering Endpoint: Create a server-side endpoint that takes the user's avatar and the recommended outfit items, and calls the image model to generate a "try-on" image.
-20. **[TODO]** Display Rendered Outfit: Integrate the rendered image into the daily outfit UI, showing the user's avatar wearing the recommended clothes.
+17. **[DONE]** User Avatar Upload UI: Create a section in the user profile for uploading a full-body photo.
+18. **[DONE]** Avatar Generation Endpoint: Create a server-side endpoint that calls the specified Google image model (`models/gemini-2.5-flash-image`) to process the user's photo and create a clean avatar.
+19. **[DONE]** Outfit Rendering Endpoint: Create a server-side endpoint that takes the user's avatar and the recommended outfit items, and calls the image model to generate a "try-on" image.
+20. **[DONE]** Display Rendered Outfit: Integrate the rendered image into the daily outfit UI, showing the user's avatar wearing the recommended clothes.
 
 ---
 
 ### Phase 4: User Feedback Loop
 
-21. **[TODO]** Feedback UI: Add simple "Like" and "Dislike" buttons to the daily outfit display.
-22. **[TODO]** Store Feedback: When a user clicks a feedback button, update the corresponding record in the `Outfit` table with their rating.
-23. **[TODO]** Evolve Recommendations: Enhance the recommendation engine endpoint (Task 13) to include the user's past feedback (likes/dislikes) in the data sent to the Gemini API, allowing for more personalized future recommendations.
+21. **[DONE]** Feedback UI: Add simple "Like" and "Dislike" buttons to the daily outfit display.
+22. **[DONE]** Store Feedback: When a user clicks a feedback button, update the corresponding record in the `Outfit` table with their rating.
+23. **[DONE]** Evolve Recommendations: Enhance the recommendation engine endpoint (Task 13) to include the user's past feedback (likes/dislikes) in the data sent to the Gemini API, allowing for more personalized future recommendations.
 
