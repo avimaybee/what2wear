@@ -1,8 +1,8 @@
-
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 
 export async function updateUserProfile(formData: FormData) {
   const supabase = await createClient()
@@ -27,21 +27,13 @@ export async function updateUserProfile(formData: FormData) {
 
     if (uploadError) {
       console.error('Error uploading avatar:', uploadError)
-      // Optionally, return an error message to the user
       return { error: 'Failed to upload avatar.' }
     }
     
-    // Get the public URL for the uploaded file
     const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(data.path)
     avatarUrl = urlData.publicUrl
-
-    // TODO: Task 18 - Avatar Generation Endpoint
-    // At this point, you would ideally call another service (or a Gemini model)
-    // to process `avatarUrl` (e.g., remove background, create a standardized model)
-    // and save the *new* processed URL. For now, we'll save the direct upload URL.
   }
 
-  // Update the profile in the database
   const { error: updateError } = await supabase
     .from('profiles')
     .update({
@@ -56,7 +48,45 @@ export async function updateUserProfile(formData: FormData) {
     return { error: 'Failed to update profile.' }
   }
 
-  // Revalidate the profile page to show the new data immediately
-  // revalidatePath('/profile') // This requires further configuration in Next.js
+  revalidatePath('/profile')
+  return { success: true }
+}
+
+export async function updateUserProfilePreferences(preferences: { styles: string[], colors: string[] }) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'You must be logged in to update preferences.' }
+  }
+
+  // Retrieve the current profile to merge preferences
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('preferences')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError) {
+    console.error('Error fetching profile for preferences update:', profileError)
+    return { error: 'Could not retrieve existing profile data.' }
+  }
+
+  const newPreferences = {
+    ...profile.preferences,
+    ...preferences,
+  }
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ preferences: newPreferences })
+    .eq('id', user.id)
+
+  if (updateError) {
+    console.error('Error updating preferences:', updateError)
+    return { error: 'Failed to update preferences.' }
+  }
+
+  revalidatePath('/profile')
   return { success: true }
 }

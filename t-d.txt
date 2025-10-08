@@ -46,7 +46,7 @@ Status Key:
 
 17. **[DONE]** User Avatar Upload UI: Create a section in the user profile for uploading a full-body photo.
 18. **[DONE]** Avatar Generation Endpoint: Create a server-side endpoint that calls the specified Google image model (`models/gemini-2.5-flash-image`) to process the user's photo and create a clean avatar.
-19. **[DONE]** Outfit Rendering Endpoint: Create a server-side endpoint that takes the user's avatar and the recommended outfit items, and calls the image model to generate a "try-on" image.
+19. **[DONE]** Outfit Rendering Endpoint: Create a server-side endpoint that takes the user's avatar and the recommended outfit items, and a "try-on" image.
 20. **[DONE]** Display Rendered Outfit: Integrate the rendered image into the daily outfit UI, showing the user's avatar wearing the recommended clothes.
 
 ---
@@ -57,3 +57,35 @@ Status Key:
 22. **[DONE]** Store Feedback: When a user clicks a feedback button, update the corresponding record in the `Outfit` table with their rating.
 23. **[DONE]** Evolve Recommendations: Enhance the recommendation engine endpoint (Task 13) to include the user's past feedback (likes/dislikes) in the data sent to the Gemini API, allowing for more personalized future recommendations.
 
+---
+
+### Phase 5: UI/UX Modernization & Feature Completion
+
+This phase focuses on elevating the user experience by incorporating modern UI/UX trends and implementing missing core features.
+
+24. **[DONE]** **UI/UX Research & Style Guide:**
+    - Research and define a new visual style guide (colors, typography, spacing, component design).
+    - Create a reference document for the new design system.
+
+25. **[DONE]** **Implement Core Missing Features:**
+    - **[DONE]** **Profile Preferences:** Create UI for users to set their style preferences.
+    - **[DONE]** **Clothing Item Deletion:** Implement functionality to delete items from the wardrobe.
+    - **[DONE]** **Outfit History:** Create a page to view past recommended outfits and feedback.
+    - **[DONE]** **Manual Outfit Creation:** Allow users to create and save their own outfits.
+    - **[DONE]** **Display "Last Worn" Date:** Show the `last_used_date` on item views.
+
+26. **[DONE]** **Implement Modern UI/UX Patterns:**
+    - **[DONE]** **Dark Mode:** The application is dark mode by default.
+    - **[DONE]** **Microinteractions & Animations:** Implement subtle animations and transitions for buttons, modals, and page loads.
+    - **[DONE]** **Redesign Wardrobe UI:**
+        - Implement a more dynamic and interactive grid for clothing items.
+        - Add advanced filtering and sorting options.
+        - Implement swipe gestures for quick actions (e.g., delete).
+    - **[DONE]** **Redesign Outfit Recommendation UI:**
+        - Present recommendations in a more engaging format (e.g., card stack).
+        - Animate the presentation of the outfit.
+
+27. **[TODO]** **Advanced Features & Interactivity:**
+    - **[TODO]** **Gamify the Experience:** Add badges and rewards for user engagement (e.g., adding items, trying new styles).
+    - **[TODO]** **AR Virtual Try-On:** Investigate and implement a more immersive AR-based virtual try-on.
+    - **[TODO]** **Voice UI:** Explore adding voice commands for key actions (e.g., "show me a casual outfit").
