@@ -4,6 +4,8 @@ import Link from 'next/link'
 import UploadForm from './UploadForm'
 import WardrobeGrid from './WardrobeGrid'
 
+export const runtime = 'edge'; // Add this line
+
 export default async function WardrobePage() {
   const supabase = await createClient()
 

@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { getOutfitHistory } from './actions'
 import OutfitHistoryList from './OutfitHistoryList'
 
+export const runtime = 'edge'; // Add this line
+
 export default async function HistoryPage() {
   const supabase = await createClient()
 
@@ -18,7 +20,6 @@ export default async function HistoryPage() {
   const { outfits: initialOutfits, error } = await getOutfitHistory(1)
 
   if (error) {
-    // Handle error appropriately
     return <p className="text-center text-error">{error}</p>
   }
 

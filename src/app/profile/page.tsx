@@ -4,6 +4,8 @@ import Link from 'next/link'
 import ProfileForm from './ProfileForm'
 import ProfilePreferencesForm from './ProfilePreferencesForm'
 
+export const runtime = 'edge'; // Add this line
+
 export default async function ProfilePage() {
   const supabase = await createClient()
 

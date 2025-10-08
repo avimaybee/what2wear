@@ -4,6 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ItemEditForm from './ItemEditForm'
 
+export const runtime = 'edge'; // Add this line
+
 export default async function ItemDetailsPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
 
@@ -27,13 +29,13 @@ export default async function ItemDetailsPage({ params }: { params: { id: string
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-background text-text">
+      <header className="bg-surface/80 backdrop-blur-sm shadow-sm">
         <nav className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900 truncate">
+            <h1 className="text-2xl font-bold text-text truncate">
               Item Details
             </h1>
-            <Link href="/wardrobe" className="py-2 px-4 rounded-md no-underline bg-gray-200 hover:bg-gray-300 text-sm font-medium">
+            <Link href="/wardrobe" className="py-2 px-4 rounded-md no-underline bg-primary text-background text-sm font-medium hover:bg-secondary transition-colors">
                 Back to Wardrobe
             </Link>
         </nav>
@@ -43,17 +45,17 @@ export default async function ItemDetailsPage({ params }: { params: { id: string
             <div>
                 <Image src={item.image_url} alt={item.category || 'Clothing item'} width={500} height={500} className="w-full h-auto object-cover rounded-lg shadow-lg" />
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg space-y-6">
+            <div className="bg-surface p-6 rounded-lg shadow-lg space-y-6">
                 <div>
-                    <h2 className="text-2xl font-bold capitalize mb-4 border-b pb-2">{item.category}</h2>
+                    <h2 className="text-2xl font-bold capitalize mb-4 border-b border-background/50 pb-2">{item.category}</h2>
                     <div className="space-y-3">
                         <p><strong>Color:</strong> {item.color || 'N/A'}</p>
                         <p><strong>Seasons:</strong> {item.season_tags?.join(', ') || 'N/A'}</p>
                         <p><strong>Styles:</strong> {item.style_tags?.join(', ') || 'N/A'}</p>
-                        <p className="text-sm text-gray-500 pt-2">Added on: {new Date(item.created_at).toLocaleDateString()}</p>
+                        <p className="text-sm text-text-light pt-2">Added on: {new Date(item.created_at).toLocaleDateString()}</p>
                     </div>
                 </div>
-                <div className="border-t pt-6">
+                <div className="border-t border-background/50 pt-6">
                     <h3 className="text-xl font-bold mb-4">Edit Details</h3>
                     <ItemEditForm item={item} />
                 </div>

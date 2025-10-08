@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+export const runtime = 'edge'; // Add this line
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -45,45 +47,45 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="w-full max-w-xs p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center text-gray-900">StyleMate</h1>
+    <div className="flex justify-center items-center h-screen bg-background text-text">
+      <div className="w-full max-w-xs p-8 space-y-6 bg-surface rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold text-center text-text">StyleMate</h1>
         <div className="space-y-4">
           <div>
-            <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
+            <label htmlFor="email" className="text-sm font-medium text-text-light">Email</label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 mt-1 text-gray-900 bg-gray-200 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 mt-1 text-text bg-background border border-surface rounded-md focus:outline-none focus:ring-primary focus:border-primary"
               placeholder="you@example.com"
             />
           </div>
           <div>
-            <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
+            <label htmlFor="password" className="text-sm font-medium text-text-light">Password</label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 mt-1 text-gray-900 bg-gray-200 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 mt-1 text-text bg-background border border-surface rounded-md focus:outline-none focus:ring-primary focus:border-primary"
               placeholder="••••••••"
             />
           </div>
         </div>
         <div className="space-y-2">
-          <button onClick={handleSignIn} className="w-full px-4 py-2 font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Sign In</button>
-          <button onClick={handleSignUp} className="w-full px-4 py-2 font-bold text-indigo-600 bg-indigo-100 border border-indigo-200 rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Sign Up</button>
+          <button onClick={handleSignIn} className="w-full px-4 py-2 font-bold bg-primary text-background rounded-md hover:bg-secondary transition-colors">Sign In</button>
+          <button onClick={handleSignUp} className="w-full px-4 py-2 font-bold text-primary bg-background border border-surface rounded-md hover:bg-secondary hover:text-background transition-colors">Sign Up</button>
         </div>
         <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-surface"></div>
             </div>
-            <div className="relative px-2 text-sm text-gray-500 bg-white">Or continue with</div>
+            <div className="relative px-2 text-sm text-text-light bg-surface">Or continue with</div>
         </div>
         <div>
-          <button onClick={handleGoogleSignIn} className="w-full px-4 py-2 font-bold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Google</button>
+          <button onClick={handleGoogleSignIn} className="w-full px-4 py-2 font-bold text-text bg-background border border-surface rounded-md hover:bg-secondary hover:text-background transition-colors">Google</button>
         </div>
       </div>
     </div>

@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import OutfitCreator from './OutfitCreator'
 
+export const runtime = 'edge'; // Add this line
+
 export default async function CreateOutfitPage() {
   const supabase = await createClient()
 
