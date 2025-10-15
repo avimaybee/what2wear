@@ -1,239 +1,175 @@
-# what2wear Style Guide
-
-This document outlines the visual style guide for the what2wear application. It is the single source of truth for colors, typography, spacing, and component design.
-
-## Color Palette (Dark Mode First)
-
-The color palette is designed to be modern, bold, and visually striking, with a default dark mode theme.
-
-| Color      | Hex       | Usage                               |
-| ---------- | --------- | ----------------------------------- |
-| Background | `#1B2021` | Main background                     |
-| Surface    | `#30343F` | Cards, input fields, secondary surfaces |
-| Primary    | `#EA638C` | Primary buttons, links, active states |
-| Secondary  | `#89023E` | Secondary accents, hover states     |
-| Text       | `#FFD9DA` | Body text, headings, labels         |
-| Text Light | `#a9a9a9` | Secondary text, placeholders        |
-| Success    | `#2ecc71` | Success messages, notifications     |
-| Error      | `#e74c3c` | Error messages, notifications       |
-
-### Extended design tokens (recommended additions)
-
-Add these tokens to the project `@theme` (Tailwind) or CSS variables so they can be referenced consistently across components.
-
-Tokens (examples):
-
-- --color-background: #1B2021
-- --color-surface: #30343F
-- --color-surface-2: #373a44
-- --color-surface-3: #42444E
-- --color-primary: #EA638C
-- --color-primary-foreground: #1B2021
-- --color-secondary: #89023E
-- --color-text: #FFD9DA
-- --color-text-muted: #a9a9a9
-- --color-border: rgba(255, 255, 255, 0.06)
-- --color-success: #2ecc71
-- --color-error: #e74c3c
-- --color-ring: rgba(234, 99, 140, 0.28)
-
-Rationale: central tokens make it trivial to swap themes and produce matching Tailwind utilities.
-
-## Typography
-
-The primary font for the application is **Nunito Sans**. It is a clean, modern, and highly readable sans-serif font that is well-suited for mobile interfaces.
-
-### Type Scale
-
-The following responsive type scale should be used throughout the application. All sizes are in `rem` units.
-
-| Element         | Mobile (`rem`) | Desktop (`rem`) | Font Weight |
-| --------------- | -------------- | --------------- | ----------- |
-| Heading 1 (h1)  | 2.5            | 3               | 700 (Bold)  |
-| Heading 2 (h2)  | 2              | 2.5             | 700 (Bold)  |
-| Heading 3 (h3)  | 1.5            | 1.75            | 600 (Semi-Bold) |
-| Body            | 1              | 1               | 400 (Regular) |
-| Small           | 0.875          | 0.875           | 400 (Regular) |
-
-### Recommended premium type system (mobile-first)
-
-- Primary UI font: consider switching to Inter / Plus Jakarta Sans / Satoshi for a premium feel. If you keep Nunito, use next/font or self-host for performance.
-- Mobile scale (recommended):
-  - Display / Hero: 2rem (32px) mobile, 3rem(48px) desktop
-  - H1: 1.5rem (24px) mobile, 2rem (32px) desktop
-  - H2: 1.125rem (18px) mobile, 1.5rem (24px) desktop
-  - Body: 1rem (16px)
-  - Small / Caption: 0.875rem (14px)
-
-Rationale: tighter type scale improves perceived polish and legibility on small screens.
-
-## Spacing
-
-An **8px grid system** is used for all spacing and layout. All margins, paddings, and gaps should be multiples of 8px (e.g., 8px, 16px, 24px, 32px). This ensures a consistent and harmonious layout.
-
-### Spacing tokens
-
-- --spacing-1: 4px (utility micro)
-- --spacing-2: 8px
-- --spacing-3: 12px
-- --spacing-4: 16px
-- --spacing-5: 24px
-- --spacing-6: 32px
-
-Use these tokens with Tailwind `@theme` to generate utilities like `p-4`, `gap-5` etc.
-
-## Component Design
-
-This section provides design specifications for common UI components.
-
-### Buttons
-
-- **Primary Button:**
-  - Background: `Primary` (`#EA638C`)
-  - Text: `Background` (`#1B2021`)
-  - Padding: `12px 24px`
-  - Border Radius: `8px`
-- **Secondary Button:**
-  - Background: `Surface` (`#30343F`)
-  - Text: `Text` (`#FFD9DA`)
-  - Padding: `12px 24px`
-  - Border Radius: `8px`
-- **Accent/Destructive Button:**
-  - Background: `Secondary` (`#89023E`)
-  - Text: `Text` (`#FFD9DA`)
-  - Padding: `12px 24px`
-  - Border Radius: `8px`
-
-#### Button system (recommended)
-
-- Sizes: small (36-40px), medium (44-48px), large (56px)
-- Variants: primary (solid), secondary (tonal/filled), outline, ghost, destructive
-- States: hover (slight increase in elevation or lightening of fill), active (scale down 0.98), disabled (opacity 0.5, no pointer events), focus (ring using --color-ring)
-
-Implementation notes:
-- Primary: `bg-primary text-primary-foreground shadow-sm` with `hover:brightness(1.03)` and `focus:ring-2 focus:ring-primary`.
-- Secondary: filled surface with subtle border and high-contrast text.
-- Ghost: for icon-only actions, keep minimal padding and circular hit area >=44px.
-
-### Cards
-
-- Background: `Surface` (`#30343F`)
-- Padding: `16px`
-- Border Radius: `12px`
-- Box Shadow: `0 4px 6px rgba(0, 0, 0, 0.1)`
-
-Recommendations:
-
-- Use tonal elevation rather than heavy shadows for most surfaces (Material 3 guidance). Reserve shadow for prominent floating elements.
-- Card padding: 16px (mobile), 24px (desktop).
-- Border radius: 12px (consistent with style guide).
-
-Card states:
-- Rest: surface color
-- Hover (desktop): increase elevation via surface-2 + subtle translateY -2px
-- Press: scale 0.995
-
-### Forms
-
-- **Input Fields:**
-  - Background: `Surface` (`#30343F`)
-  - Border: `1px solid #4a4a4a`
-  - Padding: `12px 16px`
-  - Border Radius: `8px`
-- **Labels:**
-  - Font Size: `1rem`
-  - Font Weight: `600` (Semi-Bold)
-  - Color: `Text` (`#FFD9DA`)
-
-### Form system improvements
-
-- Inputs should use a filled style: `bg-surface border-transparent` with `focus:ring` and `focus:border-primary` for clarity.
-- Provide inline validation messages under fields (red text + icon), avoid alert() calls.
-- Replace multiple native `select` multi-selects with a chip selector and a bottom-sheet picker on mobile for better UX.
-
-Implementation details:
-- Use accessible labels and `aria-describedby` for helper text.
-- Provide server and client validation paths; show spinner in place of submit text when pending.
-
-Rationale: forms are frequent and should be fast, accessible, and non-obstructive.
-
----
-
-## Motion & Interaction tokens
-
-- Default spring: { stiffness: 320, damping: 28 } (expressive fast spatial for hero gestures)
-- Effects spring (opacity/color): quicker, no overshoot: { stiffness: 420, damping: 60 }
-- Page transition: opacity 0 -> 1, translateY 6px, duration 200-260ms using spring tokens.
-
-Respect `prefers-reduced-motion`.
-
-Rationale: consistent motion language gives a product a premium feel and is aligned with M3 guidance.
-
----
-
-## Component Library & Implementation Guidance
-
-Add a small set of shared components (to implement in `src/app/components`):
-
-- `Button.tsx` (variants + sizes)
-- `Input.tsx` (with label, helper, error, icon props)
-- `BottomNav.tsx` (mobile-first nav with safe-area support)
-- `ToastProvider.tsx` + `useToast` (replace alert())
-- `Skeleton.tsx` (card, avatar, list)
-- `Modal.tsx` (use sparingly; center with tonal surface and two CTAs)
-
-Prefer headless UI patterns with Tailwind.
-
----
-
-## Navigation & Layout
-
-- Mobile-first: add a bottom tab bar with 4-5 primary destinations (Home, Wardrobe, Create, History, Profile).
-- Use sticky footer for CTAs like Save when creating outfits.
-- Avoid modal-blocking flows for routine tasks; prefer inline confirmations + undo toasts.
-
----
-
-## Accessibility
-
-- Ensure WCAG AA color contrast for all text; refine `--color-text-muted` where needed.
-- Focus-visible for keyboard navigation (`:focus-visible` ring).
-- Use ARIA roles for dynamic components and `aria-live` for toasts.
-- Touch targets >=44x44px.
-
----
-
-## Performance & Best Practices
-
-- Use Next.js `next/image` with a blur placeholder for wardrobe images; ensure width/height to prevent CLS.
-- Avoid heavy, long-running animations on route change; prefetch critical routes and images.
-- Replace `alert()` usage across client actions with a `Toast` API.
-
----
-
-## Implementation roadmap (prioritized)
-
-1. Foundation: create tokens in `globals.css` and `tailwind.config` via `@theme` variables. Import premium font with next/font or host locally. Update `body` with `bg-background text-text`.
-2. Shared primitives: `Button`, `Input`, `ToastProvider`, `Skeleton`, `BottomNav`.
-3. Replace alert() with `useToast` across pages (`login`, `wardrobe/UploadForm`, `ItemEditForm`, `create-outfit` actions).
-4. Wardrobe polish: card grid improvements, skeletons, swipe-to-undo, chip filters.
-5. Create Outfit UX: stacked mobile layout, sticky save bar, elegant drop-feedback.
-6. Motion tuning: route transitions, card micro-interactions, drag/drop feedback with spring tokens.
-7. Accessibility pass + contrast checks.
-
----
-
-## Quick Wins (to ship fast)
-
-- Replace `alert()` with a simple toast and a success state in `UploadForm` and `ItemEditForm`.
-- Add skeletons to `WardrobeGrid` and `OutfitHistoryList`.
-- Add a minimal `BottomNav` component and hide the multiple "Back to Home" links.
-
----
-
-## References
-
-- Material Design 3 (Motion & Elevation)
-- Apple Human Interface Guidelines (Tab bars & safe area)
-- Tailwind CSS v4 Theme variables
-- Framer Motion best practices
+Foundation: Design System (tokens, type, spacing)
+Color tokens (Tailwind v4 @theme)
+
+Establish a premium dark-first palette with tonal surfaces (Material 3 guidance: color for elevation instead of heavy shadows).
+Add tokens: background, surface, surface-2, surface-3, text, text-muted, primary, primary-foreground, success, warning, error, border, ring.
+Ensure strong contrast and dark-mode ergonomics; consider OKLCH values for perceptual consistency.
+Rationale: You currently mix light (gray-50) and custom dark theme. Unify across all pages for a premium, cohesive feel.
+Typography
+
+Replace Nunito Sans with a premium neo-grotesk: Inter, Geist, Plus Jakarta Sans, Satoshi, or General Sans.
+Set a clear type scale for mobile-first:
+Display: 28–32, Headline: 22–24, Title: 18–20, Body: 16, Caption: 13–14.
+Line-height: 1.4–1.6 for body; tracking-tight on large headings.
+Rationale: Stronger hierarchy and legibility; instantly reads as premium.
+Spacing and radii
+
+Adopt consistent spacing increments (4/8px) and larger touch targets (44–48px min height).
+Radii tokens: sm 6px, md 10px, lg 14px, xl 20px; pill for special CTAs.
+Shadows: use subtle shadows sparingly, favor tonal elevation (M3 Elevation guidance).
+Motion and interaction
+
+Default to spring-based transitions (Framer Motion) with subtle overshoot for hero moments; standard scheme for utilitarian actions.
+Respect prefers-reduced-motion and use effect springs for opacity/color changes (M3 Motion physics).
+Keep durations 180–280ms; micro-overshoot on primary buttons and cards.
+Breakpoints and containers
+
+Mobile-first classes; use a consistent container and safe-area padding (env(safe-area-inset-*)).
+Grid rhythm: 2-col on mobile, 3–4 on tablet, 5–6 on desktop for wardrobes.
+Navigation and Structure
+Global layout (layout.tsx)
+
+Apply bg-background text-text on the body; wrap children in a container with horizontal padding and safe-area insets.
+Add a mobile bottom navigation bar (sticky, Liquid Glass-like frosted surface; Apple HIG: tab bars visible and labeled).
+Tabs: Home, Wardrobe, Create, History, Profile.
+Use icons (Heroicons) + short labels; highlight active with a pill or underline.
+Keep top headers minimal; use sticky headers with subtle blur only when needed.
+Routing and flows
+
+Eliminate ”Back to Home” buttons; rely on persistent bottom nav.
+Prefetch key routes on viewport to reduce latency.
+Page-level Improvements
+Home (page.tsx)
+
+Unify with dark theme (remove gray-50 background); introduce a hero with crisp heading, short value prop, and a primary CTA.
+If logged in, surface “Daily Picks” with a compact card stack teaser; show “Continue where you left off.”
+Add subtle entry animation using spring (no large y-translation; small fade+rise).
+Login (page.tsx)
+
+Replace white card with elevated tonal surface; larger inputs, clear labels, and inline validation (no alert boxes).
+One primary action (Sign in), secondary action (Create account) as subdued; Google button styled as neutral.
+Add password reveal, error messages inline below inputs; disable on submit with spinner.
+Keep copy minimal — premium tone.
+Wardrobe (page.tsx, grid, cards, upload)
+
+Filter + sort bar: compress into a single control with chips for categories; use select bottom sheet on mobile.
+Grid cards: consistent aspect ratio, rounded-lg/xl, thin border (border-white/10), subtle hover elevation (desktop).
+Use next/image blur placeholders; ensure width/height provided to eliminate CLS.
+Swipe-to-delete gesture on mobile: keep but add confirmation via inline undo toast (replace modal for destructive actions after swipe).
+Empty state: friendly illustration, single CTA “Add your first item” linking to Upload.
+Create Outfit (DND flow)
+
+Two zones stacked on mobile (Wardrobe list collapsed to categories, Creation zone at top).
+Larger drop zone with dashed border and hint; subtle bounce when item is dropped (spatial spring).
+Add a sticky footer for “Name outfit” + primary Save button (full-width on mobile).
+Avoid alerts; use toast success and keep user in context (clear creation zone with a soft success checkmark animation).
+History
+
+Infinite scroll with skeleton placeholders; clear date grouping; compact cards with small metadata line.
+Empty state with “You haven’t rated any outfits yet. Try recommendations.”
+Profile
+
+Convert to dark-themed surfaces; improve avatar uploader with circular preview and progress indicator.
+Use segmented controls or simple list forms; emphasize Save with sticky bottom CTA.
+Component-level Upgrades
+Buttons
+
+Variants: primary (solid), secondary (tonal), outline, ghost, destructive.
+Sizes: md (44px), lg (48px). Animated press (scale 0.98) and focus ring (ring-primary/40).
+Icon buttons with accessible labels.
+Inputs
+
+Filled surface input style (bg-surface, border-transparent, focus ring).
+Inline validation states (success/error icons), helper text, and descriptive labels.
+Replace native multi-select with stacked chips + bottom sheet selector on mobile.
+Cards
+
+Use surface-2 with border and light shadow; consistent padding and iconography.
+For wardrobe items, add overlay quick actions (Edit, Delete) on long-press or hover.
+Modals
+
+Use them sparingly; favor inline confirmation + undo toasts.
+If modal required, dim with 50–60% overlay; centered with measured spacing and large tappable actions.
+Toaster
+
+Introduce a toast system to replace alert() calls (success/error/info). Non-blocking, dismissible, live region for a11y.
+Skeletons and loaders
+
+Skeleton components for grid/list cards and form fields.
+Replace text “Loading...” with shimmering blocks.
+Page transitions
+
+Keep transitions light (opacity + tiny translateY 6–8px); use route-level transitions with shared spring token.
+Avoid heavy bounce during route changes; reserve expressive motion for card stack or hero CTA.
+Accessibility and Mobile Ergonomics
+Color contrast: Ensure minimum AA contrast for all text (especially muted text-light).
+Focus styles: Visible focus rings on interactive elements; keyboard navigable.
+Hit areas: 44–48px min; give buttons/links sufficient space.
+Prefers-reduced-motion: Respect and switch to non-animated fades.
+ARIA live regions for toasts and form errors; descriptive alt text for images (fallback to category).
+Performance and Quality
+next/image everywhere with blur placeholder; ensure defined width/height; set priority for above-the-fold images.
+Reduce CLS by reserving space for headers/nav/toasts.
+Use CSS transitions for small effects; reserve Framer Motion for gestures/layout transitions.
+Avoid re-sorting mutating arrays in-place in useMemo; clone before sort to prevent state bugs.
+Prefetch critical routes; cache read-heavy lists; paginate grids with IntersectionObserver (already present in history list).
+Lint for a11y and consistent className ordering.
+Theming and Dark/Light Support
+Option 1: Go all-in on premium dark theme with high-quality accent and tonal surfaces.
+Option 2: Add light theme and a toggle (data-theme attribute), mapping all tokens in @theme using Tailwind v4 “inline” variables.
+Ensure consistent styles across all pages (Home/Login currently conflict with global dark).
+Concrete changes mapped to your code
+globals.css
+
+Redefine @theme tokens for colors, text scale, radii, shadows, spacing, breakpoints.
+Import a premium font (Inter/Geist via @font-face or next/font) and set --font-sans.
+Add base styles for body, safe-area padding utilities, and a .container utility pattern if needed.
+layout.tsx
+
+Set className="bg-background text-text antialiased" on body.
+Add a shared &lt;BottomNav /&gt; component and a &lt;Toaster /&gt; portal; wrap main content in a container with px-4 and pb-[calc(56px+env(safe-area-inset-bottom))].
+Keep PageTransition but tune motion to smaller deltas and spring timing.
+New shared components
+
+components/BottomNav.tsx with 5 tabs and safe-area support.
+components/ToastProvider.tsx to consolidate notifications.
+components/Skeleton.tsx variants (card, line, avatar).
+components/Button.tsx and components/Input.tsx for consistent styling and states.
+Replace alerts with toasts
+
+Files: AuthButton.tsx, page.tsx, UploadForm.tsx, WardrobeGrid.tsx, ItemEditForm.tsx, create-outfit/*, history/*.
+Provide inline errors for form fields; use toast for global success/error.
+Harmonize pages to dark theme
+
+page.tsx, page.tsx: remove gray backgrounds, switch to surfaces and toned content.
+Navigation: remove “Back to Home” CTAs; rely on bottom nav.
+Wardrobe ergonomics
+
+WardrobeGrid.tsx: chip filters, unified select UI, skeletons while loading; WardrobeItemCard.tsx with accessible gestures and non-obtrusive delete confirm (toast undo).
+Create Outfit flow
+
+OutfitCreator.tsx, WardrobePanel.tsx, CreationZone.tsx: stack on mobile, sticky save bar, clearer dropzone affordances, gentle motion on drop.
+Visual style cues to feel “premium”
+High-contrast, matte background with soft luminous accents; restrained gradients and subtle glass on the bottom nav.
+Thin borders with slight translucency (border-white/10); larger corners and clean whitespace.
+Meaningful motion: tiny, confident movements instead of large bouncy transitions.
+Crisp iconography (Heroicons/Phosphor) with consistent stroke weights.
+Prioritized rollout plan (suggested)
+Core foundation (tokens, typography, layout, bottom nav, toaster, skeletons).
+Unify all pages to dark theme, remove alerts, add toasts.
+Wardrobe UI polish (filters, cards, gestures, empty states, skeletons).
+Create Outfit ergonomics (mobile-first stacking, dropzone feedback, sticky save).
+Login/Profile modernization (form styles, validation, avatar UX).
+Motion tuning pass (route transitions, micro-interactions) with reduced-motion handling.
+Accessibility and contrast audit; fix gaps.
+References used
+Material Design 3: Motion physics and Elevation (use springs, tonal elevation over heavy shadows).
+Apple HIG: Tab bar best practices and safe-area ergonomics for mobile bottom navigation.
+Tailwind CSS v4: Theme variables (@theme), colors, breakpoints, and using tokens to generate utilities.
+Framer Motion: Best practices for gestures, AnimatePresence, and layout animation.
+Quick wins you can do immediately
+Unify Home and Login to the dark theme and remove alert() calls in favor of a toast.
+Add a sticky bottom nav for mobile and remove “Back to Home” links.
+Introduce skeletons for wardrobe/history grids to replace “Loading...” text.
+Switch font to Inter/Geist and adjust headings/body sizes per the scale above.
+If you want, I can implement the foundation (design tokens, bottom nav, toaster, and updating Home/Login to the new look) in a first PR so you can feel the new visual direction end-to-end.

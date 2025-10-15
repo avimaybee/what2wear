@@ -1,40 +1,98 @@
-import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
-import OutfitRecommender from './wardrobe/OutfitRecommender'
-import Button from './components/Button'
+'use client';
 
-export default async function Home() {
-  const supabase = await createClient()
+import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import OutfitRecommender from './wardrobe/OutfitRecommender';
+import Button from './components/Button';
+import { useEffect, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+export default function Home() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+      setLoading(false);
+    };
+    checkUser();
+  }, []);
+
+  const FADE_IN_ANIMATION_VARIANTS = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 20 } },
+  };
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 pt-8 text-center">
-      <h1 className="text-[2rem] font-bold tracking-tight sm:text-[2.75rem]">Your personal AI stylist</h1>
-      <p className="mt-3 max-w-prose text-base text-[var(--color-text-muted)] sm:text-lg">
-        Build a wardrobe you love. Get daily recommendations tailored to your style and weather.
-      </p>
+    <main className="flex flex-col items-center justify-center min-h-[calc(100vh-72px)] p-4 md:p-8 text-center">
+      <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(hsl(var(--secondary))_1px,transparent_1px)] [background-size:32px_32px]"></div>
+      <motion.div
+        initial="hidden"
+        animate="show"
+        viewport={{ once: true }}
+        variants={{
+          hidden: {},
+          show: {
+            transition: {
+              staggerChildren: 0.15,
+            },
+          },
+        }}
+        className="w-full max-w-3xl"
+      >
+        <motion.h1
+          className="text-5xl font-bold tracking-tighter sm:text-7xl"
+          variants={FADE_IN_ANIMATION_VARIANTS}
+        >
+          Style, simplified.
+        </motion.h1>
+        <motion.p
+          className="mt-6 max-w-prose mx-auto text-muted-foreground sm:text-xl"
+          variants={FADE_IN_ANIMATION_VARIANTS}
+        >
+          Your digital wardrobe and personal AI stylist. All in one place.
+        </motion.p>
 
-      <div className="mt-8 w-full max-w-4xl">
-        {user ? (
-          <div className="space-y-8">
-            <OutfitRecommender />
-            <div className="flex justify-center">
-              <Link href="/wardrobe">
-                <Button size="md">Manage your wardrobe</Button>
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-2 flex justify-center gap-3">
-            <Link href="/login">
-              <Button size="md">Log in to get started</Button>
+        <motion.div
+          className="mt-10 flex justify-center gap-4"
+          variants={FADE_IN_ANIMATION_VARIANTS}
+        >
+          {loading ? (
+            <div className="h-12 w-48 rounded-md bg-secondary animate-pulse" />
+          ) : user ? (
+            <Link href="/wardrobe">
+              <Button size="lg">Enter Your Wardrobe</Button>
             </Link>
-          </div>
-        )}
-      </div>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button size="lg">Get Started</Button>
+              </Link>
+              <Link href="https://github.com/avimaybee/what2wear">
+                <Button size="lg" variant="outline">
+                  Star on GitHub
+                </Button>
+              </Link>
+            </>
+          )}
+        </motion.div>
+      </motion.div>
+
+      {user && !loading && (
+        <motion.div 
+          className="w-full mt-20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, type: 'spring', stiffness: 100, damping: 20 }}
+        >
+          <h2 className="text-2xl font-bold tracking-tight">Your Daily Picks</h2>
+          <OutfitRecommender />
+        </motion.div>
+      )}
     </main>
-  )
+  );
 }
