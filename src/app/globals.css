@@ -4,35 +4,73 @@
 
 @layer base {
   :root {
-    --background: hsl(240 10% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(240 10% 3.9%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(240 10% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(240 10% 3.9%);
-    --secondary: hsl(240 3.7% 15.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(240 3.7% 15.9%);
-    --muted-foreground: hsl(240 5.9% 64.9%);
-    --accent: hsl(240 3.7% 15.9%);
-    --accent-foreground: hsl(0 0% 98%);
-    --destructive: hsl(0 62.8% 30.6%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(240 3.7% 15.9%);
-    --input: hsl(240 3.7% 15.9%);
-    --ring: hsl(240 4.9% 83.9%);
+    --background: 247 82% 2%;
+    --foreground: 0 0% 98%;
+
+    --card: 247 82% 2%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 247 82% 2%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 245 100% 32%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 256 100% 24%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 254 98% 16%;
+    --muted-foreground: 0 0% 98%;
+
+    --accent: 0 0% 100%;
+    --accent-foreground: 247 82% 2%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 239 84% 10%;
+    --input: 239 84% 10%;
+    --ring: 245 100% 32%;
+
     --radius: 0.5rem;
-    --highlight: hsl(240 4.9% 83.9%);
   }
 
+  .dark {
+    --background: 247 82% 2%;
+    --foreground: 0 0% 98%;
+
+    --card: 247 82% 2%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 247 82% 2%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 245 100% 32%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 256 100% 24%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 254 98% 16%;
+    --muted-foreground: 0 0% 98%;
+
+    --accent: 0 0% 100%;
+    --accent-foreground: 247 82% 2%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 239 84% 10%;
+    --input: 239 84% 10%;
+    --ring: 245 100% 32%;
+  }
+}
+
+@layer base {
   * {
-    border-color: var(--border);
+    @apply border-border;
   }
   body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground;
   }
 }
