@@ -1,6 +1,20 @@
 'use client';
 
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
+
+export function useToast() {
+  return {
+    showToast: ({ variant, title, description }: { variant: 'success' | 'error' | 'info', title: string, description: string }) => {
+      if (variant === 'success') {
+        toast.success(`${title}: ${description}`);
+      } else if (variant === 'error') {
+        toast.error(`${title}: ${description}`);
+      } else {
+        toast(`${title}: ${description}`);
+      }
+    }
+  };
+}
 
 export default function ToastProvider() {
   return <Toaster 

@@ -24,7 +24,7 @@ export default function Home() {
 
   const FADE_IN_ANIMATION_VARIANTS = {
     hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 20 } },
+    show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 100, damping: 20 } },
   };
 
   return (

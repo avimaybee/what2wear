@@ -6,7 +6,7 @@ import WardrobeItemCard from './WardrobeItemCard';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { deleteClothingItem } from './actions';
 import type { ClothingItem } from '@/lib/types';
-import toast from 'react-hot-toast';
+import { useToast } from '../components/ToastProvider';
 import Chip from '../components/Chip';
 
 const categories = ['all', 'shirt', 't-shirt', 'jacket', 'pants', 'shoes', 'accessory'];
@@ -14,10 +14,11 @@ const sortOptions = ['newest', 'oldest'];
 
 export default function WardrobeGrid({ items }: { items: ClothingItem[] }) {
   const [allItems, setAllItems] = useState(items);
-  const [filter, setFilter] = useState('all';
+  const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('newest');
   const [itemToDelete, setItemToDelete] = useState<ClothingItem | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { showToast } = useToast();
 
   const filteredAndSortedItems = useMemo(() => {
     let result = [...allItems]; // Create a copy here
@@ -53,14 +54,9 @@ export default function WardrobeGrid({ items }: { items: ClothingItem[] }) {
       const result = await deleteClothingItem(itemToUndo.id, itemToUndo.image_url);
       if (result.error) {
         setAllItems(items);
-        toast.error(result.error);
+        showToast({ variant: 'error', title: 'Delete failed', description: result.error });
       } else {
-        toast('Item deleted.', {
-          action: {
-            label: 'Undo',
-            onClick: () => setAllItems(prev => [...prev, itemToUndo])
-          }
-        });
+        showToast({ variant: 'success', title: 'Deleted', description: 'Item removed from wardrobe.' });
       }
     });
   };
@@ -111,5 +107,21 @@ export default function WardrobeGrid({ items }: { items: ClothingItem[] }) {
         isConfirming={isPending}
       />
     </>
+  )
+}
+
+export function WardrobeGridSkeleton() {
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="h-8 w-40 rounded bg-[var(--color-surface-2)]" />
+        <div className="h-8 w-56 rounded bg-[var(--color-surface-2)]" />
+      </div>
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div key={i} className="aspect-square rounded-lg bg-[var(--color-surface-2)]" />
+        ))}
+      </div>
+    </div>
   )
 }

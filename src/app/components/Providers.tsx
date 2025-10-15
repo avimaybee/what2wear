@@ -6,10 +6,9 @@ import { MotionConfig } from 'framer-motion'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ToastProvider>
-      <MotionConfig transition={{ type: 'spring', stiffness: 320, damping: 28 }}>
-        {children}
-      </MotionConfig>
-    </ToastProvider>
+    <MotionConfig transition={{ type: 'spring', stiffness: 320, damping: 28 }}>
+      {children}
+      <ToastProvider />
+    </MotionConfig>
   )
 }

@@ -10,7 +10,7 @@ import Button from '../components/Button';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 400, damping: 40 } },
+  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 400, damping: 40 } },
 };
 
 export default function WardrobeItemCard({ item, onDelete }: { item: ClothingItem, onDelete: (id: number, imageUrl: string) => void }) {

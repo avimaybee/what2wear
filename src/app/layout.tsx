@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
-import PageTransition from "./components/PageTransition";
 import Providers from "./components/Providers";
 import BottomNav from "./components/BottomNav";
-import ToastProvider from "./components/ToastProvider";
 import { cn } from "@/lib/utils";
 
 
@@ -35,7 +33,6 @@ export default function RootLayout({
             </div>
           </div>
           <BottomNav />
-          <ToastProvider />
         </Providers>
       </body>
     </html>

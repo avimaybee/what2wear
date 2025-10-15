@@ -7,7 +7,7 @@ import { WardrobeGridSkeleton } from './WardrobeGrid';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 
 export default async function WardrobePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -16,6 +16,18 @@ export default async function WardrobePage() {
   if (!user) {
     return redirect('/login');
   }
+
+  const { data: clothingItems, error } = await supabase
+    .from('clothing_items')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching clothing items:', error);
+  }
+
+  const items = clothingItems || [];
 
   return (
     <div className="grid gap-8 p-4 md:p-8 lg:grid-cols-3">
@@ -26,7 +38,7 @@ export default async function WardrobePage() {
               <CardTitle>Upload New Item</CardTitle>
             </CardHeader>
             <CardContent>
-              <UploadForm />
+              <UploadForm user={user} />
             </CardContent>
           </Card>
         </div>
@@ -38,7 +50,7 @@ export default async function WardrobePage() {
           </CardHeader>
           <CardContent>
             <Suspense fallback={<WardrobeGridSkeleton />}>
-              <WardrobeGrid />
+              <WardrobeGrid items={items} />
             </Suspense>
           </CardContent>
         </Card>

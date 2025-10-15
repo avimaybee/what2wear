@@ -7,7 +7,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { ArrowLeft, Globe } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/Card';
 
 export default function LoginPage() {
@@ -91,7 +91,7 @@ export default function LoginPage() {
             </form>
           </div>
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="font-semibold text-highlight hover:underline">
               Sign up
             </Link>
