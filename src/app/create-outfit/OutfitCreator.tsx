@@ -1,19 +1,20 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect } from 'react'
 import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { saveManualOutfit } from './actions'
 import WardrobePanel from './WardrobePanel'
 import CreationZone from './CreationZone'
 import { SortableItem } from './SortableItem'
 import type { ClothingItem } from '@/lib/types'
 
-export default function OutfitCreator({ items }: { items: ClothingItem[] }) {
+export default function OutfitCreator({ items, creationItems, onItemsChange, onSave }: { items: ClothingItem[], creationItems: ClothingItem[], onItemsChange: (items: ClothingItem[]) => void, onSave: (name: string) => void }) {
   const [wardrobeItems, setWardrobeItems] = useState(items);
-  const [creationItems, setCreationItems] = useState<ClothingItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [_isPending, startTransition] = useTransition(); // Renamed to _isPending
+
+  useEffect(() => {
+    setWardrobeItems(items.filter(item => !creationItems.some(c => c.id === item.id)))
+  }, [items, creationItems])
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -44,14 +45,12 @@ export default function OutfitCreator({ items }: { items: ClothingItem[] }) {
       if (activeContainer === 'wardrobe') {
         const activeItem = wardrobeItems.find(i => i.id.toString() === active.id.toString());
         if (activeItem) {
-          setCreationItems(prev => [...prev, activeItem]);
-          setWardrobeItems(prev => prev.filter(item => item.id.toString() !== active.id.toString()));
+          onItemsChange([...creationItems, activeItem]);
         }
       } else {
         const activeItem = creationItems.find(i => i.id.toString() === active.id.toString());
         if (activeItem) {
-          setWardrobeItems(prev => [...prev, activeItem]);
-          setCreationItems(prev => prev.filter(item => item.id.toString() !== active.id.toString()));
+          onItemsChange(creationItems.filter(item => item.id.toString() !== active.id.toString()));
         }
       }
     }
@@ -59,19 +58,6 @@ export default function OutfitCreator({ items }: { items: ClothingItem[] }) {
 
   const handleDragEnd = (_event: DragEndEvent) => { // Renamed to _event
     setActiveId(null);
-  };
-
-  const handleSave = async (name: string) => {
-    startTransition(async () => {
-      const itemIds = creationItems.map(item => item.id.toString());
-      const result = await saveManualOutfit(name, itemIds);
-      if (result.error) {
-        alert(`Error: ${result.error}`);
-      } else {
-        alert('Outfit saved successfully!');
-        setCreationItems([]);
-      }
-    });
   };
 
   const activeItem = activeId ? items.find(item => item.id.toString() === activeId) : null;
@@ -89,7 +75,7 @@ export default function OutfitCreator({ items }: { items: ClothingItem[] }) {
           <WardrobePanel items={wardrobeItems} />
         </div>
         <div>
-          <CreationZone items={creationItems} onSave={handleSave} />
+          <CreationZone items={creationItems} onSave={onSave} />
         </div>
       </div>
       <DragOverlay>

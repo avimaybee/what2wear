@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteClothingItem } from '../actions'
 import ConfirmationModal from '../../components/ConfirmationModal'
+import Button from '../../components/Button'
+import { useToast } from '../../components/ToastProvider'
 
 // This type should ideally be in a central types file
 type ClothingItem = {
@@ -25,6 +27,7 @@ const styles = ['casual', 'formal', 'streetwear', 'sporty', 'business']
 export default function ItemEditForm({ item }: { item: ClothingItem }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const { showToast } = useToast()
 
   const [category, setCategory] = useState(item.category || '')
   const [color, setColor] = useState(item.color || '')
@@ -53,9 +56,9 @@ export default function ItemEditForm({ item }: { item: ClothingItem }) {
       .eq('id', item.id)
 
     if (error) {
-      alert(`Error updating item: ${error.message}`)
+      showToast({ variant: 'error', title: 'Update failed', description: error.message })
     } else {
-      alert('Item updated successfully!')
+      showToast({ variant: 'success', title: 'Saved', description: 'Item updated successfully.' })
       router.refresh()
     }
     setIsSaving(false)
@@ -65,10 +68,10 @@ export default function ItemEditForm({ item }: { item: ClothingItem }) {
     startTransition(async () => {
       const result = await deleteClothingItem(item.id, item.image_url)
       if (result.error) {
-        alert(`Error: ${result.error}`)
+        showToast({ variant: 'error', title: 'Delete failed', description: result.error })
         setIsModalOpen(false)
       } else {
-        alert('Item deleted successfully.')
+        showToast({ variant: 'success', title: 'Deleted', description: 'Item removed from wardrobe.' })
         router.push('/wardrobe')
       }
     })
@@ -81,27 +84,27 @@ export default function ItemEditForm({ item }: { item: ClothingItem }) {
 
   return (
     <>
-      <form onSubmit={handleUpdate} className="space-y-6 bg-surface p-6 rounded-lg">
+  <form onSubmit={handleUpdate} className="space-y-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
         <div>
           <label htmlFor="category" className="block text-sm font-medium text-text-light">Category</label>
-          <select id="category" value={category} onChange={(e) => setCategory(e.target.value)} required className="mt-1 block w-full py-2 px-3 border border-surface bg-background rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
+          <select id="category" value={category} onChange={(e) => setCategory(e.target.value)} required className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] sm:text-sm">
             {categories.map(c => <option key={c} value={c} className="capitalize">{c}</option>)}          </select>
         </div>
 
         <div>
           <label htmlFor="color" className="block text-sm font-medium text-text-light">Color</label>
-          <input type="text" id="color" value={color} onChange={(e) => setColor(e.target.value)} className="mt-1 block w-full border border-surface bg-background rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"/>
+          <input type="text" id="color" value={color} onChange={(e) => setColor(e.target.value)} className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"/>
         </div>
 
         <div>
           <label htmlFor="seasons" className="block text-sm font-medium text-text-light">Seasons</label>
-          <select id="seasons" multiple value={selectedSeasons} onChange={handleMultiSelectChange(setSelectedSeasons)} className="mt-1 block w-full border border-surface bg-background rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary">
+          <select id="seasons" multiple value={selectedSeasons} onChange={handleMultiSelectChange(setSelectedSeasons)} className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]">
             {seasons.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}          </select>
         </div>
 
         <div>
           <label htmlFor="styles" className="block text-sm font-medium text-text-light">Styles</label>
-          <select id="styles" multiple value={selectedStyles} onChange={handleMultiSelectChange(setSelectedStyles)} className="mt-1 block w-full border border-surface bg-background rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary">
+          <select id="styles" multiple value={selectedStyles} onChange={handleMultiSelectChange(setSelectedStyles)} className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]">
             {styles.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}          </select>
         </div>
 
@@ -110,22 +113,21 @@ export default function ItemEditForm({ item }: { item: ClothingItem }) {
           <p className="mt-1 text-sm text-text">{item.last_used_date ? new Date(item.last_used_date).toLocaleDateString() : 'Never'}</p>
         </div>
 
-        <div className="flex items-center justify-between gap-4 pt-4 border-t border-background">
-          <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              disabled={isPending}
-              className="px-4 py-2 bg-error text-white font-semibold rounded-md disabled:opacity-50 hover:bg-opacity-90"
+        <div className="flex items-center justify-between gap-4 border-t border-[var(--color-border)] pt-4">
+          <Button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            disabled={isPending}
+            variant="destructive"
           >
-              Delete Item
-          </button>
-          <button
-              type="submit"
-              disabled={isSaving || isPending}
-              className="px-4 py-2 bg-primary text-background font-semibold rounded-md disabled:opacity-50 hover:bg-secondary"
+            Delete item
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSaving || isPending}
           >
-              {isSaving ? 'Saving...' : 'Save Changes'}
-          </button>
+            {isSaving ? 'Saving…' : 'Save changes'}
+          </Button>
         </div>
       </form>
 

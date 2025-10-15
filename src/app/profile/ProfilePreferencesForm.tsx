@@ -3,6 +3,10 @@
 import { useState, useTransition } from 'react'
 import { updateUserProfilePreferences } from './actions'
 import { type Profile } from '@/lib/types'
+import Button from '../components/Button'
+import Input from '../components/Input'
+import MultiSelect from '../components/MultiSelect'
+import { useToast } from '../components/ToastProvider'
 
 const styles = ['casual', 'formal', 'streetwear', 'sporty', 'business']
 
@@ -10,15 +14,10 @@ export default function ProfilePreferencesForm({ profile }: { profile: Profile |
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const { showToast } = useToast()
 
   const [selectedStyles, setSelectedStyles] = useState<string[]>(profile?.preferences?.styles || [])
   const [preferredColors, setPreferredColors] = useState<string>(profile?.preferences?.colors?.join(', ') || '')
-
-  const handleStyleChange = (style: string) => {
-    setSelectedStyles(prev => 
-      prev.includes(style) ? prev.filter(s => s !== style) : [...prev, style]
-    )
-  }
 
   const action = async () => {
     startTransition(async () => {
@@ -29,59 +28,37 @@ export default function ProfilePreferencesForm({ profile }: { profile: Profile |
       if (result?.error) {
         setError(result.error)
         setSuccess(false)
+        showToast({ variant: 'error', title: 'Save failed', description: result.error })
       } else {
         setError(null)
         setSuccess(true)
+        showToast({ variant: 'success', title: 'Preferences updated', description: 'Your style preferences were saved.' })
         setTimeout(() => setSuccess(false), 3000)
       }
     })
   }
 
   return (
-    <form action={action} className="p-6 border rounded-lg bg-surface shadow-sm max-w-lg mx-auto space-y-6 mt-8">
-      <h3 className="text-xl font-semibold">Your Style Preferences</h3>
+    <form action={action} className="mx-auto mt-8 max-w-lg space-y-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-subtle">
+      <h3 className="text-xl font-semibold text-[var(--color-text)]">Your style preferences</h3>
+
+      <MultiSelect
+        label="Preferred styles"
+        options={styles}
+        selected={selectedStyles}
+        onChange={setSelectedStyles}
+        placeholder="Select your preferred styles"
+      />
+
+      <Input id="colors" name="colors" label="Preferred colors" value={preferredColors} onChange={(e) => setPreferredColors(e.target.value)} placeholder="e.g., black, white, beige" />
+      <p className="-mt-2 text-sm text-[var(--color-text-muted)]">Enter comma-separated colors.</p>
 
       <div>
-        <label className="block text-sm font-medium text-text">Preferred Styles</label>
-        <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {styles.map(style => (
-            <label key={style} className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${selectedStyles.includes(style) ? 'bg-primary text-background' : 'bg-background'}`}>
-              <input 
-                type="checkbox" 
-                checked={selectedStyles.includes(style)}
-                onChange={() => handleStyleChange(style)}
-                className="hidden"
-              />
-              <span className="text-sm font-medium capitalize">{style}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="colors" className="block text-sm font-medium text-text">Preferred Colors</label>
-        <input
-          type="text"
-          id="colors"
-          name="colors"
-          value={preferredColors}
-          onChange={(e) => setPreferredColors(e.target.value)}
-          placeholder="e.g., black, white, beige"
-          className="mt-1 block w-full border border-surface rounded-md shadow-sm py-2 px-3 bg-background focus:outline-none focus:ring-primary focus:border-primary"
-        />
-        <p className="mt-1 text-sm text-text-light">Enter comma-separated colors.</p>
-      </div>
-
-      <div>
-        <button
-          type="submit"
-          disabled={isPending}
-          className="w-full px-4 py-2 bg-primary text-background font-semibold rounded-md disabled:opacity-50 hover:bg-secondary"
-        >
-          {isPending ? 'Saving...' : 'Save Preferences'}
-        </button>
-        {error && <p className="mt-2 text-sm text-error">Error: {error}</p>}
-        {success && <p className="mt-2 text-sm text-success">Preferences updated successfully!</p>}
+        <Button type="submit" disabled={isPending} className="w-full">
+          {isPending ? 'Saving…' : 'Save preferences'}
+        </Button>
+        {error && <p className="mt-2 text-sm text-[var(--color-error)]">Error: {error}</p>}
+        {success && <p className="mt-2 text-sm text-[var(--color-success)]">Preferences updated successfully!</p>}
       </div>
     </form>
   )

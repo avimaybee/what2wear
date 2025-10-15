@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import AuthButton from './AuthButton'
 import Link from 'next/link'
 import OutfitRecommender from './wardrobe/OutfitRecommender'
+import Button from './components/Button'
 
 export default async function Home() {
   const supabase = await createClient()
@@ -11,35 +11,30 @@ export default async function Home() {
   } = await supabase.auth.getUser()
 
   return (
-    <div className="flex flex-col items-center min-h-screen py-2 bg-gray-50">
-      <nav className="w-full flex justify-end p-4 absolute top-0 right-0">
-        <AuthButton />
-      </nav>
-      <main className="flex flex-col items-center justify-center flex-1 px-4 sm:px-20 text-center">
-        <h1 className="text-4xl sm:text-6xl font-bold text-gray-900">
-          Welcome to StyleMate
-        </h1>
-        <p className="mt-3 text-lg sm:text-2xl text-gray-600">
-          Your personal AI stylist.
-        </p>
+    <main className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 pt-8 text-center">
+      <h1 className="text-[2rem] font-bold tracking-tight sm:text-[2.75rem]">Your personal AI stylist</h1>
+      <p className="mt-3 max-w-prose text-base text-[var(--color-text-muted)] sm:text-lg">
+        Build a wardrobe you love. Get daily recommendations tailored to your style and weather.
+      </p>
 
-        <div className="mt-12 w-full max-w-4xl">
-          {user ? (
-            <div className="space-y-8">
-              <OutfitRecommender />
-              <Link href="/wardrobe" className="inline-block px-6 py-3 text-lg font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
-                Manage Your Wardrobe
+      <div className="mt-8 w-full max-w-4xl">
+        {user ? (
+          <div className="space-y-8">
+            <OutfitRecommender />
+            <div className="flex justify-center">
+              <Link href="/wardrobe">
+                <Button size="md">Manage your wardrobe</Button>
               </Link>
             </div>
-          ) : (
-            <div className="mt-8">
-              <Link href="/login" className="px-6 py-3 text-lg font-semibold text-white bg-green-600 rounded-md hover:bg-green-700">
-                Log In to Get Started
-              </Link>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+          </div>
+        ) : (
+          <div className="mt-2 flex justify-center gap-3">
+            <Link href="/login">
+              <Button size="md">Log in to get started</Button>
+            </Link>
+          </div>
+        )}
+      </div>
+    </main>
   )
 }

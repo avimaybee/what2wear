@@ -4,14 +4,17 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableItem } from './SortableItem';
 import { useState } from 'react';
 import type { ClothingItem } from '@/lib/types';
+import Button from '../components/Button'
+import { useToast } from '../components/ToastProvider'
 
 export default function CreationZone({ items, onSave }: { items: ClothingItem[], onSave: (name: string) => void }) {
   const [outfitName, setOutfitName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const { showToast } = useToast()
 
   const handleSave = async () => {
     if (!outfitName.trim()) {
-      alert('Please give your outfit a name.');
+      showToast({ variant: 'info', title: 'Name required', description: 'Please give your outfit a name.' })
       return;
     }
     setIsSaving(true);
@@ -20,10 +23,10 @@ export default function CreationZone({ items, onSave }: { items: ClothingItem[],
   };
 
   return (
-    <div className="bg-surface rounded-lg p-4 space-y-6 sticky top-24">
+  <div className="sticky top-24 space-y-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <h2 className="text-xl font-bold">New Outfit</h2>
 
-      <div className="min-h-[200px] bg-background/50 rounded-lg p-4">
+  <div className="min-h-[200px] rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4">
         <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-4">
             {items.length > 0 ? (
@@ -45,15 +48,11 @@ export default function CreationZone({ items, onSave }: { items: ClothingItem[],
           value={outfitName}
           onChange={(e) => setOutfitName(e.target.value)}
           placeholder="e.g., Casual Friday, Weekend Look"
-          className="w-full border border-surface bg-background rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+          className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
         />
-        <button
-          onClick={handleSave}
-          disabled={isSaving || items.length === 0}
-          className="w-full px-4 py-2 bg-primary text-background font-semibold rounded-md disabled:opacity-50 hover:bg-secondary transition-colors"
-        >
-          {isSaving ? 'Saving...' : 'Save Outfit'}
-        </button>
+        <Button onClick={handleSave} disabled={isSaving || items.length === 0} className="w-full">
+          {isSaving ? 'Saving…' : 'Save outfit'}
+        </Button>
       </div>
     </div>
   );

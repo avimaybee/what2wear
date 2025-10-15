@@ -4,12 +4,15 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { categorizeImage } from './actions'
+import Button from '../components/Button'
+import { useToast } from '../components/ToastProvider'
 
 const seasons = ['spring', 'summer', 'autumn', 'winter']
 const styles = ['casual', 'formal', 'streetwear', 'sporty', 'business']
 
 export default function UploadForm({ user }: { user: User | null }) {
   const supabase = createClient()
+  const { showToast } = useToast()
   
   const [file, setFile] = useState<File | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
@@ -31,11 +34,11 @@ export default function UploadForm({ user }: { user: User | null }) {
 
   const handleAnalyze = async () => {
     if (!file) {
-      alert('Please select a file to analyze.')
+      showToast({ variant: 'info', title: 'No file selected', description: 'Choose an image before analyzing.' })
       return
     }
     if (!user) {
-      alert('You must be logged in.')
+      showToast({ variant: 'error', title: 'Not signed in', description: 'Please log in to upload items.' })
       return
     }
 
@@ -48,7 +51,7 @@ export default function UploadForm({ user }: { user: User | null }) {
       .upload(filePath, file)
 
     if (uploadError) {
-      alert(`Error uploading file: ${uploadError.message}`)
+      showToast({ variant: 'error', title: 'Upload failed', description: uploadError.message })
       setIsAnalyzing(false)
       return
     }
@@ -62,13 +65,13 @@ export default function UploadForm({ user }: { user: User | null }) {
     const result = await categorizeImage(urlData.publicUrl)
 
     if ('error' in result) {
-      alert(`AI analysis failed: ${result.error}`)
+      showToast({ variant: 'error', title: 'AI analysis failed', description: result.error })
     } else {
       setCategory(result.category || '')
       setColor(result.color || '')
       setSelectedSeasons(result.season_tags || [])
       setSelectedStyles(result.style_tags || [])
-      alert('Analysis complete! Please review the details below.')
+      showToast({ variant: 'success', title: 'Analysis complete', description: 'Review details and save your item.' })
     }
 
     setIsAnalyzing(false)
@@ -77,11 +80,11 @@ export default function UploadForm({ user }: { user: User | null }) {
   const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!imageUrl || !category) {
-      alert('Please analyze an image and ensure category is filled.')
+      showToast({ variant: 'info', title: 'Missing info', description: 'Analyze an image and fill category.' })
       return
     }
     if (!user) {
-      alert('You must be logged in.')
+      showToast({ variant: 'error', title: 'Not signed in', description: 'Please log in to save items.' })
       return
     }
 
@@ -97,9 +100,9 @@ export default function UploadForm({ user }: { user: User | null }) {
     })
 
     if (insertError) {
-      alert(`Error saving item: ${insertError.message}`)
+      showToast({ variant: 'error', title: 'Save failed', description: insertError.message })
     } else {
-      alert('Item added to your wardrobe!')
+      showToast({ variant: 'success', title: 'Item added', description: 'Your wardrobe has been updated.' })
       window.location.reload()
     }
 
@@ -112,17 +115,17 @@ export default function UploadForm({ user }: { user: User | null }) {
   };
 
   return (
-    <form onSubmit={handleSave} className="p-6 bg-surface rounded-xl shadow-lg space-y-6 max-w-lg mx-auto">
+    <form onSubmit={handleSave} className="mx-auto max-w-lg space-y-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-subtle">
       <h3 className="text-xl font-semibold text-text">Add New Clothing Item</h3>
       
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-text-light mb-2">Step 1: Choose and Analyze Image</label>
-          <input type="file" accept="image/*" onChange={handleFileChange} className="w-full text-sm text-text-light file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-background hover:file:bg-secondary"/>
+          <input type="file" accept="image/*" onChange={handleFileChange} className="w-full text-sm text-text-light file:mr-2 file:rounded-md file:border-0 file:bg-[var(--color-surface-2)] file:px-3 file:py-2 file:text-[var(--color-text)] hover:file:brightness-110"/>
         </div>
-        <button type="button" onClick={handleAnalyze} disabled={!file || isAnalyzing} className="w-full px-4 py-2 bg-primary text-background font-semibold rounded-md disabled:opacity-50 hover:bg-secondary transition-colors">
-          {isAnalyzing ? 'Analyzing...' : 'Analyze Image with AI'}
-        </button>
+        <Button type="button" onClick={handleAnalyze} disabled={!file || isAnalyzing} className="w-full">
+          {isAnalyzing ? 'Analyzing…' : 'Analyze Image with AI'}
+        </Button>
       </div>
 
       <div className={`space-y-4 pt-4 border-t border-background/50 ${!imageUrl ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -130,29 +133,29 @@ export default function UploadForm({ user }: { user: User | null }) {
         
         <div>
           <label htmlFor="category" className="block text-sm font-medium text-text-light">Category</label>
-          <input type="text" id="category" value={category} onChange={(e) => setCategory(e.target.value)} required className="mt-1 block w-full border border-surface bg-background rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"/>
+          <input type="text" id="category" value={category} onChange={(e) => setCategory(e.target.value)} required className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"/>
         </div>
 
         <div>
           <label htmlFor="color" className="block text-sm font-medium text-text-light">Color</label>
-          <input type="text" id="color" value={color} onChange={(e) => setColor(e.target.value)} placeholder="e.g., Blue, #0000FF" className="mt-1 block w-full border border-surface bg-background rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"/>
+          <input type="text" id="color" value={color} onChange={(e) => setColor(e.target.value)} placeholder="e.g., Blue, #0000FF" className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"/>
         </div>
 
         <div>
           <label htmlFor="seasons" className="block text-sm font-medium text-text-light">Seasons</label>
-          <select id="seasons" multiple value={selectedSeasons} onChange={handleMultiSelectChange(setSelectedSeasons)} className="mt-1 block w-full border border-surface bg-background rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary">
+          <select id="seasons" multiple value={selectedSeasons} onChange={handleMultiSelectChange(setSelectedSeasons)} className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]">
             {seasons.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}          </select>
         </div>
 
         <div>
           <label htmlFor="styles" className="block text-sm font-medium text-text-light">Styles</label>
-          <select id="styles" multiple value={selectedStyles} onChange={handleMultiSelectChange(setSelectedStyles)} className="mt-1 block w-full border border-surface bg-background rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary">
+          <select id="styles" multiple value={selectedStyles} onChange={handleMultiSelectChange(setSelectedStyles)} className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]">
             {styles.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}          </select>
         </div>
 
-        <button type="submit" disabled={!imageUrl || isSaving} className="w-full px-4 py-2 bg-primary text-background font-semibold rounded-md disabled:opacity-50 hover:bg-secondary transition-colors">
-          {isSaving ? 'Saving...' : 'Add Item to Wardrobe'}
-        </button>
+        <Button type="submit" disabled={!imageUrl || isSaving} className="w-full">
+          {isSaving ? 'Saving…' : 'Add item to wardrobe'}
+        </Button>
       </div>
     </form>
   )

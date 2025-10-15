@@ -3,12 +3,16 @@
 import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Button from '../components/Button'
+import Input from '../components/Input'
+import { useToast } from '../components/ToastProvider'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const router = useRouter()
   const supabase = createClient()
+  const { showToast } = useToast()
 
   const handleSignUp = async () => {
     const { error } = await supabase.auth.signUp({
@@ -16,9 +20,9 @@ export default function LoginPage() {
       password,
     })
     if (error) {
-      alert(error.message)
+      showToast({ variant: 'error', title: 'Sign up failed', description: error.message })
     } else {
-      alert('Check your email for a confirmation link!')
+      showToast({ variant: 'success', title: 'Check your email', description: 'We sent you a confirmation link.' })
     }
   }
 
@@ -28,7 +32,7 @@ export default function LoginPage() {
       password,
     })
     if (error) {
-      alert(error.message)
+      showToast({ variant: 'error', title: 'Sign in failed', description: error.message })
     } else {
       router.push('/')
       router.refresh()
@@ -40,52 +44,46 @@ export default function LoginPage() {
       provider: 'google',
     })
     if (error) {
-      alert(error.message)
+      showToast({ variant: 'error', title: 'Google sign-in failed', description: error.message })
     }
   }
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="w-full max-w-xs p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center text-gray-900">StyleMate</h1>
+    <main className="mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-md items-center px-4">
+      <div className="w-full space-y-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-subtle">
+        <h1 className="text-2xl font-bold">Welcome back</h1>
         <div className="space-y-4">
-          <div>
-            <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 mt-1 text-gray-900 bg-gray-200 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 mt-1 text-gray-900 bg-gray-200 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="••••••••"
-            />
-          </div>
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
+          <Input
+            id="password"
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+          />
         </div>
         <div className="space-y-2">
-          <button onClick={handleSignIn} className="w-full px-4 py-2 font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Sign In</button>
-          <button onClick={handleSignUp} className="w-full px-4 py-2 font-bold text-indigo-600 bg-indigo-100 border border-indigo-200 rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Sign Up</button>
+          <Button onClick={handleSignIn} className="w-full">Sign In</Button>
+          <Button onClick={handleSignUp} variant="secondary" className="w-full">Create account</Button>
         </div>
         <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative px-2 text-sm text-gray-500 bg-white">Or continue with</div>
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-[var(--color-border)]"></div>
+          </div>
+          <div className="relative bg-[var(--color-surface)] px-2 text-sm text-[var(--color-text-muted)]">Or continue with</div>
         </div>
         <div>
-          <button onClick={handleGoogleSignIn} className="w-full px-4 py-2 font-bold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Google</button>
+          <Button onClick={handleGoogleSignIn} variant="outline" className="w-full">Google</Button>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

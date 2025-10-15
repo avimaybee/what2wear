@@ -1,91 +1,175 @@
-# what2wear MVP - Task Dependency List
+Foundation: Design System (tokens, type, spacing)
+Color tokens (Tailwind v4 @theme)
 
-This document outlines the tasks required to build the Minimum Viable Product (MVP) for the StyleMate application. Tasks are organized into phases, and each task should be completed in order.
+Establish a premium dark-first palette with tonal surfaces (Material 3 guidance: color for elevation instead of heavy shadows).
+Add tokens: background, surface, surface-2, surface-3, text, text-muted, primary, primary-foreground, success, warning, error, border, ring.
+Ensure strong contrast and dark-mode ergonomics; consider OKLCH values for perceptual consistency.
+Rationale: You currently mix light (gray-50) and custom dark theme. Unify across all pages for a premium, cohesive feel.
+Typography
 
-Status Key:
-- [DONE]: Task is complete.
-- [TODO]: Task is pending.
-- [WIP]: Task is in progress.
+Replace Nunito Sans with a premium neo-grotesk: Inter, Geist, Plus Jakarta Sans, Satoshi, or General Sans.
+Set a clear type scale for mobile-first:
+Display: 28–32, Headline: 22–24, Title: 18–20, Body: 16, Caption: 13–14.
+Line-height: 1.4–1.6 for body; tracking-tight on large headings.
+Rationale: Stronger hierarchy and legibility; instantly reads as premium.
+Spacing and radii
 
----
+Adopt consistent spacing increments (4/8px) and larger touch targets (44–48px min height).
+Radii tokens: sm 6px, md 10px, lg 14px, xl 20px; pill for special CTAs.
+Shadows: use subtle shadows sparingly, favor tonal elevation (M3 Elevation guidance).
+Motion and interaction
 
-### Phase 0: Project Foundation & Setup
+Default to spring-based transitions (Framer Motion) with subtle overshoot for hero moments; standard scheme for utilitarian actions.
+Respect prefers-reduced-motion and use effect springs for opacity/color changes (M3 Motion physics).
+Keep durations 180–280ms; micro-overshoot on primary buttons and cards.
+Breakpoints and containers
 
-1.  **[DONE]** Initialize Next.js project with TypeScript and Tailwind CSS.
-2.  **[DONE]** Configure Supabase backend (Database, Auth, Storage).
-3.  **[DONE]** Implement user authentication (Sign up, Sign in, OAuth, Sign out).
-4.  **[DONE]** Initialize Git and create GitHub repository.
+Mobile-first classes; use a consistent container and safe-area padding (env(safe-area-inset-*)).
+Grid rhythm: 2-col on mobile, 3–4 on tablet, 5–6 on desktop for wardrobes.
+Navigation and Structure
+Global layout (layout.tsx)
 
----
+Apply bg-background text-text on the body; wrap children in a container with horizontal padding and safe-area insets.
+Add a mobile bottom navigation bar (sticky, Liquid Glass-like frosted surface; Apple HIG: tab bars visible and labeled).
+Tabs: Home, Wardrobe, Create, History, Profile.
+Use icons (Heroicons) + short labels; highlight active with a pill or underline.
+Keep top headers minimal; use sticky headers with subtle blur only when needed.
+Routing and flows
 
-### Phase 1: Core Wardrobe Management
+Eliminate ”Back to Home” buttons; rely on persistent bottom nav.
+Prefetch key routes on viewport to reduce latency.
+Page-level Improvements
+Home (page.tsx)
 
-5.  **[DONE]** Database Schema: Define and create the necessary tables (`ClothingItem`, `Outfit`, `UserProfile`) in Supabase based on the PRD data model.
-6.  **[DONE]** Wardrobe UI: Create a dedicated page (`/wardrobe`) to display the user's clothing items in a grid format.
-7.  **[DONE]** Image Upload Logic: Implement the function to upload a clothing image file to Supabase Storage and retrieve its URL.
-8.  **[DONE]** Item Creation UI & Form: Build a form where users can upload an image and manually enter initial details for a new clothing item.
-9.  **[DONE]** AI Categorization Endpoint: Create a server-side endpoint that receives an image URL, calls the Gemini API to analyze the clothing item (determining category, color, season, style), and returns the data.
-10. **[DONE]** Integrate AI Categorization: Connect the item creation form to the AI endpoint. After an image is uploaded, automatically send the URL to the endpoint and populate the form with the AI-generated tags.
-11. **[DONE]** Save Item to Database: Save the new clothing item, including its image URL and all its tags (AI-generated or manually corrected), to the `ClothingItem` table.
-12. **[DONE]** Item Details & Edit UI: Create a view to see all details of a specific clothing item and allow the user to edit/correct the tags.
+Unify with dark theme (remove gray-50 background); introduce a hero with crisp heading, short value prop, and a primary CTA.
+If logged in, surface “Daily Picks” with a compact card stack teaser; show “Continue where you left off.”
+Add subtle entry animation using spring (no large y-translation; small fade+rise).
+Login (page.tsx)
 
----
+Replace white card with elevated tonal surface; larger inputs, clear labels, and inline validation (no alert boxes).
+One primary action (Sign in), secondary action (Create account) as subdued; Google button styled as neutral.
+Add password reveal, error messages inline below inputs; disable on submit with spinner.
+Keep copy minimal — premium tone.
+Wardrobe (page.tsx, grid, cards, upload)
 
-### Phase 2: Daily Outfit Recommendations
+Filter + sort bar: compress into a single control with chips for categories; use select bottom sheet on mobile.
+Grid cards: consistent aspect ratio, rounded-lg/xl, thin border (border-white/10), subtle hover elevation (desktop).
+Use next/image blur placeholders; ensure width/height provided to eliminate CLS.
+Swipe-to-delete gesture on mobile: keep but add confirmation via inline undo toast (replace modal for destructive actions after swipe).
+Empty state: friendly illustration, single CTA “Add your first item” linking to Upload.
+Create Outfit (DND flow)
 
-13. **[DONE]** Recommendation Engine Endpoint: Create a server-side endpoint that:
-    a. Fetches all of the user's clothing items from the database.
-    b. Calls the Gemini API with the clothing data, user preferences, and context (e.g., season) to receive a recommended outfit (a combination of `ClothingItem` IDs).
-14. **[DONE]** Daily Outfit UI: Create a component on the main dashboard to display the outfit recommendation for the day, showing the images of the selected items.
-15. **[DONE]** Scheduler for Recommendations: Set up a daily scheduled job (e.g., using Supabase Edge Functions or a similar cron-like service) that runs the recommendation engine for every active user.
-16. **[DONE]** Save Recommended Outfit: Store the generated outfit combination in the `Outfit` table for the user for that day.
+Two zones stacked on mobile (Wardrobe list collapsed to categories, Creation zone at top).
+Larger drop zone with dashed border and hint; subtle bounce when item is dropped (spatial spring).
+Add a sticky footer for “Name outfit” + primary Save button (full-width on mobile).
+Avoid alerts; use toast success and keep user in context (clear creation zone with a soft success checkmark animation).
+History
 
----
+Infinite scroll with skeleton placeholders; clear date grouping; compact cards with small metadata line.
+Empty state with “You haven’t rated any outfits yet. Try recommendations.”
+Profile
 
-### Phase 3: Virtual Try-On (Visuals)
+Convert to dark-themed surfaces; improve avatar uploader with circular preview and progress indicator.
+Use segmented controls or simple list forms; emphasize Save with sticky bottom CTA.
+Component-level Upgrades
+Buttons
 
-17. **[DONE]** User Avatar Upload UI: Create a section in the user profile for uploading a full-body photo.
-18. **[DONE]** Avatar Generation Endpoint: Create a server-side endpoint that calls the specified Google image model (`models/gemini-2.5-flash-image`) to process the user's photo and create a clean avatar.
-19. **[DONE]** Outfit Rendering Endpoint: Create a server-side endpoint that takes the user's avatar and the recommended outfit items, and a "try-on" image.
-20. **[DONE]** Display Rendered Outfit: Integrate the rendered image into the daily outfit UI, showing the user's avatar wearing the recommended clothes.
+Variants: primary (solid), secondary (tonal), outline, ghost, destructive.
+Sizes: md (44px), lg (48px). Animated press (scale 0.98) and focus ring (ring-primary/40).
+Icon buttons with accessible labels.
+Inputs
 
----
+Filled surface input style (bg-surface, border-transparent, focus ring).
+Inline validation states (success/error icons), helper text, and descriptive labels.
+Replace native multi-select with stacked chips + bottom sheet selector on mobile.
+Cards
 
-### Phase 4: User Feedback Loop
+Use surface-2 with border and light shadow; consistent padding and iconography.
+For wardrobe items, add overlay quick actions (Edit, Delete) on long-press or hover.
+Modals
 
-21. **[DONE]** Feedback UI: Add simple "Like" and "Dislike" buttons to the daily outfit display.
-22. **[DONE]** Store Feedback: When a user clicks a feedback button, update the corresponding record in the `Outfit` table with their rating.
-23. **[DONE]** Evolve Recommendations: Enhance the recommendation engine endpoint (Task 13) to include the user's past feedback (likes/dislikes) in the data sent to the Gemini API, allowing for more personalized future recommendations.
+Use them sparingly; favor inline confirmation + undo toasts.
+If modal required, dim with 50–60% overlay; centered with measured spacing and large tappable actions.
+Toaster
 
----
+Introduce a toast system to replace alert() calls (success/error/info). Non-blocking, dismissible, live region for a11y.
+Skeletons and loaders
 
-### Phase 5: UI/UX Modernization & Feature Completion
+Skeleton components for grid/list cards and form fields.
+Replace text “Loading...” with shimmering blocks.
+Page transitions
 
-This phase focuses on elevating the user experience by incorporating modern UI/UX trends and implementing missing core features.
+Keep transitions light (opacity + tiny translateY 6–8px); use route-level transitions with shared spring token.
+Avoid heavy bounce during route changes; reserve expressive motion for card stack or hero CTA.
+Accessibility and Mobile Ergonomics
+Color contrast: Ensure minimum AA contrast for all text (especially muted text-light).
+Focus styles: Visible focus rings on interactive elements; keyboard navigable.
+Hit areas: 44–48px min; give buttons/links sufficient space.
+Prefers-reduced-motion: Respect and switch to non-animated fades.
+ARIA live regions for toasts and form errors; descriptive alt text for images (fallback to category).
+Performance and Quality
+next/image everywhere with blur placeholder; ensure defined width/height; set priority for above-the-fold images.
+Reduce CLS by reserving space for headers/nav/toasts.
+Use CSS transitions for small effects; reserve Framer Motion for gestures/layout transitions.
+Avoid re-sorting mutating arrays in-place in useMemo; clone before sort to prevent state bugs.
+Prefetch critical routes; cache read-heavy lists; paginate grids with IntersectionObserver (already present in history list).
+Lint for a11y and consistent className ordering.
+Theming and Dark/Light Support
+Option 1: Go all-in on premium dark theme with high-quality accent and tonal surfaces.
+Option 2: Add light theme and a toggle (data-theme attribute), mapping all tokens in @theme using Tailwind v4 “inline” variables.
+Ensure consistent styles across all pages (Home/Login currently conflict with global dark).
+Concrete changes mapped to your code
+globals.css
 
-24. **[DONE]** **UI/UX Research & Style Guide:**
-    - Research and define a new visual style guide (colors, typography, spacing, component design).
-    - Create a reference document for the new design system.
+Redefine @theme tokens for colors, text scale, radii, shadows, spacing, breakpoints.
+Import a premium font (Inter/Geist via @font-face or next/font) and set --font-sans.
+Add base styles for body, safe-area padding utilities, and a .container utility pattern if needed.
+layout.tsx
 
-25. **[DONE]** **Implement Core Missing Features:**
-    - **[DONE]** **Profile Preferences:** Create UI for users to set their style preferences.
-    - **[DONE]** **Clothing Item Deletion:** Implement functionality to delete items from the wardrobe.
-    - **[DONE]** **Outfit History:** Create a page to view past recommended outfits and feedback.
-    - **[DONE]** **Manual Outfit Creation:** Allow users to create and save their own outfits.
-    - **[DONE]** **Display "Last Worn" Date:** Show the `last_used_date` on item views.
+Set className="bg-background text-text antialiased" on body.
+Add a shared <BottomNav /> component and a <Toaster /> portal; wrap main content in a container with px-4 and pb-[calc(56px+env(safe-area-inset-bottom))].
+Keep PageTransition but tune motion to smaller deltas and spring timing.
+New shared components
 
-26. **[DONE]** **Implement Modern UI/UX Patterns:**
-    - **[DONE]** **Dark Mode:** The application is dark mode by default.
-    - **[DONE]** **Microinteractions & Animations:** Implement subtle animations and transitions for buttons, modals, and page loads.
-    - **[DONE]** **Redesign Wardrobe UI:**
-        - Implement a more dynamic and interactive grid for clothing items.
-        - Add advanced filtering and sorting options.
-        - Implement swipe gestures for quick actions (e.g., delete).
-    - **[DONE]** **Redesign Outfit Recommendation UI:**
-        - Present recommendations in a more engaging format (e.g., card stack).
-        - Animate the presentation of the outfit.
+components/BottomNav.tsx with 5 tabs and safe-area support.
+components/ToastProvider.tsx to consolidate notifications.
+components/Skeleton.tsx variants (card, line, avatar).
+components/Button.tsx and components/Input.tsx for consistent styling and states.
+Replace alerts with toasts
 
-27. **[TODO]** **Advanced Features & Interactivity:**
-    - **[TODO]** **Gamify the Experience:** Add badges and rewards for user engagement (e.g., adding items, trying new styles).
-    - **[TODO]** **AR Virtual Try-On:** Investigate and implement a more immersive AR-based virtual try-on.
-    - **[TODO]** **Voice UI:** Explore adding voice commands for key actions (e.g., "show me a casual outfit").
+Files: AuthButton.tsx, page.tsx, UploadForm.tsx, WardrobeGrid.tsx, ItemEditForm.tsx, create-outfit/*, history/*.
+Provide inline errors for form fields; use toast for global success/error.
+Harmonize pages to dark theme
+
+page.tsx, page.tsx: remove gray backgrounds, switch to surfaces and toned content.
+Navigation: remove “Back to Home” CTAs; rely on bottom nav.
+Wardrobe ergonomics
+
+WardrobeGrid.tsx: chip filters, unified select UI, skeletons while loading; WardrobeItemCard.tsx with accessible gestures and non-obtrusive delete confirm (toast undo).
+Create Outfit flow
+
+OutfitCreator.tsx, WardrobePanel.tsx, CreationZone.tsx: stack on mobile, sticky save bar, clearer dropzone affordances, gentle motion on drop.
+Visual style cues to feel “premium”
+High-contrast, matte background with soft luminous accents; restrained gradients and subtle glass on the bottom nav.
+Thin borders with slight translucency (border-white/10); larger corners and clean whitespace.
+Meaningful motion: tiny, confident movements instead of large bouncy transitions.
+Crisp iconography (Heroicons/Phosphor) with consistent stroke weights.
+Prioritized rollout plan (suggested)
+Core foundation (tokens, typography, layout, bottom nav, toaster, skeletons).
+Unify all pages to dark theme, remove alerts, add toasts.
+Wardrobe UI polish (filters, cards, gestures, empty states, skeletons).
+Create Outfit ergonomics (mobile-first stacking, dropzone feedback, sticky save).
+Login/Profile modernization (form styles, validation, avatar UX).
+Motion tuning pass (route transitions, micro-interactions) with reduced-motion handling.
+Accessibility and contrast audit; fix gaps.
+References used
+Material Design 3: Motion physics and Elevation (use springs, tonal elevation over heavy shadows).
+Apple HIG: Tab bar best practices and safe-area ergonomics for mobile bottom navigation.
+Tailwind CSS v4: Theme variables (@theme), colors, breakpoints, and using tokens to generate utilities.
+Framer Motion: Best practices for gestures, AnimatePresence, and layout animation.
+Quick wins you can do immediately
+Unify Home and Login to the dark theme and remove alert() calls in favor of a toast.
+Add a sticky bottom nav for mobile and remove “Back to Home” links.
+Introduce skeletons for wardrobe/history grids to replace “Loading...” text.
+Switch font to Inter/Geist and adjust headings/body sizes per the scale above.
+If you want, I can implement the foundation (design tokens, bottom nav, toaster, and updating Home/Login to the new look) in a first PR so you can feel the new visual direction end-to-end.
