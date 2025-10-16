@@ -26,7 +26,7 @@ export default function Header() {
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             {/* Add Logo Here */}
-            <span className="hidden font-bold sm:inline-block">what2wear</span>
+            <span className="hidden font-bold sm:inline-block">setmyfit</span>
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">

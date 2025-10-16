@@ -17,7 +17,7 @@ const fontSerif = Playwrite_DE_Grund({
 });
 
 export const metadata: Metadata = {
-  title: "what2wear",
+  title: "setmyfit",
   description: "Your personal AI stylist",
 };
 

@@ -5,10 +5,10 @@ import defaultTheme from "tailwindcss/defaultTheme";
 const config = {
   darkMode: "class",
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   prefix: "",
   theme: {
@@ -61,8 +61,8 @@ const config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", ...defaultTheme.fontFamily.sans],
-        serif: ["var(--font-serif)", ...defaultTheme.fontFamily.serif],
+        sans: ["var(--font-sans)"],
+        serif: ["var(--font-serif)"],
       },
       keyframes: {
         "accordion-down": {
