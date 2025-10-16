@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playwrite+DE+Grund:wght@400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,6 +36,9 @@
     --ring: 245 100% 32%;
 
     --radius: 0.5rem;
+    
+    --font-sans: 'IBM Plex Sans Condensed', sans-serif;
+    --font-serif: 'Playwrite DE Grund', serif;
   }
 
   .dark {
@@ -63,6 +69,9 @@
     --border: 239 84% 10%;
     --input: 239 84% 10%;
     --ring: 245 100% 32%;
+    
+    --font-sans: 'IBM Plex Sans Condensed', sans-serif;
+    --font-serif: 'Playwrite DE Grund', serif;
   }
 }
 
