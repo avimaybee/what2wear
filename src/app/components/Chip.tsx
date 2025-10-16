@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { cn } from '@/lib/utils'
 
 type ChipProps = {
   selected?: boolean
@@ -12,17 +13,18 @@ type ChipProps = {
 
 export default function Chip({ selected, children, onClick, onRemove, className }: ChipProps) {
   return (
-    <div className={classNames(
-      'inline-flex items-center whitespace-nowrap rounded-full border px-3 py-1.5 text-sm transition',
+    <div className={cn(
+      'inline-flex items-center whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200',
       selected
-        ? 'border-transparent bg-[var(--color-primary)] text-[var(--color-primary-foreground)]'
-        : 'border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] hover:brightness-110',
+        ? 'border-primary/50 bg-primary/20 text-primary shadow-lg shadow-primary/10'
+        : 'border-border/50 bg-surface-2/50 text-foreground hover:bg-surface-2 hover:border-border',
+      onClick && 'cursor-pointer',
       className,
     )}>
       <button
         type="button"
         onClick={onClick}
-        className="flex-1 text-left"
+        className="flex-1 text-left capitalize"
       >
         {children}
       </button>
@@ -30,15 +32,11 @@ export default function Chip({ selected, children, onClick, onRemove, className 
         <button
           type="button"
           onClick={onRemove}
-          className="ml-2 text-xs opacity-70 hover:opacity-100"
+          className="ml-2 text-sm opacity-70 hover:opacity-100 transition-opacity"
         >
           ×
         </button>
       )}
     </div>
   )
-}
-
-function classNames(...parts: Array<string | undefined | false | null>) {
-  return parts.filter(Boolean).join(' ')
 }
