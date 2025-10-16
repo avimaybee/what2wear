@@ -117,41 +117,107 @@ export default function UploadForm({ user }: { user: User | null }) {
 
   return (
     <form onSubmit={handleSave} className="space-y-6">
-      <div className="space-y-2">
-        <Label>Step 1: Choose and Analyze Image</Label>
-        <Input type="file" accept="image/*" onChange={handleFileChange} />
-        <Button type="button" onClick={handleAnalyze} disabled={!file || isAnalyzing} className="w-full">
-          {isAnalyzing ? 'Analyzing…' : 'Analyze Image with AI'}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Step 1: Choose Image</Label>
+          <div className="relative">
+            <Input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleFileChange}
+              className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer"
+            />
+          </div>
+        </div>
+        
+        <Button 
+          type="button" 
+          onClick={handleAnalyze} 
+          disabled={!file || isAnalyzing} 
+          className="w-full h-12"
+          variant={file ? "default" : "outline"}
+        >
+          {isAnalyzing ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              Analyzing with AI...
+            </>
+          ) : (
+            'Analyze Image with AI'
+          )}
         </Button>
       </div>
 
-      <div className={`space-y-4 pt-4 border-t border-border ${!imageUrl ? 'opacity-50 pointer-events-none' : ''}`}>
-        <Label>Step 2: Review Details and Save</Label>
+      <div className={`space-y-4 pt-6 border-t border-border/50 transition-opacity duration-300 ${!imageUrl ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+        <Label className="text-sm font-medium">Step 2: Review & Save</Label>
         
         <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Input type="text" id="category" value={category} onChange={(e) => setCategory(e.target.value)} required />
+          <Label htmlFor="category" className="text-xs text-muted-foreground">Category *</Label>
+          <Input 
+            type="text" 
+            id="category" 
+            value={category} 
+            onChange={(e) => setCategory(e.target.value)} 
+            placeholder="e.g., shirt, pants, jacket"
+            required 
+            className="h-11"
+          />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="color">Color</Label>
-          <Input type="text" id="color" value={color} onChange={(e) => setColor(e.target.value)} placeholder="e.g., Blue, #0000FF" />
+          <Label htmlFor="color" className="text-xs text-muted-foreground">Color</Label>
+          <Input 
+            type="text" 
+            id="color" 
+            value={color} 
+            onChange={(e) => setColor(e.target.value)} 
+            placeholder="e.g., Blue, #0000FF"
+            className="h-11"
+          />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="seasons">Seasons</Label>
-          <select id="seasons" multiple value={selectedSeasons} onChange={handleMultiSelectChange(setSelectedSeasons)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-            {seasons.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}          </select>
+          <Label htmlFor="seasons" className="text-xs text-muted-foreground">Seasons</Label>
+          <select 
+            id="seasons" 
+            multiple 
+            value={selectedSeasons} 
+            onChange={handleMultiSelectChange(setSelectedSeasons)} 
+            className="flex min-h-[80px] w-full rounded-lg border border-border bg-input px-3 py-2 text-sm transition-all focus:outline-none focus:ring-4 focus:ring-ring/30 focus:border-primary"
+          >
+            {seasons.map(s => <option key={s} value={s} className="capitalize py-1">{s}</option>)}
+          </select>
+          <p className="text-xs text-muted-foreground">Hold Ctrl/Cmd to select multiple</p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="styles">Styles</Label>
-          <select id="styles" multiple value={selectedStyles} onChange={handleMultiSelectChange(setSelectedStyles)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-            {styles.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}          </select>
+          <Label htmlFor="styles" className="text-xs text-muted-foreground">Styles</Label>
+          <select 
+            id="styles" 
+            multiple 
+            value={selectedStyles} 
+            onChange={handleMultiSelectChange(setSelectedStyles)} 
+            className="flex min-h-[80px] w-full rounded-lg border border-border bg-input px-3 py-2 text-sm transition-all focus:outline-none focus:ring-4 focus:ring-ring/30 focus:border-primary"
+          >
+            {styles.map(s => <option key={s} value={s} className="capitalize py-1">{s}</option>)}
+          </select>
+          <p className="text-xs text-muted-foreground">Hold Ctrl/Cmd to select multiple</p>
         </div>
 
-        <Button type="submit" disabled={!imageUrl || isSaving} className="w-full">
-          {isSaving ? 'Saving…' : 'Add item to wardrobe'}
+        <Button 
+          type="submit" 
+          disabled={!imageUrl || isSaving} 
+          className="w-full h-12"
+          variant="success"
+        >
+          {isSaving ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              Saving...
+            </>
+          ) : (
+            'Add to Wardrobe'
+          )}
         </Button>
       </div>
     </form>

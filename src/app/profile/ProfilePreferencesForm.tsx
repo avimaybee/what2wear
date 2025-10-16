@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import Input from '../components/Input'
 import MultiSelect from '../components/MultiSelect'
 import { useToast } from '../components/ToastProvider'
+import { Card, CardContent } from '../components/Card'
 
 const styles = ['casual', 'formal', 'streetwear', 'sporty', 'business']
 
@@ -39,27 +40,43 @@ export default function ProfilePreferencesForm({ profile }: { profile: Profile |
   }
 
   return (
-    <form action={action} className="mx-auto mt-8 max-w-lg space-y-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-subtle">
-      <h3 className="text-xl font-semibold text-[var(--color-text)]">Your style preferences</h3>
+    <Card>
+      <CardContent className="pt-6">
+        <form action={action} className="space-y-6">
+          <MultiSelect
+            label="Preferred Styles"
+            options={styles}
+            selected={selectedStyles}
+            onChange={setSelectedStyles}
+            placeholder="Select your preferred styles"
+          />
 
-      <MultiSelect
-        label="Preferred styles"
-        options={styles}
-        selected={selectedStyles}
-        onChange={setSelectedStyles}
-        placeholder="Select your preferred styles"
-      />
+          <div className="space-y-2">
+            <Input 
+              id="colors" 
+              name="colors" 
+              label="Preferred Colors" 
+              value={preferredColors} 
+              onChange={(e) => setPreferredColors(e.target.value)} 
+              placeholder="e.g., black, white, navy, beige" 
+            />
+            <p className="text-xs text-muted-foreground">Enter comma-separated colors for personalized recommendations</p>
+          </div>
 
-      <Input id="colors" name="colors" label="Preferred colors" value={preferredColors} onChange={(e) => setPreferredColors(e.target.value)} placeholder="e.g., black, white, beige" />
-      <p className="-mt-2 text-sm text-[var(--color-text-muted)]">Enter comma-separated colors.</p>
-
-      <div>
-        <Button type="submit" disabled={isPending} className="w-full">
-          {isPending ? 'Saving…' : 'Save preferences'}
-        </Button>
-        {error && <p className="mt-2 text-sm text-[var(--color-error)]">Error: {error}</p>}
-        {success && <p className="mt-2 text-sm text-[var(--color-success)]">Preferences updated successfully!</p>}
-      </div>
-    </form>
+          <div className="pt-4">
+            <Button type="submit" disabled={isPending} className="w-full h-12">
+              {isPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                'Save Preferences'
+              )}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   )
 }
