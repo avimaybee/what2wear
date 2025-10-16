@@ -2,11 +2,35 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./components/Providers";
 import BottomNav from "./components/BottomNav";
+import ScrollToTop from "./components/ScrollToTop";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "setmyfit",
-  description: "Your personal AI stylist",
+  title: {
+    default: "setmyfit - Your Personal AI Stylist",
+    template: "%s | setmyfit"
+  },
+  description: "Transform your wardrobe with AI-powered outfit recommendations. Organize, create, and discover your perfect style.",
+  keywords: ["wardrobe", "outfit", "AI stylist", "fashion", "clothing", "style"],
+  authors: [{ name: "setmyfit" }],
+  creator: "setmyfit",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://setmyfit.vercel.app",
+    title: "setmyfit - Your Personal AI Stylist",
+    description: "Transform your wardrobe with AI-powered outfit recommendations.",
+    siteName: "setmyfit",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "setmyfit - Your Personal AI Stylist",
+    description: "Transform your wardrobe with AI-powered outfit recommendations.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 import Header from "./components/Header";
@@ -33,6 +57,7 @@ export default function RootLayout({
             </div>
           </div>
           <BottomNav />
+          <ScrollToTop />
         </Providers>
       </body>
     </html>
