@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { updateUserProfilePreferences } from './actions'
 import { type Profile } from '@/lib/types'
-import Button from '../components/Button'
+import { Button } from '@/components/ui/button'
 import Input from '../components/Input'
 import MultiSelect from '../components/MultiSelect'
 import { useToast } from '../components/ToastProvider'

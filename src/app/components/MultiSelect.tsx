@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet'
-import Button from './Button'
+import { Button } from '@/components/ui/button'
 import Chip from './Chip'
 
 interface MultiSelectProps {

@@ -5,7 +5,7 @@ import { updateUserProfile } from './actions'
 import { type Profile } from '@/lib/types'
 import Image from 'next/image'
 import Input from '../components/Input'
-import Button from '../components/Button'
+import { Button } from '@/components/ui/button'
 import { useToast } from '../components/ToastProvider'
 
 export default function ProfileForm({ profile }: { profile: Profile | null }) {

@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteClothingItem } from '../actions'
 import ConfirmationModal from '../../components/ConfirmationModal'
-import Button from '../../components/Button'
+import { Button } from '@/components/ui/button'
 import { useToast } from '../../components/ToastProvider'
 
 // This type should ideally be in a central types file

@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '../components/Button';
+import { Button } from '@/components/ui/button';
 import Input from '../components/Input';
 import toast from 'react-hot-toast';
 import Link from 'next/link';

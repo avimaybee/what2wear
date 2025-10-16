@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import OutfitCreator from './OutfitCreator'
-import Button from '../components/Button'
+import { Button } from '@/components/ui/button'
 import { saveManualOutfit } from './actions'
 import { useToast } from '../components/ToastProvider'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog'

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Condensed, Playwrite_DE_S } from "next/font/google";
+import { IBM_Plex_Sans_Condensed, Playwrite_DE_Grund } from "next/font/google";
 import "./globals.css";
 import Providers from "./components/Providers";
 import BottomNav from "./components/BottomNav";
@@ -11,8 +11,7 @@ const fontSans = IBM_Plex_Sans_Condensed({
   weight: ["400", "500", "600", "700"],
 });
 
-const fontSerif = Playwrite_DE_S({
-  subsets: ["latin"],
+const fontSerif = Playwrite_DE_Grund({
   variable: "--font-serif",
   weight: ["400"],
 });

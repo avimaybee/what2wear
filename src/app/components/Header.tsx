@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
-import Button from './Button';
+import { Button } from '@/components/ui/button';
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);

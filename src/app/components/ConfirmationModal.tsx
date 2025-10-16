@@ -1,7 +1,7 @@
 'use client'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog'
-import Button from './Button'
+import { Button } from '@/components/ui/button'
 
 interface ConfirmationModalProps {
   isOpen: boolean;

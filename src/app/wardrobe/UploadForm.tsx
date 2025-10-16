@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { useState } from 'react';
 import { categorizeImage } from './actions';
-import Button from '../components/Button';
+import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import Input from '../components/Input';
 import { Label } from '../components/Label';

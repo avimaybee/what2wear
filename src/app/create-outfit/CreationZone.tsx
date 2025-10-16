@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableItem } from './SortableItem';
 import { useState } from 'react';
 import type { ClothingItem } from '@/lib/types';
-import Button from '../components/Button'
+import { Button } from '@/components/ui/button'
 import { useToast } from '../components/ToastProvider'
 
 export default function CreationZone({ items, onSave }: { items: ClothingItem[], onSave: (name: string) => void }) {

@@ -6,7 +6,7 @@ import { motion, PanInfo, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import type { ClothingItem } from '@/lib/types';
 import { Edit, Trash2 } from 'lucide-react';
-import Button from '../components/Button';
+import { Button } from '@/components/ui/button';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
