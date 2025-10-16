@@ -18,10 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" style={{
-      '--font-sans': "'IBM Plex Sans Condensed', sans-serif",
-      '--font-serif': "'Playwrite DE Grund', serif"
-    } as React.CSSProperties}>
+    <html lang="en" className="dark">
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased"
