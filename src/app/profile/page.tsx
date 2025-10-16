@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import ProfileForm from './ProfileForm'
 import ProfilePreferencesForm from './ProfilePreferencesForm'
+import { User, Settings } from 'lucide-react'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -26,22 +26,35 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-text">
-      <header className="bg-surface shadow-sm">
-        <nav className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-text">User Profile</h1>
-          <Link
-            href="/"
-            className="py-2 px-4 rounded-md no-underline bg-primary text-background text-sm font-medium hover:bg-secondary"
-          >
-            Back to Home
-          </Link>
-        </nav>
-      </header>
-      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
-        <ProfileForm profile={profile} />
-        <ProfilePreferencesForm profile={profile} />
-      </main>
+    <div className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 py-8 md:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-4xl md:text-5xl font-serif mb-2">Profile</h1>
+          <p className="text-muted-foreground text-lg">Manage your account and preferences</p>
+        </div>
+
+        <div className="space-y-8">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-2xl font-serif">Personal Information</h2>
+            </div>
+            <ProfileForm profile={profile} />
+          </div>
+
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
+                <Settings className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-2xl font-serif">Style Preferences</h2>
+            </div>
+            <ProfilePreferencesForm profile={profile} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

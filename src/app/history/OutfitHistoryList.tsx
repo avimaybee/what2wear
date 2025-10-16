@@ -5,6 +5,7 @@ import { getOutfitHistory } from './actions'
 import OutfitCard from './OutfitCard'
 import { motion } from 'framer-motion'
 import type { Outfit } from '@/lib/types'
+import { Shirt } from 'lucide-react'
 
 // Custom hook for infinite scrolling
 function useInfiniteScroll(fetcher: (page: number) => Promise<{ outfits: Outfit[] | null, error: string | null }>) {
@@ -74,21 +75,41 @@ export default function OutfitHistoryList({ initialOutfits }: { initialOutfits: 
 
   const allOutfits = page === 1 ? initialOutfits : outfits;
 
+  if (allOutfits.length === 0 && !isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-20 h-20 rounded-full bg-surface-2/50 flex items-center justify-center mb-6">
+          <Shirt className="w-10 h-10 text-muted-foreground" />
+        </div>
+        <h3 className="text-2xl font-serif mb-2">No outfit history yet</h3>
+        <p className="text-muted-foreground max-w-sm">
+          Start creating and rating outfits to build your style history.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <motion.div 
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8"
+      className="space-y-6"
     >
       {allOutfits.map(outfit => (
         <OutfitCard key={outfit.id} outfit={outfit} />
       ))}
 
-      <div ref={loaderRef} className="flex justify-center items-center p-4">
-        {isLoading && <p className="text-text-light">Loading more outfits...</p>}
-        {!hasMore && allOutfits.length > 0 && <p className="text-text-light">You&apos;ve reached the end of your history.</p>}
-        {!hasMore && allOutfits.length === 0 && <p className="text-text-light">You have no outfit history yet.</p>}
+      <div ref={loaderRef} className="flex justify-center items-center p-8">
+        {isLoading && (
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <div className="w-5 h-5 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
+            <span>Loading more outfits...</span>
+          </div>
+        )}
+        {!hasMore && allOutfits.length > 0 && (
+          <p className="text-muted-foreground">You&apos;ve reached the end of your history.</p>
+        )}
       </div>
     </motion.div>
   )
