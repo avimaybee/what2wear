@@ -21,25 +21,33 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-sm">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            {/* Add Logo Here */}
-            <span className="hidden font-bold sm:inline-block">setmyfit</span>
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center space-x-2 group">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <span className="text-white font-bold text-lg">S</span>
+            </div>
+            <span className="hidden sm:inline-block font-serif text-xl">setmyfit</span>
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <nav className="flex items-center space-x-6 text-sm font-medium">
+        
+        <div className="flex items-center gap-4">
+          <nav className="hidden md:flex items-center gap-6">
             {loading ? (
-              <div className="h-8 w-20 animate-pulse rounded-md bg-secondary" />
+              <div className="h-10 w-24 animate-pulse rounded-lg bg-surface-1" />
             ) : user ? (
-              <Link href="/profile">
-                <Button variant="ghost">Profile</Button>
-              </Link>
+              <>
+                <Link href="/wardrobe">
+                  <Button variant="ghost" size="sm">Wardrobe</Button>
+                </Link>
+                <Link href="/profile">
+                  <Button variant="ghost" size="sm">Profile</Button>
+                </Link>
+              </>
             ) : (
               <Link href="/login">
-                <Button>Sign In</Button>
+                <Button size="sm">Sign In</Button>
               </Link>
             )}
           </nav>
