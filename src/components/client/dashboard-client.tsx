@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,9 +49,11 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                     key={item.id}
                     className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary transition-all"
                   >
-                    <img
+                    <Image
                       src={item.image_url}
                       alt={item.name}
+                      width={400}
+                      height={400}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
