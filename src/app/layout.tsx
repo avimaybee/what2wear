@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { Header } from "@/components/ui/header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "What2Wear - AI-Powered Outfit Recommendations",
+  title: "setmyfit - AI-Powered Outfit Recommendations",
   description: "Context-aware, highly personalized daily outfit decision engine",
 };
 
@@ -16,9 +17,16 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Playwrite+DE+Grund:wght@100..400&family=IBM+Plex+Sans+Condensed:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
       </head>
-      <body>{children}</body>
+      <body>
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-grow p-8">
+            {children}
+          </main>
+        </div>
+      </body>
     </html>
   );
 }

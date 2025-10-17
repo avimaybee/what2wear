@@ -144,120 +144,113 @@ export default function WardrobePage() {
     : mockWardrobeItems.filter(item => item.type === filterType);
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Virtual Wardrobe</h1>
-            <p className="text-foreground-secondary">
-              Manage your clothing collection ({filteredItems.length} items)
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" asChild>
-              <Link href="/">Dashboard</Link>
-            </Button>
-            <Button onClick={() => setShowAddModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
-          </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-serif font-bold text-foreground mb-1">Virtual Wardrobe</h1>
+          <p className="text-foreground-secondary">
+            Manage your clothing collection ({filteredItems.length} items)
+          </p>
         </div>
-
-        {/* Filter Bar */}
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="h-4 w-4 text-foreground-secondary" />
-              <span className="text-sm text-foreground-secondary mr-2">Filter by type:</span>
-              <Button
-                size="sm"
-                variant={filterType === "All" ? "default" : "outline"}
-                onClick={() => setFilterType("All")}
-              >
-                All
-              </Button>
-              {clothingTypes.map((type) => (
-                <Button
-                  key={type}
-                  size="sm"
-                  variant={filterType === type ? "default" : "outline"}
-                  onClick={() => setFilterType(type)}
-                >
-                  {type}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Wardrobe Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredItems.map((item) => (
-            <Card key={item.id} className="group overflow-hidden hover:border-primary transition-all">
-              <div className="relative aspect-square bg-background-secondary">
-                <img
-                  src={item.image_url}
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 right-2">
-                  <Badge variant="secondary" className="backdrop-blur-sm bg-black/50">
-                    {item.type}
-                  </Badge>
-                </div>
-              </div>
-              <CardContent className="p-4 space-y-2">
-                <div>
-                  <h3 className="font-semibold text-foreground truncate">{item.name}</h3>
-                  <p className="text-sm text-foreground-secondary">{item.material}</p>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-border">
-                  <div className="text-xs">
-                    <p className="text-foreground-secondary">Last Worn</p>
-                    <p className="text-primary font-medium">{getRelativeTime(item.last_worn_date)}</p>
-                  </div>
-                  {item.color && (
-                    <div
-                      className="w-6 h-6 rounded-full border-2 border-border"
-                      style={{ backgroundColor: item.color.toLowerCase() }}
-                      title={item.color}
-                    />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredItems.length === 0 && (
-          <Card className="p-12">
-            <div className="text-center space-y-4">
-              <p className="text-foreground-secondary">No items found in this category</p>
-              <Button onClick={() => setFilterType("All")}>Show All Items</Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Add Item Modal Placeholder */}
-        {showAddModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <Card className="max-w-md w-full">
-              <CardContent className="p-6 space-y-4">
-                <h2 className="text-2xl font-bold">Add New Item</h2>
-                <p className="text-foreground-secondary">
-                  This feature would integrate with POST /api/wardrobe to add new items.
-                </p>
-                <Button onClick={() => setShowAddModal(false)} className="w-full">
-                  Close
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        <Button onClick={() => setShowAddModal(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Item
+        </Button>
       </div>
+
+      {/* Filter Bar */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Filter className="h-4 w-4 text-foreground-secondary" />
+            <span className="text-sm text-foreground-secondary mr-2">Filter by type:</span>
+            <Button
+              size="sm"
+              variant={filterType === "All" ? "secondary" : "outline"}
+              onClick={() => setFilterType("All")}
+            >
+              All
+            </Button>
+            {clothingTypes.map((type) => (
+              <Button
+                key={type}
+                size="sm"
+                variant={filterType === type ? "secondary" : "outline"}
+                onClick={() => setFilterType(type)}
+              >
+                {type}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Wardrobe Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        {filteredItems.map((item) => (
+          <Card key={item.id} className="group overflow-hidden transition-all hover:border-primary">
+            <div className="relative aspect-square">
+              <img
+                src={item.image_url}
+                alt={item.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-2 right-2">
+                <Badge variant="secondary" className="backdrop-blur-sm bg-black/50">
+                  {item.type}
+                </Badge>
+              </div>
+            </div>
+            <CardContent className="p-4 space-y-2">
+              <div>
+                <h3 className="font-semibold text-foreground truncate">{item.name}</h3>
+                <p className="text-sm text-foreground-secondary">{item.material}</p>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                <div className="text-xs">
+                  <p className="text-foreground-secondary">Last Worn</p>
+                  <p className="text-primary font-medium">{getRelativeTime(item.last_worn_date)}</p>
+                </div>
+                {item.color && (
+                  <div
+                    className="w-6 h-6 rounded-full border-2 border-border"
+                    style={{ backgroundColor: item.color.toLowerCase() }}
+                    title={item.color}
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {filteredItems.length === 0 && (
+        <Card className="p-12">
+          <div className="text-center space-y-4">
+            <p className="text-foreground-secondary">No items found in this category</p>
+            <Button onClick={() => setFilterType("All")}>Show All Items</Button>
+          </div>
+        </Card>
+      )}
+
+      {/* Add Item Modal Placeholder */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <Card className="max-w-md w-full">
+            <CardContent className="p-6 space-y-4">
+              <h2 className="text-2xl font-serif font-bold">Add New Item</h2>
+              <p className="text-foreground-secondary">
+                This feature would integrate with POST /api/wardrobe to add new items.
+              </p>
+              <Button onClick={() => setShowAddModal(false)} className="w-full" variant="outline">
+                Close
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

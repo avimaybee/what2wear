@@ -1,23 +1,33 @@
 @config "../../tailwind.config.ts";
 @import "tailwindcss";
 
-* {
-  border-color: var(--color-border);
+@theme {
+  --color-background: #02010A;
+  --color-card: #04052E;
+  --color-border: #140152;
+  --color-primary: #22007C;
+  --color-secondary: #0D00A4;
+  --color-foreground: #F0F0F0;
+  --color-foreground-secondary: #A0A0A0;
+
+  --font-sans: "IBM Plex Sans Condensed", sans-serif;
+  --font-serif: "Playwrite DE Grund", serif;
+
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-family-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-h1, h2, h3, h4, h5, h6, p {
-  margin: 0;
-  padding: 0;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+  }
 }
