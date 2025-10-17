@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -191,9 +191,11 @@ export default function WardrobePage() {
         {filteredItems.map((item) => (
           <Card key={item.id} className="group overflow-hidden transition-all hover:border-primary">
             <div className="relative aspect-square">
-              <img
+              <Image
                 src={item.image_url}
                 alt={item.name}
+                width={400}
+                height={400}
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-2 right-2">

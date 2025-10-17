@@ -1,6 +1,24 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Sans_Condensed, Playwrite_DE_Grund } from "next/font/google";
 import { Header } from "@/components/ui/header";
 import "./globals.css";
+
+const ibmPlexSans = IBM_Plex_Sans_Condensed({
+  weight: ["100", "200", "300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+  fallback: ["sans-serif"],
+});
+
+const playwrite = Playwrite_DE_Grund({
+  weight: ["100", "200", "300", "400"],
+  subsets: ["latin"],
+  variable: "--font-serif",
+  display: "swap",
+  fallback: ["serif"],
+});
 
 export const metadata: Metadata = {
   title: "setmyfit - AI-Powered Outfit Recommendations",
@@ -13,12 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Playwrite+DE+Grund:wght@100..400&family=IBM+Plex+Sans+Condensed:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
-      </head>
+    <html lang="en" className={`dark ${ibmPlexSans.variable} ${playwrite.variable}`}>
       <body>
         <div className="flex flex-col min-h-screen">
           <Header />
