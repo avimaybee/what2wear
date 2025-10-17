@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ThumbsUp, ThumbsDown, Cloud, Wind, Sun, Droplets, AlertTriangle } from "lucide-react";
 import { formatTemp } from "@/lib/utils";
 import type { IRecommendation } from "@/types";
+import { HourlyForecast } from "@/components/client/hourly-forecast";
 
 // Mock data for demonstration - In production, this would come from API calls
 const mockRecommendation: IRecommendation = {
@@ -91,16 +92,8 @@ const mockRecommendation: IRecommendation = {
   ],
 };
 
-// Mock hourly data
-const hourlyData = Array.from({ length: 12 }, (_, i) => ({
-  hour: `${(new Date().getHours() + i) % 24}:00`,
-  temp: 15 + Math.random() * 5,
-  condition: i % 3 === 0 ? "sunny" : i % 3 === 1 ? "cloudy" : "partly-cloudy",
-}));
-
 export default function HomePage() {
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
-  const [selectedHour, setSelectedHour] = useState(0);
 
   const handleWearOutfit = async () => {
     // In production, this would call POST /api/outfit/log
@@ -262,31 +255,7 @@ export default function HomePage() {
             </Card>
 
             {/* Hourly Timeline */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Hourly Forecast</CardTitle>
-                <CardDescription>Next 12 hours</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {hourlyData.map((hour, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedHour(idx)}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-lg border min-w-[80px] transition-all ${
-                        selectedHour === idx
-                          ? "bg-primary text-background border-primary"
-                          : "bg-card border-border hover:border-primary"
-                      }`}
-                    >
-                      <span className="text-xs font-medium">{hour.hour}</span>
-                      <Cloud className="h-5 w-5" />
-                      <span className="text-sm font-semibold">{formatTemp(hour.temp)}</span>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <HourlyForecast />
           </div>
 
           {/* Weather Card - Right Column */}
