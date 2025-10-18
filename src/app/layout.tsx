@@ -1,10 +1,23 @@
 import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { Header } from "@/components/ui/header";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "setmyfit - AI-Powered Outfit Recommendations",
-  description: "Context-aware, highly personalized daily outfit decision engine",
+  description: "Context-aware, highly personalized daily outfit decision engine that helps you dress perfectly for any occasion",
+  keywords: ["outfit recommendations", "AI fashion", "wardrobe assistant", "weather-based outfits"],
+  authors: [{ name: "setmyfit" }],
+  creator: "setmyfit",
+  metadataBase: new URL("https://setmyfit.com"),
+  openGraph: {
+    title: "setmyfit - AI-Powered Outfit Recommendations",
+    description: "Context-aware, highly personalized daily outfit decision engine",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -13,19 +26,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Playwrite+DE+Grund:wght@100..400&family=IBM+Plex+Sans+Condensed:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
-      </head>
-      <body>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-grow p-8">
-            {children}
-          </main>
-        </div>
+    <html 
+      lang="en" 
+      suppressHydrationWarning
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+    >
+      <body className="min-h-screen font-sans antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="relative flex min-h-screen flex-col">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

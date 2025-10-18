@@ -84,5 +84,9 @@ const mockRecommendation: IRecommendation = {
 };
 
 export default function HomePage() {
-  return <DashboardClient recommendation={mockRecommendation} />;
+  return (
+    <div className="min-h-screen bg-background">
+      <DashboardClient recommendation={mockRecommendation} />
+    </div>
+  );
 }
