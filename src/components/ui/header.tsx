@@ -31,7 +31,7 @@ export const Header = () => {
   return (
     <>
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-filter backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full glass-regular border-border/40">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link 
             href="/" 
@@ -81,7 +81,7 @@ export const Header = () => {
       </header>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border/40 bg-background/95 backdrop-filter backdrop-blur-md supports-[backdrop-filter]:bg-background/60 pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-regular border-t border-border/40 pb-safe">
         <div className="grid h-14 grid-cols-3 gap-1 px-2">
           {routes.map((route) => {
             const Icon = route.icon;

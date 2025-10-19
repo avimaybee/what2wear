@@ -143,6 +143,7 @@ export default function WardrobePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteItem, setDeleteItem] = useState<typeof mockWardrobeItems[0] | null>(null);
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const [modalSource, setModalSource] = useState<"add-button" | "delete" | null>(null);
 
   const filteredItems = filterType === "All" 
     ? mockWardrobeItems 
@@ -152,6 +153,22 @@ export default function WardrobePage() {
     // Here you would call DELETE /api/wardrobe/[id]
     console.log("Deleting item:", deleteItem?.id);
     setDeleteItem(null);
+    setModalSource(null);
+  };
+
+  const handleOpenAddModal = () => {
+    setModalSource("add-button");
+    setShowAddModal(true);
+  };
+
+  const handleCloseAddModal = () => {
+    setShowAddModal(false);
+    setTimeout(() => setModalSource(null), 300);
+  };
+
+  const handleOpenDeleteModal = (item: typeof mockWardrobeItems[0]) => {
+    setModalSource("delete");
+    setDeleteItem(item);
   };
 
   return (
@@ -164,10 +181,12 @@ export default function WardrobePage() {
             Manage your clothing collection ({filteredItems.length} items)
           </p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <motion.div layoutId="add-item-button">
+          <Button onClick={handleOpenAddModal} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Item
+          </Button>
+        </motion.div>
       </div>
 
       {/* Filter Bar - Mobile uses Sheet, Desktop inline */}
@@ -297,7 +316,7 @@ export default function WardrobePage() {
                       size="icon"
                       variant="destructive"
                       className="h-8 w-8 shadow-lg"
-                      onClick={() => setDeleteItem(item)}
+                      onClick={() => handleOpenDeleteModal(item)}
                       aria-label={`Delete ${item.name}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -369,37 +388,41 @@ export default function WardrobePage() {
         </motion.div>
       )}
 
-      {/* Add Item Dialog (uses new Dialog component) */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent variant="scale">
-          <DialogHeader>
-            <DialogTitle>Add New Item</DialogTitle>
-            <DialogDescription>
-              This feature would integrate with POST /api/wardrobe to add new items to your collection.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              In a production version, this would include:
-            </p>
-            <ul className="text-sm text-muted-foreground space-y-2 ml-4">
-              <li>• Image upload with preview</li>
-              <li>• Name, type, and material selection</li>
-              <li>• Color picker for accurate matching</li>
-              <li>• Season and style tags</li>
-              <li>• Insulation value slider</li>
-            </ul>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setShowAddModal(false)} variant="outline">
-              Close
-            </Button>
-            <Button onClick={() => setShowAddModal(false)}>
-              Add Item
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Add Item Dialog (uses new Dialog component with layoutId) */}
+      <AnimatePresence>
+        {showAddModal && (
+          <Dialog open={showAddModal} onOpenChange={handleCloseAddModal}>
+            <DialogContent variant="scale" layoutId="add-item-button">
+              <DialogHeader>
+                <DialogTitle>Add New Item</DialogTitle>
+                <DialogDescription>
+                  This feature would integrate with POST /api/wardrobe to add new items to your collection.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-sm text-muted-foreground">
+                  In a production version, this would include:
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-2 ml-4">
+                  <li>• Image upload with preview</li>
+                  <li>• Name, type, and material selection</li>
+                  <li>• Color picker for accurate matching</li>
+                  <li>• Season and style tags</li>
+                  <li>• Insulation value slider</li>
+                </ul>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleCloseAddModal} variant="outline">
+                  Close
+                </Button>
+                <Button onClick={handleCloseAddModal}>
+                  Add Item
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteItem !== null} onOpenChange={(open) => !open && setDeleteItem(null)}>

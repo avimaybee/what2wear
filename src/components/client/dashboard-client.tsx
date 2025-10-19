@@ -25,6 +25,8 @@ import {
   AlertTriangle,
   Sparkles,
   Calendar,
+  RefreshCw,
+  Wand2,
 } from "lucide-react";
 import { formatTemp, cn } from "@/lib/utils";
 import type { IRecommendation } from "@/types";
@@ -38,6 +40,8 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const [isLogging, setIsLogging] = useState(false);
   const [logSuccess, setLogSuccess] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [occasionPrompt, setOccasionPrompt] = useState("");
 
   const handleWearOutfit = async () => {
     setIsLogging(true);
@@ -72,6 +76,39 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
         { icon: type === "up" ? "👍" : "👎" }
       );
     }
+  };
+
+  const handleRegenerateOutfit = async () => {
+    setIsRegenerating(true);
+    
+    // Simulate API call for regeneration
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    toast.success("New outfit generated! 🎨", {
+      duration: 3000,
+    });
+    
+    setIsRegenerating(false);
+    // In production, this would trigger a revalidation or state update
+  };
+
+  const handleGenerateWithPrompt = async () => {
+    if (!occasionPrompt.trim()) {
+      toast("Please describe your occasion first", { icon: "✏️" });
+      return;
+    }
+
+    setIsRegenerating(true);
+    
+    // Simulate API call with prompt
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    toast.success(`Outfit curated for: "${occasionPrompt}" 🎯`, {
+      duration: 3000,
+    });
+    
+    setIsRegenerating(false);
+    setOccasionPrompt("");
   };
 
   const getAQIStatus = (aqi: number) => {
@@ -305,6 +342,28 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                     )}
                   </Button>
 
+                  {/* Generate Another Outfit Button */}
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleRegenerateOutfit}
+                    disabled={isRegenerating}
+                    className="w-full text-base font-semibold h-12 transition-all duration-200"
+                    aria-busy={isRegenerating}
+                  >
+                    <motion.div
+                      animate={isRegenerating ? { rotate: 360 } : { rotate: 0 }}
+                      transition={
+                        isRegenerating 
+                          ? { duration: 1, repeat: Infinity, ease: "linear" }
+                          : { duration: 0 }
+                      }
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    </motion.div>
+                    {isRegenerating ? "Generating..." : "Generate Another Outfit"}
+                  </Button>
+
                   <div className="flex items-center justify-center gap-3 pt-2">
                     <span className="text-sm text-muted-foreground font-medium">
                       How does this look?
@@ -341,7 +400,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
             </Card>
           </motion.div>
 
-          {/* Context & Alerts */}
+          {/* AI Occasion Prompt */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -350,34 +409,49 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Today&apos;s Context
+                  <Wand2 className="h-5 w-5 text-primary" />
+                  Describe Your Occasion
                 </CardTitle>
+                <CardDescription>
+                  Tell us about your day and we&apos;ll curate the perfect outfit
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Schedule */}
-                {recommendation.constraint_alerts.length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      Schedule
-                    </p>
-                    <div className="space-y-2">
-                      {recommendation.constraint_alerts.map((alert, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                        >
-                          <Calendar className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                          <span className="text-sm font-medium">{alert}</span>
-                        </div>
-                      ))}
-                    </div>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <textarea
+                    value={occasionPrompt}
+                    onChange={(e) => setOccasionPrompt(e.target.value)}
+                    placeholder="E.g., Casual brunch with friends, Important client meeting, Date night at a fancy restaurant..."
+                    className="w-full min-h-[100px] px-4 py-3 rounded-lg border border-border bg-background/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none text-sm"
+                    maxLength={200}
+                  />
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>AI will consider weather, your wardrobe, and occasion</span>
+                    <span>{occasionPrompt.length}/200</span>
                   </div>
-                )}
+                </div>
+                <Button
+                  onClick={handleGenerateWithPrompt}
+                  disabled={isRegenerating || !occasionPrompt.trim()}
+                  className="w-full"
+                  size="lg"
+                >
+                  <motion.div
+                    animate={isRegenerating ? { rotate: 360 } : { rotate: 0 }}
+                    transition={
+                      isRegenerating 
+                        ? { duration: 1, repeat: Infinity, ease: "linear" }
+                        : { duration: 0 }
+                    }
+                  >
+                    <Wand2 className="h-4 w-4 mr-2" />
+                  </motion.div>
+                  {isRegenerating ? "Curating..." : "Generate Outfit"}
+                </Button>
 
                 {/* Weather Alerts */}
                 {recommendation.weather_alerts && recommendation.weather_alerts.length > 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-3 pt-4 border-t">
                     <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                       Weather Alerts
                     </p>

@@ -302,38 +302,72 @@
   }
 }
 /* Liquid Glass Material Effects - Apple Design Language */
+/* Based on Apple HIG Materials: https://developer.apple.com/design/human-interface-guidelines/materials */
 @layer utilities {
+  /* Ultra Thin - Highly translucent, minimal blur */
   .glass-ultra-thin {
-    background: hsl(var(--background) / 0.7);
-    backdrop-filter: blur(12px) saturate(150%);
-    -webkit-backdrop-filter: blur(12px) saturate(150%);
-    border: 1px solid hsl(var(--border) / 0.2);
+    background: oklch(from var(--background) l c h / 0.65);
+    backdrop-filter: blur(10px) saturate(180%) brightness(1.1);
+    -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.1);
+    border: 1px solid oklch(from var(--border) l c h / 0.18);
+    box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.03) inset,
+                0 1px 2px -1px oklch(from var(--foreground) l c h / 0.08);
   }
   
+  /* Thin - More blur, better separation */
   .glass-thin {
-    background: hsl(var(--background) / 0.8);
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
-    border: 1px solid hsl(var(--border) / 0.3);
+    background: oklch(from var(--background) l c h / 0.72);
+    backdrop-filter: blur(20px) saturate(180%) brightness(1.05);
+    -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.05);
+    border: 1px solid oklch(from var(--border) l c h / 0.22);
+    box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.05) inset,
+                0 2px 4px -2px oklch(from var(--foreground) l c h / 0.1);
   }
   
+  /* Regular (default) - Primary Liquid Glass variant */
+  /* Provides optimal legibility with blur and luminosity adjustment */
   .glass-regular {
-    background: hsl(var(--card) / 0.85);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid hsl(var(--border) / 0.4);
+    background: oklch(from var(--card) l c h / 0.78);
+    backdrop-filter: blur(30px) saturate(180%) brightness(1.02);
+    -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(1.02);
+    border: 1px solid oklch(from var(--border) l c h / 0.28);
+    box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.06) inset,
+                0 4px 8px -4px oklch(from var(--foreground) l c h / 0.12),
+                0 0 0 1px oklch(from var(--background) l c h / 0.04);
   }
   
+  /* Thick - Maximum opacity, strongest blur */
   .glass-thick {
-    background: hsl(var(--card) / 0.9);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid hsl(var(--border) / 0.5);
+    background: oklch(from var(--card) l c h / 0.85);
+    backdrop-filter: blur(40px) saturate(180%) brightness(1.0);
+    -webkit-backdrop-filter: blur(40px) saturate(180()) brightness(1.0);
+    border: 1px solid oklch(from var(--border) l c h / 0.35);
+    box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.08) inset,
+                0 8px 16px -6px oklch(from var(--foreground) l c h / 0.15),
+                0 0 0 1px oklch(from var(--background) l c h / 0.05);
   }
   
-  /* Glass with subtle shadow for depth */
+  /* Clear variant - For media/visually rich backgrounds */
+  /* Highly translucent to prioritize content visibility */
+  .glass-clear {
+    background: oklch(from var(--background) l c h / 0.45);
+    backdrop-filter: blur(15px) saturate(150%);
+    -webkit-backdrop-filter: blur(15px) saturate(150%);
+    border: 1px solid oklch(from var(--border) l c h / 0.12);
+    box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.02) inset;
+  }
+  
+  /* Glass with elevation shadow for floating elements */
   .glass-elevated {
-    @apply glass-regular shadow-lg;
+    @apply glass-regular;
+    box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.06) inset,
+                0 8px 24px -8px oklch(from var(--foreground) l c h / 0.18),
+                0 16px 32px -12px oklch(from var(--foreground) l c h / 0.14);
+  }
+  
+  /* Dimming layer for clear glass over bright content (35% opacity as per HIG) */
+  .glass-dimming {
+    background: oklch(0 0 0 / 0.35);
   }
   
   /* Fallback for browsers without backdrop-filter support */
@@ -341,37 +375,123 @@
     .glass-ultra-thin,
     .glass-thin,
     .glass-regular,
+    .glass-thick,
+    .glass-clear {
+      background: var(--card);
+    }
+  }
+  
+  /* Dark mode adjustments for Liquid Glass */
+  @media (prefers-color-scheme: dark) {
+    .glass-ultra-thin {
+      background: oklch(from var(--background) l c h / 0.60);
+      backdrop-filter: blur(10px) saturate(180%) brightness(0.95);
+      -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(0.95);
+    }
+    
+    .glass-thin {
+      background: oklch(from var(--background) l c h / 0.68);
+      backdrop-filter: blur(20px) saturate(180%) brightness(0.97);
+      -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(0.97);
+    }
+    
+    .glass-regular {
+      background: oklch(from var(--card) l c h / 0.75);
+      backdrop-filter: blur(30px) saturate(180%) brightness(0.98);
+      -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(0.98);
+    }
+    
     .glass-thick {
-      background: hsl(var(--card));
+      background: oklch(from var(--card) l c h / 0.82);
+      backdrop-filter: blur(40px) saturate(180%) brightness(0.99);
+      -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(0.99);
+    }
+    
+    .glass-clear {
+      background: oklch(from var(--background) l c h / 0.40);
+      backdrop-filter: blur(15px) saturate(150%) brightness(0.92);
+      -webkit-backdrop-filter: blur(15px) saturate(150%) brightness(0.92);
+    }
+  }
+  
+  /* Dark class support for manual dark mode */
+  :is(.dark *) {
+    .glass-ultra-thin {
+      background: oklch(from var(--background) l c h / 0.60);
+      backdrop-filter: blur(10px) saturate(180%) brightness(0.95);
+      -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(0.95);
+    }
+    
+    .glass-thin {
+      background: oklch(from var(--background) l c h / 0.68);
+      backdrop-filter: blur(20px) saturate(180%) brightness(0.97);
+      -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(0.97);
+    }
+    
+    .glass-regular {
+      background: oklch(from var(--card) l c h / 0.75);
+      backdrop-filter: blur(30px) saturate(180%) brightness(0.98);
+      -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(0.98);
+    }
+    
+    .glass-thick {
+      background: oklch(from var(--card) l c h / 0.82);
+      backdrop-filter: blur(40px) saturate(180%) brightness(0.99);
+      -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(0.99);
+    }
+    
+    .glass-clear {
+      background: oklch(from var(--background) l c h / 0.40);
+      backdrop-filter: blur(15px) saturate(150%) brightness(0.92);
+      -webkit-backdrop-filter: blur(15px) saturate(150%) brightness(0.92);
     }
   }
 }
 
 /* Liquid Glass Material Effects - Tailwind v4 syntax */
 @utility glass-ultra-thin {
-  background: hsl(var(--background) / 0.7);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  border: 1px solid hsl(var(--border) / 0.2);
+  background: oklch(from var(--background) l c h / 0.65);
+  backdrop-filter: blur(10px) saturate(180%) brightness(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(180%) brightness(1.1);
+  border: 1px solid oklch(from var(--border) l c h / 0.18);
+  box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.03) inset,
+              0 1px 2px -1px oklch(from var(--foreground) l c h / 0.08);
 }
 
 @utility glass-thin {
-  background: hsl(var(--background) / 0.8);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid hsl(var(--border) / 0.3);
+  background: oklch(from var(--background) l c h / 0.72);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.05);
+  border: 1px solid oklch(from var(--border) l c h / 0.22);
+  box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.05) inset,
+              0 2px 4px -2px oklch(from var(--foreground) l c h / 0.1);
 }
 
 @utility glass-regular {
-  background: hsl(var(--card) / 0.85);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid hsl(var(--border) / 0.4);
+  background: oklch(from var(--card) l c h / 0.78);
+  backdrop-filter: blur(30px) saturate(180%) brightness(1.02);
+  -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(1.02);
+  border: 1px solid oklch(from var(--border) l c h / 0.28);
+  box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.06) inset,
+              0 4px 8px -4px oklch(from var(--foreground) l c h / 0.12),
+              0 0 0 1px oklch(from var(--background) l c h / 0.04);
 }
 
 @utility glass-thick {
-  background: hsl(var(--card) / 0.9);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid hsl(var(--border) / 0.5);
+  background: oklch(from var(--card) l c h / 0.85);
+  backdrop-filter: blur(40px) saturate(180%) brightness(1.0);
+  -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.0);
+  border: 1px solid oklch(from var(--border) l c h / 0.35);
+  box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.08) inset,
+              0 8px 16px -6px oklch(from var(--foreground) l c h / 0.15),
+              0 0 0 1px oklch(from var(--background) l c h / 0.05);
 }
+
+@utility glass-clear {
+  background: oklch(from var(--background) l c h / 0.45);
+  backdrop-filter: blur(15px) saturate(150%);
+  -webkit-backdrop-filter: blur(15px) saturate(150%);
+  border: 1px solid oklch(from var(--border) l c h / 0.12);
+  box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.02) inset;
+}
+

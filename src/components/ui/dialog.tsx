@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const Dialog = DialogPrimitive.Root;
@@ -40,42 +41,51 @@ interface DialogContentProps
    * @default true
    */
   showClose?: boolean;
+  /**
+   * Optional layoutId for Framer Motion morph transitions
+   */
+  layoutId?: string;
 }
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, variant = "scale", showClose = true, ...props }, ref) => {
-  // Variant is used via className data-state animations
-  // Different animation timings could be applied here based on variant prop if needed
-  const _unusedVariant = variant; // Acknowledge variant prop to satisfy linter
+>(({ className, children, variant = "scale", showClose = true, layoutId, ...props }, ref) => {
+  const _unusedVariant = variant;
 
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
-        className={cn(
-          "fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%]",
-          "grid gap-4 border border-border bg-card p-6 shadow-2xl",
-          "rounded-lg",
-          "data-[state=open]:animate-in data-[state=closed]:animate-out",
-          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-          "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]",
-          "data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-          "duration-200",
-          className
-        )}
+        asChild
         {...props}
       >
-        {children}
-        {showClose && (
-          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-accent hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        )}
+        <motion.div
+          layoutId={layoutId}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{
+            type: "spring",
+            damping: 25,
+            stiffness: 300,
+          }}
+          className={cn(
+            "fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%]",
+            "grid gap-4 border border-border bg-card p-4 md:p-5 shadow-2xl",
+            "rounded-lg",
+            className
+          )}
+        >
+          {children}
+          {showClose && (
+            <DialogPrimitive.Close className="absolute right-3 top-3 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 hover:bg-accent hover:scale-110 focus:outline-none focus:ring-1 focus:ring-ring disabled:pointer-events-none">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          )}
+        </motion.div>
       </DialogPrimitive.Content>
     </DialogPortal>
   );

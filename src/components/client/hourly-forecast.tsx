@@ -109,7 +109,7 @@ export function HourlyForecast() {
         <CardContent>
           <div className="relative">
             <div 
-              className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory"
+              className="flex gap-3 overflow-x-auto pb-2 px-1 -mx-1 scrollbar-hide snap-x snap-mandatory"
               role="radiogroup"
               aria-label="Hourly weather forecast"
             >
@@ -117,19 +117,19 @@ export function HourlyForecast() {
                 <motion.button
                   key={idx}
                   onClick={() => setSelectedHour(idx)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: selectedHour === idx ? 1.05 : 1 }}
+                  animate={{ opacity: 1, scale: selectedHour === idx ? 1.02 : 1 }}
                   transition={{ 
                     duration: 0.2,
                     delay: idx * 0.05,
                   }}
                   className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-lg border min-w-[90px] snap-center transition-all duration-200",
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border min-w-[90px] snap-center transition-all duration-200 shrink-0",
                     selectedHour === idx
-                      ? "bg-primary text-primary-foreground border-primary shadow-lg ring-2 ring-primary ring-offset-2 ring-offset-background"
-                      : "bg-card border-border hover:border-primary hover:shadow-md hover:scale-[1.02]"
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-card border-border hover:bg-accent"
                   )}
                   role="radio"
                   aria-checked={selectedHour === idx}
