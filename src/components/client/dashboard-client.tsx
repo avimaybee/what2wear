@@ -24,50 +24,112 @@ import {
   Droplets,
   AlertTriangle,
   Sparkles,
-  Calendar,
   RefreshCw,
   Wand2,
+  MapPin,
 } from "lucide-react";
 import { formatTemp, cn } from "@/lib/utils";
-import type { IRecommendation } from "@/types";
 import { HourlyForecast } from "@/components/client/hourly-forecast";
+import { createClient } from "@/lib/supabase/client";
 
 interface DashboardClientProps {
-  recommendation: IRecommendation;
+  recommendationData: any; // Data from /api/recommendation
+  location: { lat: number; lon: number };
+  onLocationChange: () => void;
+  onRefresh: () => void;
 }
 
-export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
+export const DashboardClient = ({ 
+  recommendationData,
+  location,
+  onLocationChange,
+  onRefresh,
+}: DashboardClientProps) => {
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const [isLogging, setIsLogging] = useState(false);
   const [logSuccess, setLogSuccess] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [occasionPrompt, setOccasionPrompt] = useState("");
+
+  const { recommendation, weather } = recommendationData;
 
   const handleWearOutfit = async () => {
     setIsLogging(true);
     
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    
-    setLogSuccess(true);
-    
-    // Show success animation then reset
-    setTimeout(() => {
-      setIsLogging(false);
-      toast.success("Outfit logged successfully! 🎉", {
-        duration: 3000,
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        toast.error("Please sign in to log outfits");
+        setIsLogging(false);
+        return;
+      }
+
+      const response = await fetch("/api/outfit/log", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          item_ids: recommendation.outfit.map((item: any) => item.id),
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to log outfit");
+      }
+
+      setLogSuccess(true);
       
-      // Reset success state after animation
-      setTimeout(() => setLogSuccess(false), 600);
-    }, 800);
+      setTimeout(() => {
+        setIsLogging(false);
+        toast.success("Outfit logged successfully! 🎉", {
+          duration: 3000,
+        });
+        
+        setTimeout(() => setLogSuccess(false), 600);
+      }, 800);
+    } catch (error) {
+      console.error("Error logging outfit:", error);
+      toast.error("Failed to log outfit. Please try again.");
+      setIsLogging(false);
+    }
   };
 
-  const handleFeedback = (type: "up" | "down") => {
-    if (feedback === type) {
-      setFeedback(null);
-      toast("Feedback removed", { icon: "👋" });
-    } else {
+  const handleFeedback = async (type: "up" | "down") => {
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        toast.error("Please sign in to provide feedback");
+        return;
+      }
+
+      if (feedback === type) {
+        setFeedback(null);
+        toast("Feedback removed", { icon: "👋" });
+        return;
+      }
+
+      // Call feedback API
+      const response = await fetch(`/api/recommendation/${recommendation.id}/feedback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          is_liked: type === "up",
+          reason: type === "up" ? "Loved the outfit!" : "Not my style",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit feedback");
+      }
+
       setFeedback(type);
       toast.success(
         type === "up" 
@@ -75,21 +137,28 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
           : "Got it! We'll adjust future recommendations.",
         { icon: type === "up" ? "👍" : "👎" }
       );
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      toast.error("Failed to submit feedback. Please try again.");
     }
   };
 
   const handleRegenerateOutfit = async () => {
     setIsRegenerating(true);
     
-    // Simulate API call for regeneration
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    toast.success("New outfit generated! 🎨", {
-      duration: 3000,
-    });
-    
-    setIsRegenerating(false);
-    // In production, this would trigger a revalidation or state update
+    try {
+      // Call the refresh function passed from parent
+      await onRefresh();
+      
+      toast.success("New outfit generated! 🎨", {
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error regenerating outfit:", error);
+      toast.error("Failed to generate new outfit. Please try again.");
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   const handleGenerateWithPrompt = async () => {
@@ -98,17 +167,54 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
       return;
     }
 
-    setIsRegenerating(true);
+    setIsGeneratingAI(true);
     
-    // Simulate API call with prompt
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    toast.success(`Outfit curated for: "${occasionPrompt}" 🎯`, {
-      duration: 3000,
-    });
-    
-    setIsRegenerating(false);
-    setOccasionPrompt("");
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        toast.error("Please sign in to use AI recommendations");
+        setIsGeneratingAI(false);
+        return;
+      }
+
+      const response = await fetch("/api/recommendation/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lat: location.lat,
+          lon: location.lon,
+          occasion: occasionPrompt,
+          season: "current",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate AI outfit");
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success(`AI outfit curated for: "${occasionPrompt}" 🎯`, {
+          duration: 3000,
+        });
+        setOccasionPrompt("");
+        
+        // Refresh the page to show new recommendation
+        await onRefresh();
+      } else {
+        throw new Error(data.error || "Failed to generate outfit");
+      }
+    } catch (error) {
+      console.error("Error generating AI outfit:", error);
+      toast.error("Failed to generate AI outfit. Please try again.");
+    } finally {
+      setIsGeneratingAI(false);
+    }
   };
 
   const getAQIStatus = (aqi: number) => {
@@ -124,8 +230,8 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
     return { label: "Very High", variant: "destructive" as const };
   };
 
-  const aqiStatus = getAQIStatus(recommendation.aqi);
-  const uvStatus = getUVStatus(recommendation.uv_index);
+  const aqiStatus = getAQIStatus(weather.air_quality_index || 0);
+  const uvStatus = getUVStatus(weather.uv_index || 0);
 
   return (
     <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-6 pb-20 md:pb-6">
@@ -156,7 +262,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden glass-effect">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xl md:text-2xl">Your Perfect Look</CardTitle>
                 <CardDescription className="text-sm leading-relaxed">
@@ -181,7 +287,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                       className="w-full"
                     >
                       <CarouselContent>
-                        {recommendation.outfit.map((item, index) => (
+                        {recommendation.outfit.map((item: any, index: number) => (
                           <CarouselItem key={item.id} className="basis-3/4">
                             <motion.div
                               initial={{ opacity: 0, scale: 0.9 }}
@@ -216,7 +322,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
 
                   {/* Desktop Grid (hidden on mobile) */}
                   <div className="hidden md:grid grid-cols-4 gap-3 md:gap-4">
-                    {recommendation.outfit.map((item, index) => (
+                    {recommendation.outfit.map((item: any, index: number) => (
                       <motion.div
                         key={item.id}
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -250,7 +356,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                   <Badge variant="secondary" className="text-xs">
                     {recommendation.dress_code}
                   </Badge>
-                  {recommendation.outfit[0]?.style_tags?.slice(0, 3).map((tag) => (
+                  {recommendation.outfit[0]?.style_tags?.slice(0, 3).map((tag: string) => (
                     <Badge key={tag} variant="outline" className="text-xs">
                       {tag}
                     </Badge>
@@ -406,7 +512,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Card>
+            <Card className="glass-effect">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wand2 className="h-5 w-5 text-primary" />
@@ -432,21 +538,21 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                 </div>
                 <Button
                   onClick={handleGenerateWithPrompt}
-                  disabled={isRegenerating || !occasionPrompt.trim()}
+                  disabled={isGeneratingAI || !occasionPrompt.trim()}
                   className="w-full"
                   size="lg"
                 >
                   <motion.div
-                    animate={isRegenerating ? { rotate: 360 } : { rotate: 0 }}
+                    animate={isGeneratingAI ? { rotate: 360 } : { rotate: 0 }}
                     transition={
-                      isRegenerating 
+                      isGeneratingAI 
                         ? { duration: 1, repeat: Infinity, ease: "linear" }
                         : { duration: 0 }
                     }
                   >
                     <Wand2 className="h-4 w-4 mr-2" />
                   </motion.div>
-                  {isRegenerating ? "Curating..." : "Generate Outfit"}
+                  {isGeneratingAI ? "Curating with AI..." : "Generate AI Outfit"}
                 </Button>
 
                 {/* Weather Alerts */}
@@ -456,7 +562,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                       Weather Alerts
                     </p>
                     <div className="space-y-3">
-                      {recommendation.weather_alerts.map((alert, idx) => (
+                      {recommendation.weather_alerts.map((alert: any, idx: number) => (
                         <div
                           key={idx}
                           className={cn(
@@ -487,7 +593,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
           </motion.div>
 
           {/* Hourly Forecast */}
-          <HourlyForecast />
+          <HourlyForecast location={location} />
         </div>
 
         {/* Sidebar */}
@@ -498,9 +604,23 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden glass-effect">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Weather Now</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Weather Now</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onLocationChange}
+                    className="h-8"
+                  >
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                    Change
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {weather.weather_condition || "Current conditions"}
+                </p>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Feels Like - Prominent */}
@@ -511,7 +631,10 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                       Feels Like
                     </p>
                     <p className="text-6xl font-bold text-primary tracking-tight">
-                      {formatTemp(recommendation.temp_feels_like)}
+                      {formatTemp(weather.feels_like)}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Actual: {formatTemp(weather.temperature)}
                     </p>
                   </div>
                 </div>
@@ -521,7 +644,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                   <MetricCard
                     icon={Wind}
                     label="Air Quality"
-                    value={recommendation.aqi}
+                    value={weather.air_quality_index || 0}
                     status={aqiStatus.label}
                     statusVariant={aqiStatus.variant}
                     description="Current air quality index"
@@ -529,11 +652,11 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                   <MetricCard
                     icon={Sun}
                     label="UV Index"
-                    value={recommendation.uv_index}
+                    value={weather.uv_index || 0}
                     status={uvStatus.label}
                     statusVariant={uvStatus.variant}
                     description={
-                      recommendation.uv_index > 5
+                      (weather.uv_index || 0) > 5
                         ? "Consider sun protection"
                         : "UV protection optional"
                     }
@@ -541,10 +664,10 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                   <MetricCard
                     icon={Droplets}
                     label="Pollen"
-                    value={recommendation.pollen_count.toFixed(1)}
+                    value={(weather.pollen_count || 0).toFixed(1)}
                     status="Low"
                     statusVariant="success"
-                    description="Low pollen count today"
+                    description="Pollen count today"
                   />
                 </div>
               </CardContent>

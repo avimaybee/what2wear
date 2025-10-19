@@ -14,40 +14,82 @@ interface HourlyData {
   condition: string;
 }
 
+interface HourlyForecastProps {
+  location: { lat: number; lon: number };
+}
+
 const getWeatherIcon = (condition: string, isSelected: boolean) => {
   const className = cn(
     "h-6 w-6 transition-all",
     isSelected && "text-primary-foreground"
   );
   
-  switch (condition) {
-    case "sunny":
-      return <Sun className={className} />;
-    case "cloudy":
-      return <Cloud className={className} />;
-    case "rainy":
-      return <CloudRain className={className} />;
-    case "snow":
-      return <CloudSnow className={className} />;
-    default:
-      return <CloudDrizzle className={className} />;
+  const conditionLower = condition.toLowerCase();
+  
+  if (conditionLower.includes("clear") || conditionLower.includes("sunny")) {
+    return <Sun className={className} />;
   }
+  if (conditionLower.includes("rain")) {
+    return <CloudRain className={className} />;
+  }
+  if (conditionLower.includes("snow")) {
+    return <CloudSnow className={className} />;
+  }
+  if (conditionLower.includes("cloud")) {
+    return <Cloud className={className} />;
+  }
+  return <CloudDrizzle className={className} />;
 };
 
-export function HourlyForecast() {
+export function HourlyForecast({ location }: HourlyForecastProps) {
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [selectedHour, setSelectedHour] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Generate mock data on the client side to avoid hydration mismatch
-    const conditions = ["sunny", "cloudy", "partly-cloudy", "rainy", "cloudy"];
-    const data = Array.from({ length: 12 }, (_, i) => ({
-      hour: `${(new Date().getHours() + i) % 24}:00`,
-      temp: 15 + Math.random() * 5,
-      condition: conditions[i % conditions.length],
-    }));
-    setHourlyData(data);
-  }, []);
+    const fetchHourlyForecast = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(
+          `/api/weather?lat=${location.lat}&lon=${location.lon}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch weather data");
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !data.data.hourly_forecast) {
+          throw new Error("No hourly forecast data available");
+        }
+
+        // Format hourly forecast data
+        const forecast = data.data.hourly_forecast.slice(0, 12).map((hour: any) => ({
+          hour: new Date(hour.timestamp).toLocaleTimeString('en-US', { 
+            hour: 'numeric',
+            hour12: true 
+          }),
+          temp: hour.temperature,
+          condition: hour.weather_condition || hour.condition,
+        }));
+
+        setHourlyData(forecast);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching hourly forecast:", err);
+        setError(err instanceof Error ? err.message : "Failed to load forecast");
+        setLoading(false);
+      }
+    };
+
+    if (location) {
+      fetchHourlyForecast();
+    }
+  }, [location]);
 
   // Keyboard navigation (left/right arrows)
   useEffect(() => {
@@ -67,15 +109,17 @@ export function HourlyForecast() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [hourlyData.length]);
 
-  if (hourlyData.length === 0) {
+  if (loading || hourlyData.length === 0) {
     return (
-      <Card>
+      <Card className="glass-effect">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
             Hourly Forecast
           </CardTitle>
-          <CardDescription>Next 12 hours</CardDescription>
+          <CardDescription>
+            {loading ? "Loading forecast..." : error || "Next 12 hours"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">

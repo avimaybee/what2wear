@@ -1,159 +1,106 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle } from "lucide-react";
 import { getRelativeTime } from "@/lib/utils";
 import { motionVariants, motionDurations } from "@/lib/motion";
-import type { ClothingType } from "@/types";
-
-// Mock wardrobe data
-const mockWardrobeItems = [
-  {
-    id: 1,
-    user_id: "user-1",
-    name: "Navy Blazer",
-    type: "Outerwear" as const,
-    material: "Wool" as const,
-    insulation_value: 7,
-    last_worn_date: "2025-10-10T00:00:00.000Z",
-    image_url: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&h=400&fit=crop",
-    color: "Navy",
-    season_tags: ["Fall", "Winter"],
-    style_tags: ["Business", "Formal"],
-    dress_code: ["Business Casual" as const, "Formal" as const],
-    created_at: "2025-01-01T00:00:00.000Z",
-  },
-  {
-    id: 2,
-    user_id: "user-1",
-    name: "White Oxford Shirt",
-    type: "Top" as const,
-    material: "Cotton" as const,
-    insulation_value: 3,
-    last_worn_date: "2025-10-12T00:00:00.000Z",
-    image_url: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&h=400&fit=crop",
-    color: "White",
-    season_tags: ["All Season"],
-    style_tags: ["Business", "Classic"],
-    dress_code: ["Business Casual" as const, "Formal" as const],
-    created_at: "2025-01-01T00:00:00.000Z",
-  },
-  {
-    id: 3,
-    user_id: "user-1",
-    name: "Charcoal Trousers",
-    type: "Bottom" as const,
-    material: "Wool" as const,
-    insulation_value: 4,
-    last_worn_date: "2025-10-11T00:00:00.000Z",
-    image_url: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=400&h=400&fit=crop",
-    color: "Charcoal",
-    season_tags: ["All Season"],
-    style_tags: ["Business", "Classic"],
-    dress_code: ["Business Casual" as const, "Formal" as const],
-    created_at: "2025-01-01T00:00:00.000Z",
-  },
-  {
-    id: 4,
-    user_id: "user-1",
-    name: "Brown Leather Shoes",
-    type: "Footwear" as const,
-    material: "Leather" as const,
-    insulation_value: 2,
-    last_worn_date: "2025-10-09T00:00:00.000Z",
-    image_url: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?w=400&h=400&fit=crop",
-    color: "Brown",
-    season_tags: ["All Season"],
-    style_tags: ["Business", "Classic"],
-    dress_code: ["Business Casual" as const, "Formal" as const],
-    created_at: "2025-01-01T00:00:00.000Z",
-  },
-  {
-    id: 5,
-    user_id: "user-1",
-    name: "Black Puffer Jacket",
-    type: "Outerwear" as const,
-    material: "Synthetic" as const,
-    insulation_value: 9,
-    last_worn_date: null,
-    image_url: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400&h=400&fit=crop",
-    color: "Black",
-    season_tags: ["Winter"],
-    style_tags: ["Casual", "Athletic"],
-    dress_code: ["Casual" as const, "Athletic" as const],
-    created_at: "2025-01-01T00:00:00.000Z",
-  },
-  {
-    id: 6,
-    user_id: "user-1",
-    name: "Grey Hoodie",
-    type: "Top" as const,
-    material: "Cotton" as const,
-    insulation_value: 5,
-    last_worn_date: "2025-10-14T00:00:00.000Z",
-    image_url: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=400&fit=crop",
-    color: "Grey",
-    season_tags: ["Fall", "Spring"],
-    style_tags: ["Casual", "Comfort"],
-    dress_code: ["Casual" as const, "Loungewear" as const],
-    created_at: "2025-01-01T00:00:00.000Z",
-  },
-  {
-    id: 7,
-    user_id: "user-1",
-    name: "Blue Jeans",
-    type: "Bottom" as const,
-    material: "Denim" as const,
-    insulation_value: 3,
-    last_worn_date: "2025-10-13T00:00:00.000Z",
-    image_url: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=400&fit=crop",
-    color: "Blue",
-    season_tags: ["All Season"],
-    style_tags: ["Casual"],
-    dress_code: ["Casual" as const],
-    created_at: "2025-01-01T00:00:00.000Z",
-  },
-  {
-    id: 8,
-    user_id: "user-1",
-    name: "White Sneakers",
-    type: "Footwear" as const,
-    material: "Synthetic" as const,
-    insulation_value: 1,
-    last_worn_date: "2025-10-15T00:00:00.000Z",
-    image_url: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=400&fit=crop",
-    color: "White",
-    season_tags: ["All Season"],
-    style_tags: ["Casual", "Athletic"],
-    dress_code: ["Casual" as const, "Athletic" as const],
-    created_at: "2025-01-01T00:00:00.000Z",
-  },
-];
+import { toast } from "@/components/ui/toaster";
+import { createClient } from "@/lib/supabase/client";
+import type { ClothingType, IClothingItem } from "@/types";
 
 const clothingTypes: ClothingType[] = ["Outerwear", "Top", "Bottom", "Footwear", "Accessory", "Headwear"];
 
 export default function WardrobePage() {
+  const [wardrobeItems, setWardrobeItems] = useState<IClothingItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<ClothingType | "All">("All");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [deleteItem, setDeleteItem] = useState<typeof mockWardrobeItems[0] | null>(null);
+  const [deleteItem, setDeleteItem] = useState<IClothingItem | null>(null);
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [modalSource, setModalSource] = useState<"add-button" | "delete" | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Fetch wardrobe items from API
+  const fetchWardrobe = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        setError("Please sign in to view your wardrobe");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch("/api/wardrobe");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch wardrobe");
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        setWardrobeItems(data.data);
+      } else {
+        throw new Error(data.error || "Failed to load wardrobe");
+      }
+
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching wardrobe:", err);
+      setError(err instanceof Error ? err.message : "Failed to load wardrobe");
+      setLoading(false);
+    }
+  };
+
+  // Fetch on mount
+  useEffect(() => {
+    fetchWardrobe();
+  }, []);
 
   const filteredItems = filterType === "All" 
-    ? mockWardrobeItems 
-    : mockWardrobeItems.filter(item => item.type === filterType);
+    ? wardrobeItems 
+    : wardrobeItems.filter(item => item.type === filterType);
 
-  const handleDeleteConfirm = () => {
-    // Here you would call DELETE /api/wardrobe/[id]
-    console.log("Deleting item:", deleteItem?.id);
-    setDeleteItem(null);
-    setModalSource(null);
+  const handleDeleteConfirm = async () => {
+    if (!deleteItem) return;
+
+    setDeleting(true);
+
+    try {
+      const response = await fetch(`/api/wardrobe/${deleteItem.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete item");
+      }
+
+      toast.success("Item deleted successfully!", { duration: 2000 });
+      
+      // Refresh wardrobe
+      await fetchWardrobe();
+      
+      setDeleteItem(null);
+      setModalSource(null);
+    } catch (err) {
+      console.error("Error deleting item:", err);
+      toast.error("Failed to delete item. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleOpenAddModal = () => {
@@ -166,10 +113,75 @@ export default function WardrobePage() {
     setTimeout(() => setModalSource(null), 300);
   };
 
-  const handleOpenDeleteModal = (item: typeof mockWardrobeItems[0]) => {
+  const handleOpenDeleteModal = (item: IClothingItem) => {
     setModalSource("delete");
     setDeleteItem(item);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-9 w-28" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+          {Array.from({ length: 12 }).map((_, idx) => (
+            <Skeleton key={idx} className="aspect-square rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
+            <AlertCircle className="h-12 w-12 text-destructive" />
+            <h2 className="text-xl font-semibold">Oops! Something went wrong</h2>
+            <p className="text-center text-muted-foreground">{error}</p>
+            <Button onClick={fetchWardrobe}>Try Again</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (wardrobeItems.length === 0) {
+    return (
+      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Virtual Wardrobe</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage your clothing collection
+            </p>
+          </div>
+        </div>
+        <Card className="max-w-md mx-auto glass-effect">
+          <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
+            <PackageOpen className="h-16 w-16 text-muted-foreground" />
+            <h2 className="text-xl font-semibold">Your wardrobe is empty</h2>
+            <p className="text-center text-muted-foreground">
+              Start adding clothing items to get personalized outfit recommendations
+            </p>
+            <Button onClick={handleOpenAddModal} size="lg">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Your First Item
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6 pb-20 md:pb-6">

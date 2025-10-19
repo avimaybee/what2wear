@@ -495,3 +495,14 @@
   box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.02) inset;
 }
 
+/* Glass effect for cards - liquid glass aesthetic */
+@utility glass-effect {
+  background: oklch(from var(--card) l c h / 0.75);
+  backdrop-filter: blur(24px) saturate(160%) brightness(1.05);
+  -webkit-backdrop-filter: blur(24px) saturate(160%) brightness(1.05);
+  border: 1px solid oklch(from var(--border) l c h / 0.25);
+  box-shadow: 
+    0 0 0 0.5px oklch(from var(--foreground) l c h / 0.05) inset,
+    0 4px 12px -4px oklch(from var(--foreground) l c h / 0.1),
+    0 0 0 1px oklch(from var(--background) l c h / 0.03);
+}

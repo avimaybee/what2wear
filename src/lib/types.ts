@@ -204,3 +204,31 @@ export interface PaginatedResponse<T> {
   per_page: number;
   total_pages: number;
 }
+
+// ============================================================================
+// AI Analysis Types (New)
+// ============================================================================
+
+export interface ClothingAnalysis {
+  style: string;
+  formality: string;
+  season_suitability: string;
+  color_harmony: string[];
+  occasion_fit: string[];
+}
+
+export interface OutfitValidation {
+  isValid: boolean;
+  score: number;
+  issues: string[];
+  suggestions: string[];
+  problemItemId?: number;
+}
+
+export interface AIOutfitRecommendation {
+  outfit: IClothingItem[];
+  validationScore: number;
+  iterations: number;
+  analysisLog: string[];
+  reasoning: string;
+}
