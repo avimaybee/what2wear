@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Shirt, Settings, Home } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { TextRollAccessible } from '@/components/ui/text-roll';
 import { cn } from '@/lib/utils';
 
 const routes = [
@@ -34,14 +35,17 @@ export const Header = () => {
         <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link 
             href="/" 
-            className="flex items-center space-x-2 transition-opacity hover:opacity-80"
+            className="flex items-center space-x-3 transition-opacity hover:opacity-80"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Shirt className="h-5 w-5 text-primary-foreground" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+              <Shirt className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-semibold tracking-tight">
+            <TextRollAccessible 
+              className="text-2xl md:text-3xl font-bold tracking-tight"
+              as="span"
+            >
               setmyfit
-            </span>
+            </TextRollAccessible>
           </Link>
           
           {/* Desktop Navigation */}

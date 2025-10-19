@@ -9,6 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { MetricCard } from "@/components/ui/metric-card";
 import { toast } from "@/components/ui/toaster";
 import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import {
   ThumbsUp,
   ThumbsDown,
   Wind,
@@ -33,12 +41,10 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
 
   const handleWearOutfit = async () => {
     setIsLogging(true);
-    const itemIds = recommendation.outfit.map((item) => item.id);
     
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1200));
     
-    console.log("Logging outfit:", itemIds);
     setLogSuccess(true);
     
     // Show success animation then reset
@@ -121,34 +127,85 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Outfit Items Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                  {recommendation.outfit.map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                      className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary transition-all hover:shadow-lg"
+                {/* Outfit Items - Carousel on Mobile, Grid on Desktop */}
+                <div>
+                  {/* Mobile Carousel (hidden on md+) */}
+                  <div className="block md:hidden">
+                    <Carousel
+                      opts={{
+                        align: "start",
+                        loop: true,
+                      }}
+                      plugins={[
+                        Autoplay({
+                          delay: 3000,
+                        }),
+                      ]}
+                      className="w-full"
                     >
-                      <Image
-                        src={item.image_url}
-                        alt={item.name}
-                        fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 200px"
-                        className="object-cover transition-transform group-hover:scale-105"
-                        priority={index === 0}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all">
-                        <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
-                          <p className="text-white font-semibold text-sm line-clamp-1">
-                            {item.name}
-                          </p>
-                          <p className="text-white/80 text-xs">{item.type}</p>
+                      <CarouselContent>
+                        {recommendation.outfit.map((item, index) => (
+                          <CarouselItem key={item.id} className="basis-3/4">
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3, delay: index * 0.1 }}
+                              className="group relative aspect-square overflow-hidden hover:shadow-lg squircle-filter transition-all"
+                            >
+                              <Image
+                                src={item.image_url}
+                                alt={item.name}
+                                fill
+                                sizes="75vw"
+                                className="object-cover transition-transform group-hover:scale-105"
+                                priority={index === 0}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent">
+                                <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1">
+                                  <p className="text-white font-semibold text-base">
+                                    {item.name}
+                                  </p>
+                                  <p className="text-white/80 text-sm">{item.type}</p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="-left-2" />
+                      <CarouselNext className="-right-2" />
+                    </Carousel>
+                  </div>
+
+                  {/* Desktop Grid (hidden on mobile) */}
+                  <div className="hidden md:grid grid-cols-4 gap-3 md:gap-4">
+                    {recommendation.outfit.map((item, index) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        className="group relative aspect-square overflow-hidden hover:shadow-lg squircle-filter transition-all"
+                      >
+                        <Image
+                          src={item.image_url}
+                          alt={item.name}
+                          fill
+                          sizes="(max-width: 1200px) 25vw, 200px"
+                          className="object-cover transition-transform group-hover:scale-105"
+                          priority={index === 0}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all">
+                          <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+                            <p className="text-white font-semibold text-sm line-clamp-1">
+                              {item.name}
+                            </p>
+                            <p className="text-white/80 text-xs">{item.type}</p>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Dress Code Tags */}

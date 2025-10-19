@@ -4,6 +4,8 @@ import { GeistMono } from "geist/font/mono";
 import { Header } from "@/components/ui/header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { SquircleProvider } from "@/components/ui/squircle-filter";
+import { FirstVisitStairs } from "@/components/client/first-visit-stairs";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -38,13 +40,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="relative flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
-          </div>
-          <Toaster />
+          <FirstVisitStairs>
+            <SquircleProvider>
+              <div className="relative flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">
+                  {children}
+                </main>
+              </div>
+              <Toaster />
+            </SquircleProvider>
+          </FirstVisitStairs>
         </ThemeProvider>
       </body>
     </html>

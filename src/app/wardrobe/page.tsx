@@ -250,6 +250,7 @@ export default function WardrobePage() {
             >
               <Card 
                 hoverable
+                squircle
                 className="group overflow-hidden"
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}

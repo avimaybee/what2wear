@@ -262,3 +262,42 @@
     }
   }
 }
+
+/* Squircle filter utilities - Apple-style smooth rounded corners */
+@layer utilities {
+  .squircle-filter {
+    filter: url(#SkiperSquiCircleFilterLayout);
+    /* Fallback for unsupported browsers */
+    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
+      border-radius: var(--radius-xl);
+    }
+  }
+  
+  .squircle-sm {
+    filter: url(#SkiperSquiCircleFilterLayout);
+    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
+      border-radius: var(--radius-sm);
+    }
+  }
+  
+  .squircle-md {
+    filter: url(#SkiperSquiCircleFilterLayout);
+    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
+      border-radius: var(--radius-md);
+    }
+  }
+  
+  .squircle-lg {
+    filter: url(#SkiperSquiCircleFilterLayout);
+    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
+      border-radius: var(--radius-lg);
+    }
+  }
+  
+  .squircle-xl {
+    filter: url(#SkiperSquiCircleFilterLayout);
+    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
+      border-radius: var(--radius-xl);
+    }
+  }
+}
