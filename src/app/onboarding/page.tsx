@@ -96,13 +96,31 @@ export default function OnboardingPage() {
         },
         (error) => {
           console.error("Location error:", error);
-          // Use default location
-          const defaultLocation = { lat: 40.7128, lon: -74.0060 };
-          setLocation(defaultLocation);
-          setLocationGranted(true);
-          toast("Using default location (New York)", { icon: "📍" });
+          
+          // Show specific error message
+          if (error.code === error.PERMISSION_DENIED) {
+            toast.error("Location permission denied. Please enable it in your browser settings.", {
+              duration: 5000,
+            });
+          } else {
+            toast.error("Failed to get location. Using default location.", {
+              duration: 3000,
+            });
+            // Use default location as fallback
+            const defaultLocation = { lat: 40.7128, lon: -74.0060 };
+            setLocation(defaultLocation);
+            setLocationGranted(true);
+            localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
         }
       );
+    } else {
+      toast.error("Geolocation is not supported by your browser");
     }
   };
 
@@ -140,7 +158,7 @@ export default function OnboardingPage() {
 
       // Save profile
       const response = await fetch("/api/settings/profile", {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -155,19 +173,29 @@ export default function OnboardingPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save profile");
+        const errorData = await response.json();
+        console.error("Profile save error:", errorData);
+        throw new Error(errorData.error || "Failed to save profile");
       }
 
-      toast.success("Profile saved! Let's get started! 🎉", { duration: 3000 });
+      const result = await response.json();
       
-      // Redirect to home
-      setTimeout(() => {
-        router.push("/");
-        router.refresh();
-      }, 1000);
+      if (result.success) {
+        toast.success("Profile saved! Let's get started! 🎉", { duration: 3000 });
+        
+        // Redirect to home after a short delay
+        setTimeout(() => {
+          router.push("/");
+          router.refresh();
+        }, 1000);
+      } else {
+        throw new Error(result.error || "Failed to save profile");
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
-      toast.error("Failed to save profile. Please try again.");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save profile. Please try again."
+      );
       setSaving(false);
     }
   };

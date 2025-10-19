@@ -55,7 +55,7 @@ export async function updateSession(request: NextRequest) {
   if (user && !isOnboarding && !isAuthPage) {
     try {
       const { data: profile } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('id')
         .eq('id', user.id)
         .single()
