@@ -91,28 +91,28 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
   const uvStatus = getUVStatus(recommendation.uv_index);
 
   return (
-    <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 md:space-y-8 pb-24 md:pb-8">
+    <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-6 pb-20 md:pb-6">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-2"
+        className="space-y-1"
       >
         <div className="flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
             Today&apos;s Outfit
           </h1>
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Curated just for you based on weather and your schedule
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6 md:space-y-8">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           {/* Outfit Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -120,13 +120,13 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <Card className="overflow-hidden">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-2xl md:text-3xl">Your Perfect Look</CardTitle>
-                <CardDescription className="text-base leading-relaxed">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-xl md:text-2xl">Your Perfect Look</CardTitle>
+                <CardDescription className="text-sm leading-relaxed">
                   {recommendation.reasoning}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 {/* Outfit Items - Carousel on Mobile, Grid on Desktop */}
                 <div>
                   {/* Mobile Carousel (hidden on md+) */}

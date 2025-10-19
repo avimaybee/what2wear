@@ -31,17 +31,14 @@ export const Header = () => {
   return (
     <>
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-filter backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link 
             href="/" 
-            className="flex items-center space-x-3 transition-opacity hover:opacity-80"
+            className="flex items-center transition-opacity hover:opacity-80"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <Shirt className="h-6 w-6 text-primary-foreground" />
-            </div>
             <TextRollAccessible 
-              className="text-2xl md:text-3xl font-bold tracking-tight"
+              className="text-xl md:text-2xl font-bold tracking-tight leading-none py-1"
               as="span"
             >
               setmyfit
@@ -59,9 +56,9 @@ export const Header = () => {
                   key={route.href}
                   href={route.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                    "hover:bg-accent hover:text-accent-foreground",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    "flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                    "hover:bg-accent/50 hover:text-accent-foreground",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                     isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground"
                   )}
                   aria-current={isActive ? 'page' : undefined}
@@ -84,8 +81,8 @@ export const Header = () => {
       </header>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-safe">
-        <div className="grid h-16 grid-cols-3 gap-1 px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border/40 bg-background/95 backdrop-filter backdrop-blur-md supports-[backdrop-filter]:bg-background/60 pb-safe">
+        <div className="grid h-14 grid-cols-3 gap-1 px-2">
           {routes.map((route) => {
             const Icon = route.icon;
             const isActive = pathname === route.href;
@@ -95,7 +92,7 @@ export const Header = () => {
                 key={route.href}
                 href={route.href}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 rounded-md transition-colors",
+                  "flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors",
                   "active:bg-accent",
                   isActive 
                     ? "text-foreground" 

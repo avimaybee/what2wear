@@ -155,16 +155,16 @@ export default function WardrobePage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6 pb-20 md:pb-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-serif font-bold text-foreground mb-1">Virtual Wardrobe</h1>
-          <p className="text-foreground-secondary">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Virtual Wardrobe</h1>
+          <p className="text-sm text-muted-foreground">
             Manage your clothing collection ({filteredItems.length} items)
           </p>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>
+        <Button onClick={() => setShowAddModal(true)} size="sm">
           <Plus className="h-4 w-4 mr-2" />
           Add Item
         </Button>
@@ -174,7 +174,7 @@ export default function WardrobePage() {
       <div className="block lg:hidden">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" size="sm" className="w-full">
               <Filter className="h-4 w-4 mr-2" />
               Filter by Type {filterType !== "All" && `(${filterType})`}
             </Button>
@@ -186,6 +186,7 @@ export default function WardrobePage() {
             <div className="mt-6 space-y-2">
               <Button
                 className="w-full justify-start"
+                size="sm"
                 variant={filterType === "All" ? "secondary" : "ghost"}
                 onClick={() => setFilterType("All")}
               >
@@ -195,6 +196,7 @@ export default function WardrobePage() {
                 <Button
                   key={type}
                   className="w-full justify-start"
+                  size="sm"
                   variant={filterType === type ? "secondary" : "ghost"}
                   onClick={() => setFilterType(type)}
                 >
@@ -207,10 +209,10 @@ export default function WardrobePage() {
       </div>
 
       <Card className="hidden lg:block">
-        <CardContent className="py-4">
+        <CardContent className="py-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <Filter className="h-4 w-4 text-foreground-secondary" />
-            <span className="text-sm text-foreground-secondary mr-2">Filter by type:</span>
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground mr-2">Filter by type:</span>
             <Button
               size="sm"
               variant={filterType === "All" ? "secondary" : "outline"}
@@ -234,7 +236,7 @@ export default function WardrobePage() {
 
       {/* Wardrobe Grid with Enhanced Cards */}
       <AnimatePresence mode="popLayout">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
           {filteredItems.map((item, idx) => (
             <motion.div
               key={item.id}
@@ -244,14 +246,14 @@ export default function WardrobePage() {
               exit="hidden"
               transition={{ 
                 duration: motionDurations.fast / 1000,
-                delay: idx * 0.05 
+                delay: idx * 0.02 
               }}
               layout
             >
               <Card 
                 hoverable
                 squircle
-                className="group overflow-hidden"
+                className="group overflow-hidden transition-shadow hover:shadow-md"
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
@@ -261,8 +263,7 @@ export default function WardrobePage() {
                     src={item.image_url}
                     alt={item.name}
                     className="w-full h-full object-cover"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
+                    
                   />
                   
                   {/* Type Badge */}
