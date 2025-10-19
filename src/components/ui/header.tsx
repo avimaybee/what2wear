@@ -117,7 +117,7 @@ export const Header = () => {
       </nav>
 
       {/* Spacer for mobile bottom nav */}
-      <div className="h-16 md:hidden" />
+      <div className="h-14 md:hidden" />
     </>
   );
 };

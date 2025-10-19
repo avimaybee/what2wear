@@ -301,3 +301,77 @@
     }
   }
 }
+/* Liquid Glass Material Effects - Apple Design Language */
+@layer utilities {
+  .glass-ultra-thin {
+    background: hsl(var(--background) / 0.7);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+  
+  .glass-thin {
+    background: hsl(var(--background) / 0.8);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+  
+  .glass-regular {
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.4);
+  }
+  
+  .glass-thick {
+    background: hsl(var(--card) / 0.9);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+  
+  /* Glass with subtle shadow for depth */
+  .glass-elevated {
+    @apply glass-regular shadow-lg;
+  }
+  
+  /* Fallback for browsers without backdrop-filter support */
+  @supports not (backdrop-filter: blur(20px)) {
+    .glass-ultra-thin,
+    .glass-thin,
+    .glass-regular,
+    .glass-thick {
+      background: hsl(var(--card));
+    }
+  }
+}
+
+/* Liquid Glass Material Effects - Tailwind v4 syntax */
+@utility glass-ultra-thin {
+  background: hsl(var(--background) / 0.7);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid hsl(var(--border) / 0.2);
+}
+
+@utility glass-thin {
+  background: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid hsl(var(--border) / 0.3);
+}
+
+@utility glass-regular {
+  background: hsl(var(--card) / 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid hsl(var(--border) / 0.4);
+}
+
+@utility glass-thick {
+  background: hsl(var(--card) / 0.9);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid hsl(var(--border) / 0.5);
+}

@@ -157,7 +157,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                                 alt={item.name}
                                 fill
                                 sizes="75vw"
-                                className="object-cover transition-transform group-hover:scale-105"
+                                className="object-cover transition-opacity group-hover:opacity-90"
                                 priority={index === 0}
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent">
@@ -192,7 +192,7 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                           alt={item.name}
                           fill
                           sizes="(max-width: 1200px) 25vw, 200px"
-                          className="object-cover transition-transform group-hover:scale-105"
+                          className="object-cover transition-opacity group-hover:opacity-90"
                           priority={index === 0}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all">
