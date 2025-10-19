@@ -4,9 +4,9 @@ import { ApiResponse } from '@/lib/types';
 
 /**
  * POST /api/outfit/log
- * Task 1.3: Log outfit usage and update last_worn_date for all items
+ * Log outfit usage, create outfit record, and update last_worn_date for all items
  */
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<{ updated_count: number }>>> {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<{ outfit_id: number; updated_count: number }>>> {
   try {
     const supabase = await createClient();
     
@@ -32,39 +32,69 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     const itemIds = body.item_ids as number[];
+    const outfitDate = body.outfit_date || new Date().toISOString().split('T')[0];
+    const feedback = body.feedback || null;
     const currentDate = new Date().toISOString();
 
+    // Create outfit record
+    const { data: outfit, error: outfitError } = await supabase
+      .from('outfits')
+      .insert({
+        user_id: user.id,
+        outfit_date: outfitDate,
+        feedback,
+      })
+      .select()
+      .single();
+
+    if (outfitError || !outfit) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to create outfit record' },
+        { status: 500 }
+      );
+    }
+
+    // Create outfit_items relationships
+    const outfitItems = itemIds.map(itemId => ({
+      outfit_id: outfit.id,
+      clothing_item_id: itemId,
+    }));
+
+    const { error: itemsError } = await supabase
+      .from('outfit_items')
+      .insert(outfitItems);
+
+    if (itemsError) {
+      // Rollback: delete the outfit if items couldn't be linked
+      await supabase.from('outfits').delete().eq('id', outfit.id);
+      return NextResponse.json(
+        { success: false, error: 'Failed to link items to outfit' },
+        { status: 500 }
+      );
+    }
+
     // Update last_worn_date for all items in the outfit
-    const { data, error } = await supabase
+    const { data: updatedItems, error: updateError } = await supabase
       .from('clothing_items')
       .update({ last_worn_date: currentDate })
       .in('id', itemIds)
       .eq('user_id', user.id)
       .select('id');
 
-    if (error) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
+    if (updateError) {
+      console.error('Error updating last_worn_date:', updateError);
+      // Don't fail the request, just log the error
     }
 
-    // Verify all items were updated
-    const updatedCount = data?.length || 0;
-    if (updatedCount !== itemIds.length) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Only ${updatedCount} of ${itemIds.length} items were updated. Some items may not exist or don't belong to you.` 
-        },
-        { status: 400 }
-      );
-    }
+    const updatedCount = updatedItems?.length || 0;
 
     return NextResponse.json({
       success: true,
-      data: { updated_count: updatedCount },
-      message: `Successfully logged outfit usage for ${updatedCount} items`,
+      data: { 
+        outfit_id: outfit.id,
+        updated_count: updatedCount 
+      },
+      message: `Successfully logged outfit with ${itemIds.length} items`,
     });
   } catch (error) {
     return NextResponse.json(

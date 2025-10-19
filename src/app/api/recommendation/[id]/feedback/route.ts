@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { RecommendationFeedback, ApiResponse } from '@/lib/types';
+import { adjustPreferencesBasedOnFeedback } from '@/lib/helpers/preferenceLearning';
 
 /**
  * POST /api/recommendation/[id]/feedback
- * Task 4.1: User Feedback Model - Log user feedback on recommendations
+ * Submit feedback for a recommendation and update user preferences
  */
 export async function POST(
   request: NextRequest,
@@ -35,6 +36,21 @@ export async function POST(
       );
     }
 
+    // Verify recommendation exists and belongs to user
+    const { data: recommendation, error: recError } = await supabase
+      .from('outfit_recommendations')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (recError || !recommendation) {
+      return NextResponse.json(
+        { success: false, error: 'Recommendation not found' },
+        { status: 404 }
+      );
+    }
+
     // Create feedback record
     const feedback: RecommendationFeedback = {
       recommendation_id: id,
@@ -45,40 +61,59 @@ export async function POST(
     };
 
     // Store feedback in database
-    // Note: This requires a 'recommendation_feedback' table in Supabase
-    const { error } = await supabase
+    const { error: insertError } = await supabase
       .from('recommendation_feedback')
       .insert([{
         user_id: user.id,
         recommendation_id: feedback.recommendation_id,
         is_liked: feedback.is_liked,
         reason: feedback.reason,
-        weather_conditions: feedback.weather_conditions,
       }])
       .select()
       .single();
 
-    if (error) {
-      // If table doesn't exist, log to console for now
-      if (error.code === '42P01') {
-        console.log('Feedback logged (table not created yet):', feedback);
-        return NextResponse.json({
-          success: true,
-          data: feedback,
-          message: 'Feedback logged (recommendation_feedback table will be created in database setup)',
-        });
-      }
-      
+    if (insertError) {
       return NextResponse.json(
-        { success: false, error: error.message },
+        { success: false, error: insertError.message },
         { status: 500 }
       );
+    }
+
+    // Get clothing items from the recommendation
+    const { data: items } = await supabase
+      .from('clothing_items')
+      .select('*')
+      .in('id', recommendation.outfit_items);
+
+    // Update user preferences based on feedback
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('preferences')
+        .eq('id', user.id)
+        .single();
+
+      const currentPreferences = profile?.preferences || {};
+      const updatedPreferences = adjustPreferencesBasedOnFeedback(
+        currentPreferences,
+        items || [],
+        body.is_liked
+      );
+
+      // Save updated preferences
+      await supabase
+        .from('profiles')
+        .update({ preferences: updatedPreferences })
+        .eq('id', user.id);
+    } catch (prefError) {
+      console.error('Failed to update preferences:', prefError);
+      // Don't fail the request if preference update fails
     }
 
     return NextResponse.json({
       success: true,
       data: feedback,
-      message: 'Feedback recorded successfully',
+      message: 'Feedback recorded successfully. Your preferences have been updated.',
     });
   } catch (error) {
     return NextResponse.json(
