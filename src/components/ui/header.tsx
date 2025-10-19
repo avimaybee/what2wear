@@ -1,11 +1,15 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Shirt, Settings, Home } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Shirt, Settings, Home, LogOut, User as UserIcon } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { TextRollAccessible } from '@/components/ui/text-roll';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 const routes = [
   {
@@ -27,6 +31,41 @@ const routes = [
 
 export const Header = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+    
+    // Get initial user
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+      setLoading(false);
+    };
+    
+    getUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/auth/sign-in');
+    router.refresh();
+  };
+
+  // Don't show header on auth pages
+  if (pathname?.startsWith('/auth') || pathname === '/onboarding') {
+    return null;
+  }
 
   return (
     <>
@@ -68,8 +107,27 @@ export const Header = () => {
                 </Link>
               );
             })}
-            <div className="ml-2 flex items-center">
+            
+            <div className="ml-2 flex items-center gap-2">
+              {!loading && user && (
+                <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-accent/50 text-xs">
+                  <UserIcon className="h-3 w-3" />
+                  <span className="max-w-[120px] truncate">
+                    {user.email?.split('@')[0]}
+                  </span>
+                </div>
+              )}
               <ThemeToggle />
+              {!loading && user && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="h-8 px-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </nav>
 

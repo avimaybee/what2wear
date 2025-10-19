@@ -32,8 +32,47 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: This line is required to refresh the session.
-  await supabase.auth.getUser()
+  // Refresh the session
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const url = request.nextUrl.clone()
+  const isAuthPage = url.pathname.startsWith('/auth')
+  const isOnboarding = url.pathname === '/onboarding'
+
+  // If user is not authenticated and trying to access protected routes
+  if (!user && !isAuthPage && !isOnboarding) {
+    url.pathname = '/auth/sign-in'
+    return NextResponse.redirect(url)
+  }
+
+  // If user is authenticated and on auth pages, redirect to home
+  if (user && isAuthPage) {
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
+
+  // Check if user needs onboarding (new user without profile)
+  if (user && !isOnboarding && !isAuthPage) {
+    try {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      // If no profile exists, redirect to onboarding
+      if (!profile) {
+        url.pathname = '/onboarding'
+        return NextResponse.redirect(url)
+      }
+    } catch (error) {
+      // Profile doesn't exist, redirect to onboarding
+      if (!isOnboarding) {
+        url.pathname = '/onboarding'
+        return NextResponse.redirect(url)
+      }
+    }
+  }
 
   return supabaseResponse
 }

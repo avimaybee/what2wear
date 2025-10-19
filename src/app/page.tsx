@@ -1,19 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { DashboardClient } from "@/components/client/dashboard-client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, AlertCircle } from "lucide-react";
+import { MapPin, AlertCircle, LogIn } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
 
 export default function HomePage() {
+  const router = useRouter();
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [recommendationData, setRecommendationData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthError, setIsAuthError] = useState(false);
   const [requestingLocation, setRequestingLocation] = useState(false);
 
   // Request user location
@@ -61,6 +64,7 @@ export default function HomePage() {
 
       if (!session) {
         setError("Please sign in to get outfit recommendations");
+        setIsAuthError(true);
         setLoading(false);
         return;
       }
@@ -167,25 +171,39 @@ export default function HomePage() {
         <Card className="max-w-md w-full">
           <CardHeader className="text-center space-y-2">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-            <h2 className="text-2xl font-bold">Oops! Something went wrong</h2>
+            <h2 className="text-2xl font-bold">
+              {isAuthError ? "Authentication Required" : "Oops! Something went wrong"}
+            </h2>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-center text-muted-foreground">{error}</p>
             <div className="flex gap-2">
-              <Button
-                onClick={() => location && fetchRecommendation(location)}
-                className="flex-1"
-              >
-                Try Again
-              </Button>
-              <Button
-                onClick={requestLocation}
-                variant="outline"
-                className="flex-1"
-              >
-                <MapPin className="h-4 w-4 mr-2" />
-                Change Location
-              </Button>
+              {isAuthError ? (
+                <Button
+                  onClick={() => router.push("/auth/sign-in")}
+                  className="w-full"
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => location && fetchRecommendation(location)}
+                    className="flex-1"
+                  >
+                    Try Again
+                  </Button>
+                  <Button
+                    onClick={requestLocation}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Change Location
+                  </Button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
