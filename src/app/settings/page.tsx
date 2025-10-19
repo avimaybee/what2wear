@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/toaster";
-import { Save, User, MapPin, Thermometer, Shuffle, Settings as SettingsIcon } from "lucide-react";
+import { Save, User, MapPin, Thermometer, Shuffle, Settings as SettingsIcon, HelpCircle } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
   // Mock initial settings - In production, fetch from GET /api/settings/profile
@@ -19,6 +21,19 @@ export default function SettingsPage() {
   const [name, setName] = useState("John Doe");
   const [region, setRegion] = useState("New York, USA");
   const [isSaving, setIsSaving] = useState(false);
+  const [sliderPosition, setSliderPosition] = useState(50);
+  const sliderRef = useRef<HTMLInputElement>(null);
+
+  // Calculate slider thumb position for dynamic label
+  useEffect(() => {
+    if (sliderRef.current) {
+      const min = -2;
+      const max = 2;
+      const value = temperatureSensitivity;
+      const percentage = ((value - min) / (max - min)) * 100;
+      setSliderPosition(percentage);
+    }
+  }, [temperatureSensitivity]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -77,6 +92,18 @@ export default function SettingsPage() {
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
               Profile Information
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="inline-flex" aria-label="Profile help">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent showArrow>
+                    <p className="max-w-xs">Your profile information helps personalize outfit recommendations based on your location and preferences.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </CardTitle>
             <CardDescription>Update your personal details</CardDescription>
           </CardHeader>
@@ -128,6 +155,18 @@ export default function SettingsPage() {
             <CardTitle className="flex items-center gap-2">
               <Thermometer className="h-5 w-5 text-primary" />
               Temperature Sensitivity
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="inline-flex" aria-label="Temperature sensitivity help">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent showArrow>
+                    <p className="max-w-xs">Tell us if you prefer warmer or cooler clothing. This adjusts outfit recommendations to match your comfort level.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </CardTitle>
             <CardDescription>
               How do you typically feel about temperature?
@@ -149,17 +188,57 @@ export default function SettingsPage() {
                 </motion.div>
               </div>
 
-              {/* Slider */}
+              {/* Enhanced Slider with Dynamic Label */}
               <div className="space-y-3">
-                <input
-                  type="range"
-                  min="-2"
-                  max="2"
-                  step="1"
-                  value={temperatureSensitivity}
-                  onChange={(e) => setTemperatureSensitivity(Number(e.target.value))}
-                  className="w-full h-3 bg-muted rounded-lg appearance-none cursor-pointer accent-primary [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer hover:[&::-webkit-slider-thumb]:bg-primary/90 transition-all"
-                />
+                <div className="relative pt-8 pb-2">
+                  {/* Dynamic floating label above thumb */}
+                  <motion.div
+                    className="absolute top-0 -translate-x-1/2 pointer-events-none"
+                    animate={{ 
+                      left: `${sliderPosition}%`,
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  >
+                    <motion.div
+                      className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm font-semibold shadow-lg whitespace-nowrap"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {getSensitivityLabel(temperatureSensitivity)}
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-primary" />
+                    </motion.div>
+                  </motion.div>
+
+                  <input
+                    ref={sliderRef}
+                    type="range"
+                    min="-2"
+                    max="2"
+                    step="1"
+                    value={temperatureSensitivity}
+                    onChange={(e) => setTemperatureSensitivity(Number(e.target.value))}
+                    className={cn(
+                      "w-full h-3 bg-muted rounded-lg appearance-none cursor-pointer accent-primary",
+                      "[&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:rounded-full",
+                      "[&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer",
+                      "[&::-webkit-slider-thumb]:shadow-md hover:[&::-webkit-slider-thumb]:shadow-lg",
+                      "hover:[&::-webkit-slider-thumb]:bg-primary/90 transition-all",
+                      // Ensure 44x44px touch target
+                      "[&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-10",
+                      "touch-pan-x"
+                    )}
+                    style={{
+                      minHeight: "44px", // WCAG touch target minimum
+                      padding: "16px 0",
+                    }}
+                    aria-label="Temperature sensitivity"
+                    aria-valuemin={-2}
+                    aria-valuemax={2}
+                    aria-valuenow={temperatureSensitivity}
+                    aria-valuetext={getSensitivityLabel(temperatureSensitivity)}
+                  />
+                </div>
                 <div className="flex justify-between text-xs text-muted-foreground font-medium px-1">
                   <span>Very Cold</span>
                   <span>Neutral</span>
@@ -228,39 +307,43 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            {/* Quick Presets */}
+            {/* Quick Presets with proper touch targets */}
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Quick Presets:</p>
               <div className="grid grid-cols-2 sm:flex gap-2">
                 <Button
-                  size="sm"
+                  size="lg"
                   variant={varietyDays === 3 ? "default" : "outline"}
                   onClick={() => setVarietyDays(3)}
-                  className="transition-all"
+                  className="transition-all min-h-[44px] min-w-[44px]"
+                  aria-pressed={varietyDays === 3}
                 >
                   3 days
                 </Button>
                 <Button
-                  size="sm"
+                  size="lg"
                   variant={varietyDays === 7 ? "default" : "outline"}
                   onClick={() => setVarietyDays(7)}
-                  className="transition-all"
+                  className="transition-all min-h-[44px] min-w-[44px]"
+                  aria-pressed={varietyDays === 7}
                 >
                   1 week
                 </Button>
                 <Button
-                  size="sm"
+                  size="lg"
                   variant={varietyDays === 14 ? "default" : "outline"}
                   onClick={() => setVarietyDays(14)}
-                  className="transition-all"
+                  className="transition-all min-h-[44px] min-w-[44px]"
+                  aria-pressed={varietyDays === 14}
                 >
                   2 weeks
                 </Button>
                 <Button
-                  size="sm"
+                  size="lg"
                   variant={varietyDays === 30 ? "default" : "outline"}
                   onClick={() => setVarietyDays(30)}
-                  className="transition-all"
+                  className="transition-all min-h-[44px] min-w-[44px]"
+                  aria-pressed={varietyDays === 30}
                 >
                   1 month
                 </Button>

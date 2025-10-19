@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { Toaster as HotToaster, toast as hotToast } from "react-hot-toast";
 
 export function Toaster() {

@@ -49,6 +49,24 @@ export function HourlyForecast() {
     setHourlyData(data);
   }, []);
 
+  // Keyboard navigation (left/right arrows)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (hourlyData.length === 0) return;
+      
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setSelectedHour((prev) => (prev > 0 ? prev - 1 : hourlyData.length - 1));
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setSelectedHour((prev) => (prev < hourlyData.length - 1 ? prev + 1 : 0));
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [hourlyData.length]);
+
   if (hourlyData.length === 0) {
     return (
       <Card>
@@ -90,32 +108,52 @@ export function HourlyForecast() {
         </CardHeader>
         <CardContent>
           <div className="relative">
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
+            <div 
+              className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory"
+              role="radiogroup"
+              aria-label="Hourly weather forecast"
+            >
               {hourlyData.map((hour, idx) => (
                 <motion.button
                   key={idx}
                   onClick={() => setSelectedHour(idx)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: selectedHour === idx ? 1.05 : 1 }}
+                  transition={{ 
+                    duration: 0.2,
+                    delay: idx * 0.05,
+                  }}
                   className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-lg border min-w-[90px] snap-center transition-all",
+                    "flex flex-col items-center gap-2 p-4 rounded-lg border min-w-[90px] snap-center transition-all duration-200",
                     selectedHour === idx
-                      ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105"
-                      : "bg-card border-border hover:border-primary hover:shadow-md"
+                      ? "bg-primary text-primary-foreground border-primary shadow-lg ring-2 ring-primary ring-offset-2 ring-offset-background"
+                      : "bg-card border-border hover:border-primary hover:shadow-md hover:scale-[1.02]"
                   )}
-                  aria-label={`Weather at ${hour.hour}: ${formatTemp(hour.temp)}`}
-                  aria-pressed={selectedHour === idx}
+                  role="radio"
+                  aria-checked={selectedHour === idx}
+                  aria-label={`${hour.hour}, ${formatTemp(hour.temp)}, ${hour.condition}. ${selectedHour === idx ? 'Selected' : 'Select for details'}`}
+                  tabIndex={selectedHour === idx ? 0 : -1}
                 >
                   <span className={cn(
-                    "text-xs font-medium",
-                    selectedHour === idx && "text-primary-foreground"
+                    "text-xs font-medium transition-all",
+                    selectedHour === idx && "text-primary-foreground font-bold"
                   )}>
                     {hour.hour}
                   </span>
-                  {getWeatherIcon(hour.condition, selectedHour === idx)}
+                  <motion.div
+                    animate={selectedHour === idx ? { 
+                      scale: [1, 1.2, 1],
+                      rotate: [0, 5, -5, 0]
+                    } : {}}
+                    transition={{ duration: 0.4 }}
+                  >
+                    {getWeatherIcon(hour.condition, selectedHour === idx)}
+                  </motion.div>
                   <span className={cn(
-                    "text-sm font-semibold",
-                    selectedHour === idx && "text-primary-foreground"
+                    "text-sm font-semibold transition-all",
+                    selectedHour === idx && "text-primary-foreground font-bold text-base"
                   )}>
                     {formatTemp(hour.temp)}
                   </span>
@@ -123,9 +161,16 @@ export function HourlyForecast() {
               ))}
             </div>
             
-            {/* Fade gradient on edges for better UX */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+            {/* Edge fade gradients to indicate scrollable area */}
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background via-background/50 to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background via-background/50 to-transparent pointer-events-none" />
+          </div>
+          
+          {/* Keyboard hint */}
+          <div className="mt-3 text-center">
+            <p className="text-xs text-muted-foreground">
+              Use <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">←</kbd> <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">→</kbd> keys to navigate
+            </p>
           </div>
         </CardContent>
       </Card>

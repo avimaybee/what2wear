@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MetricCard } from "@/components/ui/metric-card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toaster";
 import {
   ThumbsUp,
@@ -18,9 +17,6 @@ import {
   AlertTriangle,
   Sparkles,
   Calendar,
-  Eye,
-  TrendingUp,
-  CloudRain,
 } from "lucide-react";
 import { formatTemp, cn } from "@/lib/utils";
 import type { IRecommendation } from "@/types";
@@ -33,19 +29,28 @@ interface DashboardClientProps {
 export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const [isLogging, setIsLogging] = useState(false);
+  const [logSuccess, setLogSuccess] = useState(false);
 
   const handleWearOutfit = async () => {
     setIsLogging(true);
     const itemIds = recommendation.outfit.map((item) => item.id);
     
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1200));
     
     console.log("Logging outfit:", itemIds);
-    toast.success("Outfit logged successfully! 🎉", {
-      duration: 3000,
-    });
-    setIsLogging(false);
+    setLogSuccess(true);
+    
+    // Show success animation then reset
+    setTimeout(() => {
+      setIsLogging(false);
+      toast.success("Outfit logged successfully! 🎉", {
+        duration: 3000,
+      });
+      
+      // Reset success state after animation
+      setTimeout(() => setLogSuccess(false), 600);
+    }, 800);
   };
 
   const handleFeedback = (type: "up" | "down") => {
@@ -158,29 +163,88 @@ export const DashboardClient = ({ recommendation }: DashboardClientProps) => {
                   ))}
                 </div>
 
-                {/* Action Buttons */}
+                {/* Enhanced Action Button with Success Animation */}
                 <div className="flex flex-col gap-3 pt-2">
                   <Button
                     size="lg"
                     onClick={handleWearOutfit}
                     disabled={isLogging}
-                    className="w-full text-base font-semibold h-12 shadow-lg hover:shadow-xl transition-all"
+                    variant={logSuccess ? "success" : "default"}
+                    className={cn(
+                      "w-full text-base font-semibold h-14 shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden",
+                      logSuccess && "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                    )}
+                    aria-busy={isLogging}
                   >
-                    {isLogging ? (
-                      <>
+                    <AnimatePresence mode="wait">
+                      {logSuccess ? (
                         <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          key="success"
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{ 
+                            type: "spring", 
+                            stiffness: 200, 
+                            damping: 15 
+                          }}
+                          className="flex items-center"
+                        >
+                          <motion.svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-6 w-6 mr-2"
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 0.5, ease: "easeOut" }}
+                          >
+                            <motion.path d="M20 6L9 17l-5-5" />
+                          </motion.svg>
+                          Logged!
+                        </motion.div>
+                      ) : isLogging ? (
+                        <motion.div
+                          key="loading"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="flex items-center"
+                        >
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          >
+                            <Sparkles className="h-5 w-5 mr-2" />
+                          </motion.div>
+                          Processing...
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="default"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="flex items-center"
                         >
                           <Sparkles className="h-5 w-5 mr-2" />
+                          Wear This Outfit
                         </motion.div>
-                        Logging...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-5 w-5 mr-2" />
-                        Wear This Outfit
-                      </>
+                      )}
+                    </AnimatePresence>
+                    
+                    {/* Ripple effect on success */}
+                    {logSuccess && (
+                      <motion.div
+                        className="absolute inset-0 bg-white/20"
+                        initial={{ scale: 0, opacity: 1 }}
+                        animate={{ scale: 2, opacity: 0 }}
+                        transition={{ duration: 0.6 }}
+                      />
                     )}
                   </Button>
 
