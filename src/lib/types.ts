@@ -190,11 +190,17 @@ export interface RecommendationFeedback {
 // API Response Types
 // ============================================================================
 
-export interface ApiResponse<T = unknown> {
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
   message?: string;
+  validation_errors?: ValidationError[];
 }
 
 export interface PaginatedResponse<T> {

@@ -8,36 +8,33 @@ import {
   adjustInsulationForActivity,
   getRecommendation,
 } from '@/lib/helpers/recommendationEngine';
+import { 
+  validateBody, 
+  withValidation, 
+  recommendationRequestSchema 
+} from '@/lib/validation';
 
 /**
  * POST /api/recommendation
  * Generate outfit recommendation based on weather, calendar, and user preferences
+ * UPDATED: Recommendation #4 - Added comprehensive validation
  */
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> {
-  try {
-    const supabase = await createClient();
-    
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+export const POST = withValidation(async (request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> => {
+  const supabase = await createClient();
+  
+  // Get authenticated user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
 
-    // Parse request body
-    const body = await request.json();
-    const { lat, lon } = body;
-    const _occasion = ""; // Reserved for future use
-
-    if (!lat || !lon) {
-      return NextResponse.json(
-        { success: false, error: 'Latitude and longitude are required' },
-        { status: 400 }
-      );
-    }
+  // Validate and sanitize request body
+  const validatedData = await validateBody(request, recommendationRequestSchema);
+  const { lat, lon, occasion = "" } = validatedData;
 
     // Fetch user's wardrobe
     const { data: wardrobeItems, error: wardrobeError } = await supabase
@@ -185,25 +182,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         id: savedRecommendation?.id,
       },
     });
-  } catch (error) {
-    console.error('Recommendation generation error:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      },
-      { status: 500 }
-    );
-  }
-}
+});
 
 /**
  * GET /api/recommendation
  * Get latest recommendation for the user
+ * UPDATED: Recommendation #4 - Added validation middleware
  */
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> {
-  try {
-    const supabase = await createClient();
+export const GET = withValidation(async (request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> => {
+  const supabase = await createClient();
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -250,13 +237,4 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         },
       },
     });
-  } catch (error) {
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      },
-      { status: 500 }
-    );
-  }
-}
+});
