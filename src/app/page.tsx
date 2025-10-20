@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useRouter } from "next/navigation";
-import { DashboardClient } from "@/components/client/dashboard-client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, AlertCircle, LogIn, Shirt } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
+
+// Lazy load heavy components
+const DashboardClient = lazy(() => 
+  import("@/components/client/dashboard-client").then(mod => ({ default: mod.DashboardClient }))
+);
 
 export default function HomePage() {
   const router = useRouter();
@@ -233,12 +237,20 @@ export default function HomePage() {
   // Success - show dashboard with real data
   return (
     <div className="min-h-screen bg-background">
-      <DashboardClient 
-        recommendationData={recommendationData}
-        location={location}
-        onLocationChange={requestLocation}
-        onRefresh={() => location && fetchRecommendation(location)}
-      />
+      <Suspense fallback={
+        <div className="container mx-auto p-4 space-y-4">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      }>
+        <DashboardClient 
+          recommendationData={recommendationData}
+          location={location}
+          onLocationChange={requestLocation}
+          onRefresh={() => location && fetchRecommendation(location)}
+        />
+      </Suspense>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   trackDatabaseOperation,
   metricsCollector 
 } from '@/lib/monitoring';
+import { cache } from '@/lib/cache';
 
 /**
  * GET /api/wardrobe
@@ -113,6 +114,9 @@ export const POST = withMonitoring(withValidation(async (request: NextRequest): 
       { status: 500 }
     );
   }
+
+  // Invalidate recommendation cache when wardrobe changes
+  await cache.invalidateUserCache(user.id);
 
   // Track wardrobe item addition
   metricsCollector.trackWardrobeItemAdded(user.id, validatedData.type);

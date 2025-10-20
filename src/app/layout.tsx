@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { SquircleProvider } from "@/components/ui/squircle-filter";
 import { FirstVisitStairs } from "@/components/client/first-visit-stairs";
+import { WebVitalsTracker } from "@/components/client/web-vitals-tracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
       <body className="min-h-screen font-sans antialiased">
+        <WebVitalsTracker />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
