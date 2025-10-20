@@ -35,6 +35,14 @@ Sentry.init({
   // Capture 100% of errors in development, 10% in production
   enabled: Boolean(SENTRY_DSN),
 
+  // Distributed tracing - propagate trace context to backend
+  tracePropagationTargets: [
+    'localhost',
+    /^https:\/\/.*\.vercel\.app/,
+    /^https:\/\/setmyfit\.com/,
+    /^\/api\//,  // Internal API routes
+  ],
+
   // Integrations
   integrations: [
     // Browser tracing for performance monitoring
@@ -42,6 +50,10 @@ Sentry.init({
       // Track navigation timing
       traceFetch: true,
       traceXHR: true,
+      
+      // Enable distributed tracing for API calls
+      enableLongTask: true,
+      enableInp: true,
     }),
 
     // Replay integration for session replay (useful for debugging)

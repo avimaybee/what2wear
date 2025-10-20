@@ -35,7 +35,7 @@ export interface TraceContext {
   /** Request timestamp */
   timestamp: number;
   /** Additional context metadata */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Span {
@@ -60,7 +60,7 @@ export interface Span {
   /** Operation type */
   operationType: 'api' | 'database' | 'external' | 'internal' | 'user_action';
   /** Span attributes/tags */
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -240,7 +240,7 @@ export function startSpan(
   name: string,
   operationType: Span['operationType'],
   traceContext: TraceContext,
-  attributes: Record<string, any> = {}
+  attributes: Record<string, unknown> = {}
 ): string {
   const spanId = generateSpanId();
   
@@ -272,7 +272,7 @@ export function endSpan(
   spanId: string,
   status: 'success' | 'error' = 'success',
   error?: Error,
-  additionalAttributes: Record<string, any> = {}
+  additionalAttributes: Record<string, unknown> = {}
 ): Span | null {
   const span = activeSpans.get(spanId);
   if (!span) {
@@ -331,16 +331,16 @@ export async function traceOperation<T>(
   operationType: Span['operationType'],
   traceContext: TraceContext,
   operation: () => Promise<T>,
-  attributes: Record<string, any> = {}
+  attributes: Record<string, unknown> = {}
 ): Promise<{ result: T; span: Span | null }> {
   const spanId = startSpan(name, operationType, traceContext, attributes);
 
   try {
     const result = await operation();
-    const span = endSpan(spanId, 'success', undefined, { success: true });
-    return { result, span };
+    const _span = endSpan(spanId, 'success', undefined, { success: true });
+    return { result, span: _span };
   } catch (error) {
-    const span = endSpan(spanId, 'error', error as Error, { 
+    const _span = endSpan(spanId, 'error', error as Error, { 
       success: false,
       errorMessage: (error as Error).message 
     });
@@ -356,16 +356,16 @@ export function traceOperationSync<T>(
   operationType: Span['operationType'],
   traceContext: TraceContext,
   operation: () => T,
-  attributes: Record<string, any> = {}
+  attributes: Record<string, unknown> = {}
 ): { result: T; span: Span | null } {
   const spanId = startSpan(name, operationType, traceContext, attributes);
 
   try {
     const result = operation();
-    const span = endSpan(spanId, 'success', undefined, { success: true });
-    return { result, span };
+    const _span = endSpan(spanId, 'success', undefined, { success: true });
+    return { result, span: _span };
   } catch (error) {
-    const span = endSpan(spanId, 'error', error as Error, { 
+    const _span = endSpan(spanId, 'error', error as Error, { 
       success: false,
       errorMessage: (error as Error).message 
     });

@@ -1,21 +1,29 @@
 /**
- * API Monitoring Middleware
+ * API Monitoring Middleware with Distributed Tracing
  * 
  * Wraps API route handlers with automatic logging, performance tracking,
- * and error handling.
+ * error handling, and distributed tracing.
  * 
  * Features:
  * - Automatic request/response logging
- * - Performance timing
+ * - Distributed tracing with correlation IDs
+ * - Performance timing with span tracking
  * - Error tracking with Sentry
  * - Request context extraction
  * - User identification
+ * - Trace context propagation
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger, LogContext } from './logger';
+import { logger, LogContext, createLogContextFromTrace } from './logger';
 import { performanceMonitor, MetricType } from './performance';
 import { metricsCollector } from './metrics';
+import { 
+  tracing, 
+  createTraceContext, 
+  getTraceHeaders,
+  type TraceContext 
+} from './tracing';
 
 /**
  * API route handler type
@@ -26,9 +34,9 @@ type ApiHandler = (
 ) => Promise<NextResponse>;
 
 /**
- * Extract request context for logging
+ * Extract request context for logging with trace context
  */
-function extractRequestContext(request: NextRequest): LogContext {
+function extractRequestContext(request: NextRequest, traceContext: TraceContext): LogContext {
   const url = new URL(request.url);
   
   return {
@@ -36,6 +44,11 @@ function extractRequestContext(request: NextRequest): LogContext {
     method: request.method,
     ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     userAgent: request.headers.get('user-agent') || 'unknown',
+    requestId: traceContext.requestId,
+    traceId: traceContext.traceId,
+    spanId: traceContext.spanId,
+    userId: traceContext.userId,
+    sessionId: traceContext.sessionId,
   };
 }
 
@@ -60,31 +73,39 @@ async function extractUserId(request: NextRequest): Promise<string | undefined> 
 }
 
 /**
- * Generate a unique request ID for tracing
- */
-function generateRequestId(): string {
-  return `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
-/**
- * Wrap an API route handler with monitoring
+ * Wrap an API route handler with monitoring and distributed tracing
  */
 export function withMonitoring(handler: ApiHandler): ApiHandler {
   return async (request: NextRequest, context?: { params: Promise<Record<string, string>> }) => {
-    const requestId = generateRequestId();
     const startTime = Date.now();
-    const requestContext = extractRequestContext(request);
     const userId = await extractUserId(request);
 
-    // Add request ID to context
-    const fullContext: LogContext = {
-      ...requestContext,
-      requestId,
-      userId,
+    // Create trace context for this request
+    const traceContext = createTraceContext(request, userId);
+
+    // Extract request context with trace info
+    const requestContext = extractRequestContext(request, traceContext);
+
+    // Start a span for this API request
+    const spanId = tracing.startSpan(
+      `API ${requestContext.method} ${requestContext.endpoint}`,
+      'api',
+      traceContext,
+      {
+        method: requestContext.method,
+        endpoint: requestContext.endpoint,
+        userAgent: requestContext.userAgent,
+      }
+    );
+
+    // Update trace context with the span ID
+    const spanTraceContext = {
+      ...traceContext,
+      spanId,
     };
 
-    // Log incoming request
-    logger.info(`Incoming ${requestContext.method} request`, fullContext);
+    // Log incoming request with trace context
+    logger.info(`Incoming ${requestContext.method} request`, requestContext);
 
     // Start performance measurement
     const endMeasurement = performanceMonitor.startMeasurement(
@@ -101,10 +122,16 @@ export function withMonitoring(handler: ApiHandler): ApiHandler {
       // Extract status code
       const statusCode = response.status;
 
+      // End the span successfully
+      tracing.endSpan(spanId, 'success', undefined, {
+        statusCode,
+        duration,
+      });
+
       // Log response
       logger.info(
         `${requestContext.method} ${requestContext.endpoint} - ${statusCode} (${duration}ms)`,
-        fullContext,
+        requestContext,
         { statusCode, duration }
       );
 
@@ -114,7 +141,7 @@ export function withMonitoring(handler: ApiHandler): ApiHandler {
         requestContext.method || 'UNKNOWN',
         duration,
         statusCode,
-        { requestId, userId }
+        { requestId: traceContext.requestId, userId }
       );
 
       // Track metrics for successful requests
@@ -133,20 +160,38 @@ export function withMonitoring(handler: ApiHandler): ApiHandler {
           userId,
           errorType,
           requestContext.endpoint || 'unknown',
-          { statusCode, requestId }
+          { statusCode, requestId: traceContext.requestId }
         );
       }
 
-      return response;
+      // Add trace headers to response
+      const headers = new Headers(response.headers);
+      const traceHeaders = getTraceHeaders(spanTraceContext);
+      Object.entries(traceHeaders).forEach(([key, value]) => {
+        headers.set(key, value);
+      });
+
+      // Return response with trace headers
+      return new NextResponse(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
     } catch (error) {
       // Calculate duration even for errors
       const duration = endMeasurement();
+
+      // End the span with error
+      tracing.endSpan(spanId, 'error', error as Error, {
+        duration,
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
 
       // Log error
       logger.error(
         `${requestContext.method} ${requestContext.endpoint} - Error (${duration}ms)`,
         error,
-        fullContext,
+        requestContext,
         { duration }
       );
 
@@ -156,7 +201,7 @@ export function withMonitoring(handler: ApiHandler): ApiHandler {
         'unhandled_exception',
         requestContext.endpoint || 'unknown',
         {
-          requestId,
+          requestId: traceContext.requestId,
           error: error instanceof Error ? error.message : String(error),
         }
       );
@@ -167,18 +212,28 @@ export function withMonitoring(handler: ApiHandler): ApiHandler {
         requestContext.method || 'UNKNOWN',
         duration,
         500,
-        { requestId, userId, error: true }
+        { requestId: traceContext.requestId, userId, error: true }
       );
 
-      // Return error response
+      // Add trace headers to error response
+      const traceHeaders = getTraceHeaders(spanTraceContext);
+
+      // Return error response with trace context
       return NextResponse.json(
         {
           success: false,
           error: 'Internal server error',
-          requestId, // Include request ID for debugging
+          requestId: traceContext.requestId, // Include request ID for debugging
+          traceId: traceContext.traceId,
         },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: traceHeaders,
+        }
       );
+    } finally {
+      // Clean up trace context
+      tracing.clearTraceContext(traceContext.requestId);
     }
   };
 }
@@ -298,3 +353,120 @@ export async function trackExternalApiCall<T>(
     throw error;
   }
 }
+
+/**
+ * Helper to track database operations with trace context
+ * Use this version when you have access to trace context
+ */
+export async function trackDatabaseOperationWithTrace<T>(
+  operation: string,
+  table: string,
+  traceContext: TraceContext,
+  fn: () => Promise<T>
+): Promise<T> {
+  // Create a span for the database operation
+  const spanId = tracing.startSpan(
+    `DB ${operation} ${table}`,
+    'database',
+    traceContext,
+    { operation, table }
+  );
+
+  const timing = logger.logDatabaseOperation(operation, table);
+
+  try {
+    const result = await fn();
+    const duration = logger.endTiming(timing);
+
+    // End span successfully
+    tracing.endSpan(spanId, 'success', undefined, { duration, rowCount: Array.isArray(result) ? result.length : 1 });
+
+    performanceMonitor.trackDatabaseQuery(operation, table, duration);
+
+    return result;
+  } catch (error) {
+    const duration = logger.endTiming(timing);
+
+    // End span with error
+    tracing.endSpan(spanId, 'error', error as Error, { duration });
+
+    const logContext = createLogContextFromTrace(traceContext);
+    logger.error(
+      `Database operation failed: ${operation} ${table}`,
+      error,
+      logContext,
+      { duration, operation, table }
+    );
+
+    performanceMonitor.trackDatabaseQuery(operation, table, duration, undefined, {
+      error: true,
+    });
+
+    throw error;
+  }
+}
+
+/**
+ * Helper to track external API calls with trace context
+ * Use this version when you have access to trace context
+ * Automatically propagates trace headers to downstream services
+ */
+export async function trackExternalApiCallWithTrace<T>(
+  service: string,
+  endpoint: string,
+  traceContext: TraceContext,
+  fn: (traceHeaders: Record<string, string>) => Promise<T>
+): Promise<T> {
+  // Create a span for the external API call
+  const spanId = tracing.startSpan(
+    `External ${service} ${endpoint}`,
+    'external',
+    traceContext,
+    { service, endpoint }
+  );
+
+  // Update trace context with new span
+  const spanTraceContext = { ...traceContext, spanId };
+
+  // Get trace headers to propagate
+  const traceHeaders = getTraceHeaders(spanTraceContext);
+
+  const timing = logger.startTiming(`External API: ${service} ${endpoint}`);
+
+  try {
+    // Pass trace headers to the function so it can add them to the request
+    const result = await fn(traceHeaders);
+    const duration = logger.endTiming(timing);
+
+    // End span successfully
+    tracing.endSpan(spanId, 'success', undefined, { duration });
+
+    performanceMonitor.trackExternalApi(service, endpoint, duration, true);
+
+    return result;
+  } catch (error) {
+    const duration = logger.endTiming(timing);
+
+    // End span with error
+    tracing.endSpan(spanId, 'error', error as Error, { duration });
+
+    const logContext = createLogContextFromTrace(traceContext);
+    logger.error(
+      `External API call failed: ${service} ${endpoint}`,
+      error,
+      logContext,
+      { duration, service, endpoint }
+    );
+
+    performanceMonitor.trackExternalApi(service, endpoint, duration, false, {
+      error: String(error),
+    });
+
+    throw error;
+  }
+}
+
+/**
+ * Export trace utilities for use in API handlers
+ */
+export { createTraceContext, getTraceHeaders, type TraceContext } from './tracing';

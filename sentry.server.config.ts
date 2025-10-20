@@ -1,9 +1,10 @@
 import * as Sentry from '@sentry/nextjs';
 
 /**
- * Sentry Server Configuration
+ * Sentry Server Configuration with Distributed Tracing
  * 
  * Configures error tracking and performance monitoring for server-side code (API routes, SSR).
+ * Integrates with custom tracing system for full request flow visibility.
  * 
  * To use Sentry:
  * 1. Sign up at https://sentry.io
@@ -27,16 +28,37 @@ Sentry.init({
 
   // Sample rates
   sampleRate: SENTRY_ENVIRONMENT === 'production' ? 0.8 : 1.0,
+  
+  // Enable distributed tracing
+  // Higher sample rate in development for testing
   tracesSampleRate: SENTRY_ENVIRONMENT === 'production' ? 0.1 : 1.0,
+
+  // Enable profiling (optional - helps with performance debugging)
+  profilesSampleRate: SENTRY_ENVIRONMENT === 'production' ? 0.1 : 1.0,
 
   // Enable only if DSN is configured
   enabled: Boolean(SENTRY_DSN),
+
+  // Distributed tracing options
+  tracePropagationTargets: [
+    'localhost',
+    /^https:\/\/.*\.vercel\.app/,
+    /^https:\/\/setmyfit\.com/,
+    // Add other services you want to trace
+    'api.openweathermap.org',
+  ],
 
   // Filter sensitive data
   beforeSend(event, hint) {
     // Don't send if not configured
     if (!SENTRY_DSN) {
       return null;
+    }
+
+    // Enrich event with custom trace context
+    if (event.tags) {
+      // Tags are already set by our logger
+      // Just ensure they're preserved
     }
 
     // Remove sensitive data from request
