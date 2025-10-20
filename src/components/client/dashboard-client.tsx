@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -33,7 +34,7 @@ import { HourlyForecast } from "@/components/client/hourly-forecast";
 import { createClient } from "@/lib/supabase/client";
 
 interface DashboardClientProps {
-  recommendationData: any; // Data from /api/recommendation
+  recommendationData: any; // Data from /api/recommendation - dynamic structure
   location: { lat: number; lon: number };
   onLocationChange: () => void;
   onRefresh: () => void;
@@ -98,7 +99,9 @@ export const DashboardClient = ({
     }
   };
 
-  const handleFeedback = async (type: "up" | "down") => {
+  const handleFeedback = async (
+    type: "up" | "down"
+  ) => {
     try {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -114,8 +117,14 @@ export const DashboardClient = ({
         return;
       }
 
+      const recommendationId = recommendation?.id;
+      if (!recommendationId) {
+        toast.error("No recommendation available");
+        return;
+      }
+
       // Call feedback API
-      const response = await fetch(`/api/recommendation/${recommendation.id}/feedback`, {
+      const response = await fetch(`/api/recommendation/${recommendationId}/feedback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

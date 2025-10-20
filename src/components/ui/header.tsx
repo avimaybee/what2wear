@@ -76,12 +76,9 @@ export const Header = () => {
             href="/" 
             className="flex items-center transition-opacity hover:opacity-80"
           >
-            <TextRollAccessible 
-              className="text-xl md:text-2xl font-bold tracking-tight leading-none py-1"
-              as="span"
-            >
+            <span className="text-xl md:text-2xl font-bold tracking-tight">
               setmyfit
-            </TextRollAccessible>
+            </span>
           </Link>
           
           {/* Desktop Navigation */}

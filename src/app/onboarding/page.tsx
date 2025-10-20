@@ -21,7 +21,6 @@ import {
   Palette,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { ClothingType, ClothingMaterial, DressCode } from "@/types";
 
 const steps = [
   { id: 1, title: "Welcome", icon: Sparkles },
@@ -46,7 +45,7 @@ export default function OnboardingPage() {
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [temperatureSensitivity, setTemperatureSensitivity] = useState(0);
-  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [locationGranted, setLocationGranted] = useState(false);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -89,7 +88,7 @@ export default function OnboardingPage() {
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           };
-          setLocation(coords);
+          setUserLocation(coords);
           setLocationGranted(true);
           localStorage.setItem("userLocation", JSON.stringify(coords));
           toast.success("Location saved! 📍", { duration: 2000 });
@@ -108,7 +107,7 @@ export default function OnboardingPage() {
             });
             // Use default location as fallback
             const defaultLocation = { lat: 40.7128, lon: -74.0060 };
-            setLocation(defaultLocation);
+            setUserLocation(defaultLocation);
             setLocationGranted(true);
             localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
           }
@@ -354,7 +353,7 @@ export default function OnboardingPage() {
                 exit={{ opacity: 0, x: -20 }}
               >
                 <CardHeader>
-                  <CardTitle>What's your style?</CardTitle>
+                  <CardTitle>What&apos;s your style?</CardTitle>
                   <CardDescription>
                     Select your favorite styles and colors (choose as many as you like)
                   </CardDescription>
@@ -429,13 +428,13 @@ export default function OnboardingPage() {
                           ✓ Location Enabled
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          You're all set! We'll use your location for weather-based recommendations.
+                          You&apos;re all set! We&apos;ll use your location for weather-based recommendations.
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-4">
                         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                          Click the button below to grant location permission. We'll use this to get accurate weather data for your outfit recommendations.
+                          Click the button below to grant location permission. We&apos;ll use this to get accurate weather data for your outfit recommendations.
                         </p>
                         <Button
                           size="lg"
@@ -452,10 +451,10 @@ export default function OnboardingPage() {
                   <div className="p-4 rounded-lg bg-muted/50 space-y-2">
                     <p className="text-xs font-medium">Why we need location:</p>
                     <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>• Real-time weather data for your area</li>
-                      <li>• Accurate temperature and conditions</li>
-                      <li>• UV index and air quality information</li>
-                      <li>• Better outfit recommendations</li>
+                      <li>&bull; Real-time weather data for your area</li>
+                      <li>&bull; Accurate temperature and conditions</li>
+                      <li>&bull; UV index and air quality information</li>
+                      <li>&bull; Better outfit recommendations</li>
                     </ul>
                   </div>
                 </CardContent>

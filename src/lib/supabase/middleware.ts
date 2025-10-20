@@ -65,7 +65,7 @@ export async function updateSession(request: NextRequest) {
         url.pathname = '/onboarding'
         return NextResponse.redirect(url)
       }
-    } catch (error) {
+    } catch (_error) {
       // Profile doesn't exist, redirect to onboarding
       if (!isOnboarding) {
         url.pathname = '/onboarding'

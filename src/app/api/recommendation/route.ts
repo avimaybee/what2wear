@@ -29,7 +29,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     // Parse request body
     const body = await request.json();
-    const { lat, lon, date, occasion } = body;
+    const { lat, lon } = body;
+    const _occasion = ""; // Reserved for future use
 
     if (!lat || !lon) {
       return NextResponse.json(
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     let healthActivity: HealthActivity | undefined;
     try {
       const healthUrl = new URL('/api/health/activity', request.url);
-      healthUrl.searchParams.set('date', date || new Date().toISOString().split('T')[0]);
+      healthUrl.searchParams.set('date', new Date().toISOString().split('T')[0]);
       
       const healthResponse = await fetch(healthUrl.toString(), {
         headers: request.headers,

@@ -6,22 +6,20 @@ import { DashboardClient } from "@/components/client/dashboard-client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, AlertCircle, LogIn } from "lucide-react";
+import { MapPin, AlertCircle, LogIn, Shirt } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
 
 export default function HomePage() {
   const router = useRouter();
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
-  const [recommendationData, setRecommendationData] = useState<any | null>(null);
+  const [recommendationData, setRecommendationData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthError, setIsAuthError] = useState(false);
-  const [requestingLocation, setRequestingLocation] = useState(false);
 
   // Request user location
   const requestLocation = () => {
-    setRequestingLocation(true);
     setError(null);
 
     if ("geolocation" in navigator) {
@@ -33,14 +31,12 @@ export default function HomePage() {
           };
           setLocation(coords);
           localStorage.setItem("userLocation", JSON.stringify(coords));
-          setRequestingLocation(false);
         },
         (error) => {
           console.error("Geolocation error:", error);
           // Fallback to default location (New York)
           const defaultLocation = { lat: 40.7128, lon: -74.0060 };
           setLocation(defaultLocation);
-          setRequestingLocation(false);
           toast("Using default location (New York)", { icon: "📍" });
         }
       );
@@ -48,7 +44,6 @@ export default function HomePage() {
       // Fallback if geolocation not supported
       const defaultLocation = { lat: 40.7128, lon: -74.0060 };
       setLocation(defaultLocation);
-      setRequestingLocation(false);
       toast("Geolocation not supported. Using New York.", { icon: "📍" });
     }
   };
@@ -84,6 +79,12 @@ export default function HomePage() {
       const data = await response.json();
       
       if (!data.success) {
+        // Check if it's a "no wardrobe items" error
+        if (data.error && data.error.toLowerCase().includes("wardrobe")) {
+          setError("Let's add some clothes to your wardrobe first!");
+          setLoading(false);
+          return;
+        }
         throw new Error(data.error || "Failed to generate recommendation");
       }
 
@@ -166,13 +167,23 @@ export default function HomePage() {
 
   // Error state
   if (error) {
+    const isWardrobeError = error.toLowerCase().includes("wardrobe") || error.toLowerCase().includes("clothes");
+    
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader className="text-center space-y-2">
-            <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+            {isWardrobeError ? (
+              <Shirt className="h-12 w-12 text-primary mx-auto" />
+            ) : (
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+            )}
             <h2 className="text-2xl font-bold">
-              {isAuthError ? "Authentication Required" : "Oops! Something went wrong"}
+              {isAuthError 
+                ? "Authentication Required" 
+                : isWardrobeError 
+                ? "Build Your Wardrobe"
+                : "Oops! Something went wrong"}
             </h2>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -185,6 +196,14 @@ export default function HomePage() {
                 >
                   <LogIn className="h-4 w-4 mr-2" />
                   Sign In
+                </Button>
+              ) : isWardrobeError ? (
+                <Button
+                  onClick={() => router.push("/wardrobe")}
+                  className="w-full"
+                >
+                  <Shirt className="h-4 w-4 mr-2" />
+                  Add Clothes to Wardrobe
                 </Button>
               ) : (
                 <>

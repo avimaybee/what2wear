@@ -1,0 +1,84 @@
+00:01:44.523 Running build in Washington, D.C., USA (East) – iad1
+00:01:44.523 Build machine configuration: 2 cores, 8 GB
+00:01:44.563 Cloning github.com/avimaybee/what2wear (Branch: main, Commit: 7579ce0)
+00:01:44.855 Cloning completed: 292.000ms
+00:01:45.710 Restored build cache from previous deployment (4oiTY8Y4GWuLh7g8d4Zrb25oMFLJ)
+00:01:46.178 Running "vercel build"
+00:01:46.564 Vercel CLI 48.2.9
+00:01:46.884 Installing dependencies...
+00:01:48.227 
+00:01:48.228 added 1 package in 1s
+00:01:48.229 
+00:01:48.229 142 packages are looking for funding
+00:01:48.229   run `npm fund` for details
+00:01:48.260 Detected Next.js version: 15.5.4
+00:01:48.264 Running "npm run build"
+00:01:48.471 
+00:01:48.472 > app@0.1.0 build
+00:01:48.472 > next build --turbopack
+00:01:48.472 
+00:01:49.849    ▲ Next.js 15.5.4 (Turbopack)
+00:01:49.849 
+00:01:49.928    Creating an optimized production build ...
+00:02:05.726  ✓ Finished writing to disk in 18ms
+00:02:05.755  ✓ Compiled successfully in 15.1s
+00:02:05.762    Linting and checking validity of types ...
+00:02:06.141 (node:260) ESLintIgnoreWarning: The ".eslintignore" file is no longer supported. Switch to using the "ignores" property in "eslint.config.js": https://eslint.org/docs/latest/use/configure/migration-guide#ignoring-files
+00:02:06.141 (Use `node --trace-warnings ...` to show where the warning was created)
+00:02:12.309 
+00:02:12.309 Failed to compile.
+00:02:12.309 
+00:02:12.310 ./src/app/api/recommendation/ai/route.ts
+00:02:12.310 175:19  Warning: 'savedRecommendation' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.310 
+00:02:12.310 ./src/app/api/recommendation/route.ts
+00:02:12.310 8:3  Warning: 'adjustInsulationForActivity' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.310 32:29  Warning: 'occasion' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.310 203:27  Warning: 'request' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.310 
+00:02:12.310 ./src/app/auth/sign-in/page.tsx
+00:02:12.310 61:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+00:02:12.311 
+00:02:12.311 ./src/app/onboarding/page.tsx
+00:02:12.311 24:15  Warning: 'ClothingType' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.311 24:29  Warning: 'ClothingMaterial' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.311 24:47  Warning: 'DressCode' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.311 49:10  Warning: 'location' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.311 357:34  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+00:02:12.311 432:30  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+00:02:12.311 432:45  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+00:02:12.311 438:82  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+00:02:12.312 
+00:02:12.312 ./src/app/page.tsx
+00:02:12.312 16:64  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+00:02:12.312 20:10  Warning: 'requestingLocation' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.312 
+00:02:12.312 ./src/app/settings/page.tsx
+00:02:12.312 9:10  Warning: 'Tooltip' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.312 9:19  Warning: 'TooltipContent' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.312 9:35  Warning: 'TooltipProvider' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.312 9:52  Warning: 'TooltipTrigger' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.312 11:78  Warning: 'HelpCircle' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.313 
+00:02:12.313 ./src/app/wardrobe/page.tsx
+00:02:12.313 28:10  Warning: 'modalSource' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.314 29:10  Warning: 'deleting' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.314 
+00:02:12.314 ./src/components/client/dashboard-client.tsx
+00:02:12.315 36:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+00:02:12.315 76:54  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+00:02:12.323 290:59  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+00:02:12.323 325:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+00:02:12.323 565:66  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+00:02:12.323 
+00:02:12.323 ./src/components/client/hourly-forecast.tsx
+00:02:12.323 71:76  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+00:02:12.323 
+00:02:12.323 ./src/components/ui/dialog.tsx
+00:02:12.323 6:18  Warning: 'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.329 
+00:02:12.329 ./src/lib/supabase/middleware.ts
+00:02:12.329 68:14  Warning: 'error' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+00:02:12.330 
+00:02:12.330 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+00:02:12.356 Error: Command "npm run build" exited with 1

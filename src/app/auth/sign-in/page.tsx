@@ -58,10 +58,11 @@ export default function SignInPage() {
           router.refresh();
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Auth error:", err);
-      setError(err.message || "Authentication failed. Please try again.");
-      toast.error(err.message || "Authentication failed");
+      const errorMessage = err instanceof Error ? err.message : "Authentication failed. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
