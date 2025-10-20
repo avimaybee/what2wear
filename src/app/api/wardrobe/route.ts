@@ -6,13 +6,19 @@ import {
   withValidation, 
   createClothingItemSchema 
 } from '@/lib/validation';
+import { 
+  withMonitoring, 
+  trackDatabaseOperation,
+  metricsCollector 
+} from '@/lib/monitoring';
 
 /**
  * GET /api/wardrobe
  * Task 1.2: Get all wardrobe items for the authenticated user
  * UPDATED: Recommendation #4 - Added validation middleware
+ * UPDATED: Recommendation #1 - Added monitoring and performance tracking
  */
-export const GET = withValidation(async (_request: NextRequest): Promise<NextResponse<ApiResponse<IClothingItem[]>>> => {
+export const GET = withMonitoring(withValidation(async (_request: NextRequest): Promise<NextResponse<ApiResponse<IClothingItem[]>>> => {
   const supabase = await createClient();
   
   // Get authenticated user
@@ -25,12 +31,16 @@ export const GET = withValidation(async (_request: NextRequest): Promise<NextRes
     );
   }
 
-  // Fetch all clothing items for the user
-  const { data, error } = await supabase
-    .from('clothing_items')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+  // Fetch all clothing items for the user with performance tracking
+  const { data, error } = await trackDatabaseOperation(
+    'SELECT',
+    'clothing_items',
+    async () => supabase
+      .from('clothing_items')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+  );
 
   if (error) {
     return NextResponse.json(
@@ -39,18 +49,22 @@ export const GET = withValidation(async (_request: NextRequest): Promise<NextRes
     );
   }
 
+  // Track wardrobe view metrics
+  metricsCollector.trackWardrobeViewed(user.id, data?.length || 0);
+
   return NextResponse.json({
     success: true,
     data: data as IClothingItem[],
   });
-});
+}));
 
 /**
  * POST /api/wardrobe
  * Task 1.2: Add a new clothing item to the wardrobe
  * UPDATED: Recommendation #4 - Added comprehensive validation with Zod
+ * UPDATED: Recommendation #1 - Added monitoring and metrics tracking
  */
-export const POST = withValidation(async (request: NextRequest): Promise<NextResponse<ApiResponse<IClothingItem>>> => {
+export const POST = withMonitoring(withValidation(async (request: NextRequest): Promise<NextResponse<ApiResponse<IClothingItem>>> => {
   const supabase = await createClient();
   
   // Get authenticated user
@@ -82,11 +96,16 @@ export const POST = withValidation(async (request: NextRequest): Promise<NextRes
     last_worn_date: null,
   };
 
-  const { data, error } = await supabase
-    .from('clothing_items')
-    .insert([newItem])
-    .select()
-    .single();
+  // Insert with performance tracking
+  const { data, error } = await trackDatabaseOperation(
+    'INSERT',
+    'clothing_items',
+    async () => supabase
+      .from('clothing_items')
+      .insert([newItem])
+      .select()
+      .single()
+  );
 
   if (error) {
     return NextResponse.json(
@@ -95,9 +114,12 @@ export const POST = withValidation(async (request: NextRequest): Promise<NextRes
     );
   }
 
+  // Track wardrobe item addition
+  metricsCollector.trackWardrobeItemAdded(user.id, validatedData.type);
+
   return NextResponse.json({
     success: true,
     data: data as IClothingItem,
     message: 'Item added successfully',
   }, { status: 201 });
-});
+}));

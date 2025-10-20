@@ -7,3 +7,4 @@
 export * from './logger';
 export * from './performance';
 export * from './metrics';
+export * from './apiMiddleware';

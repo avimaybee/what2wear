@@ -7,6 +7,11 @@ import {
   withValidation, 
   weatherRequestSchema 
 } from '@/lib/validation';
+import { 
+  withMonitoring, 
+  trackExternalApiCall,
+  metricsCollector 
+} from '@/lib/monitoring';
 
 /**
  * Calculate apparent temperature (feels-like) using heat index and wind chill
@@ -110,8 +115,9 @@ function generateWeatherAlerts(weather: WeatherData): WeatherAlert[] {
  * Task 3.1: Hyper-local weather API with UV, Pollen, AQI
  * Task 3.2: Includes feels-like temperature calculation
  * UPDATED: Recommendation #4 - Added comprehensive validation
+ * UPDATED: Recommendation #1 - Added monitoring and external API tracking
  */
-export const GET = withValidation(async (request: NextRequest): Promise<NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[] }>>> => {
+export const GET = withMonitoring(withValidation(async (request: NextRequest): Promise<NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[] }>>> => {
   const supabase = await createClient();
   
   // Get authenticated user
@@ -130,12 +136,17 @@ export const GET = withValidation(async (request: NextRequest): Promise<NextResp
     // Try to fetch real weather data
     let weatherData: WeatherData | null = null;
     
-    // OpenWeatherMap integration
+    // OpenWeatherMap integration with monitoring
     if (provider === 'openWeather' && config.weather.openWeather.apiKey) {
       try {
         const apiUrl = `${config.weather.openWeather.baseUrl}${config.weather.openWeather.endpoints.onecall}?lat=${lat}&lon=${lon}&appid=${config.weather.openWeather.apiKey}&units=metric`;
         
-        const response = await fetch(apiUrl);
+        // Track external API call performance
+        const response = await trackExternalApiCall(
+          'OpenWeatherMap',
+          '/onecall',
+          async () => fetch(apiUrl)
+        );
         
         if (!response.ok) {
           console.error('OpenWeatherMap API error:', await response.text());
@@ -157,7 +168,11 @@ export const GET = withValidation(async (request: NextRequest): Promise<NextResp
           // Fetch air quality data if available
           try {
             const aqiUrl = `http://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${config.weather.openWeather.apiKey}`;
-            const aqiResponse = await fetch(aqiUrl);
+            const aqiResponse = await trackExternalApiCall(
+              'OpenWeatherMap',
+              '/air_pollution',
+              async () => fetch(aqiUrl)
+            );
             if (aqiResponse.ok) {
               const aqiData = await aqiResponse.json();
               // AQI scale: 1-5 -> convert to 0-500 scale
@@ -198,6 +213,14 @@ export const GET = withValidation(async (request: NextRequest): Promise<NextResp
     // Generate alerts based on weather conditions
     const alerts = generateWeatherAlerts(weatherData);
 
+    // Track weather fetch metrics
+    metricsCollector.trackWeatherFetched(
+      user.id,
+      `${lat},${lon}`,
+      false, // Not cached in this implementation
+      { provider }
+    );
+
     return NextResponse.json({
       success: true,
       data: {
@@ -206,4 +229,4 @@ export const GET = withValidation(async (request: NextRequest): Promise<NextResp
       },
       message: `Weather data from ${provider}`,
     });
-});
+}));
