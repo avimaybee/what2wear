@@ -576,3 +576,198 @@
     0 4px 12px -4px oklch(from var(--foreground) l c h / 0.1),
     0 0 0 1px oklch(from var(--background) l c h / 0.03);
 }
+
+/**
+ * ================================================================
+ * MOBILE-OPTIMIZED UX UTILITIES
+ * ================================================================
+ * Feature #6: Mobile-Optimized UX Enhancements
+ * Touch-friendly interactions, gestures, and mobile-first design
+ */
+
+/* Touch-friendly target sizes (Apple HIG: 44pt minimum, Google Material: 48dp) */
+@utility touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  
+  @media (min-width: 768px) {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}
+
+@utility touch-target-lg {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Safe area padding for mobile devices (notches, home indicators) */
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@utility pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+@utility px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* Mobile-optimized spacing for bottom navigation */
+@utility pb-nav {
+  padding-bottom: calc(56px + max(0.5rem, env(safe-area-inset-bottom)));
+}
+
+/* Touch manipulation for better mobile performance */
+@utility touch-action-none {
+  touch-action: none;
+}
+
+@utility touch-action-pan-y {
+  touch-action: pan-y;
+}
+
+@utility touch-action-pan-x {
+  touch-action: pan-x;
+}
+
+/* Active press feedback for mobile */
+@utility active-press {
+  transition: transform 120ms ease-out;
+  
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+/* Smooth scrolling areas */
+@utility smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar but keep functionality (mobile swipe) */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Mobile-optimized focus states (larger, more visible) */
+@utility focus-mobile {
+  @media (max-width: 767px) {
+    &:focus-visible {
+      outline: 3px solid oklch(from var(--primary) l c h / 0.5);
+      outline-offset: 3px;
+    }
+  }
+}
+
+/* Tap highlight removal (use custom active states instead) */
+@utility tap-highlight-none {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Optimized text selection for mobile */
+@utility select-mobile {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+@utility select-none-mobile {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Mobile-friendly card press animation */
+@utility card-press {
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+  
+  &:active {
+    transform: scale(0.98) translateY(1px);
+    box-shadow: 
+      0 0 0 0.5px oklch(from var(--foreground) l c h / 0.03) inset,
+      0 2px 4px -2px oklch(from var(--foreground) l c h / 0.08);
+  }
+}
+
+/* Swipe indicator (for carousels, sheets) */
+@utility swipe-indicator {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 4px;
+    background: oklch(from var(--muted-foreground) l c h / 0.3);
+    border-radius: 2px;
+  }
+}
+
+/* Optimized animation for mobile (respects reduced motion) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Mobile-specific overrides */
+@media (max-width: 767px) {
+  /* Larger buttons on mobile */
+  .btn-mobile {
+    min-height: 48px;
+    min-width: 48px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Larger input fields on mobile (prevents zoom on iOS) */
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em); /* iOS won't zoom if font-size >= 16px */
+  }
+  
+  /* Optimized modal positioning */
+  [role="dialog"] {
+    max-height: calc(100vh - env(safe-area-inset-bottom) - env(safe-area-inset-top));
+  }
+}
+
+/* Haptic feedback simulation (visual only, actual haptics require native) */
+@utility haptic-feedback {
+  transition: opacity 80ms ease-out;
+  
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+/* Mobile sheet drag handle */
+@utility drag-handle {
+  width: 48px;
+  height: 4px;
+  background: oklch(from var(--muted-foreground) l c h / 0.2);
+  border-radius: 2px;
+  margin: 8px auto;
+  cursor: grab;
+  
+  &:active {
+    cursor: grabbing;
+  }
+}
+

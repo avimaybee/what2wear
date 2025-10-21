@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, AlertCircle, LogIn, Shirt } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // Lazy load heavy components
 const DashboardClient = lazy(() => 
@@ -175,61 +176,76 @@ export default function HomePage() {
     
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center space-y-2">
-            {isWardrobeError ? (
-              <Shirt className="h-12 w-12 text-primary mx-auto" />
-            ) : (
-              <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-            )}
-            <h2 className="text-2xl font-bold">
-              {isAuthError 
-                ? "Authentication Required" 
-                : isWardrobeError 
-                ? "Build Your Wardrobe"
-                : "Oops! Something went wrong"}
-            </h2>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-center text-muted-foreground">{error}</p>
-            <div className="flex gap-2">
-              {isAuthError ? (
-                <Button
-                  onClick={() => router.push("/auth/sign-in")}
-                  className="w-full"
-                >
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Sign In
-                </Button>
-              ) : isWardrobeError ? (
-                <Button
-                  onClick={() => router.push("/wardrobe")}
-                  className="w-full"
-                >
-                  <Shirt className="h-4 w-4 mr-2" />
-                  Add Clothes to Wardrobe
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    onClick={() => location && fetchRecommendation(location)}
-                    className="flex-1"
-                  >
-                    Try Again
-                  </Button>
-                  <Button
-                    onClick={requestLocation}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Change Location
-                  </Button>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="max-w-2xl w-full">
+          {isAuthError ? (
+            <EmptyState
+              icon={LogIn}
+              title="Authentication Required"
+              description="Please sign in to get personalized outfit recommendations based on your wardrobe and preferences."
+              actions={[
+                {
+                  label: "Sign In",
+                  onClick: () => router.push("/auth/sign-in"),
+                  icon: LogIn,
+                  variant: "default"
+                }
+              ]}
+              tips={[
+                "Create your account in seconds",
+                "Build your digital wardrobe",
+                "Get AI-powered outfit suggestions",
+                "Track your style over time"
+              ]}
+              variant="illustrated"
+            />
+          ) : isWardrobeError ? (
+            <EmptyState
+              icon={Shirt}
+              title="Build Your Wardrobe First"
+              description="Add some clothing items to your wardrobe so we can generate personalized outfit recommendations for you."
+              actions={[
+                {
+                  label: "Add Clothes to Wardrobe",
+                  onClick: () => router.push("/wardrobe"),
+                  icon: Shirt,
+                  variant: "default"
+                },
+                {
+                  label: "Learn More",
+                  onClick: () => router.push("/onboarding"),
+                  variant: "outline"
+                }
+              ]}
+              tips={[
+                "Take photos of your favorite clothes",
+                "Add details like color and season",
+                "We'll suggest outfits based on weather",
+                "Start with at least 5-10 items"
+              ]}
+              variant="illustrated"
+            />
+          ) : (
+            <EmptyState
+              icon={AlertCircle}
+              title="Oops! Something Went Wrong"
+              description={error}
+              actions={[
+                {
+                  label: "Try Again",
+                  onClick: () => location && fetchRecommendation(location),
+                  variant: "default"
+                },
+                {
+                  label: "Change Location",
+                  onClick: requestLocation,
+                  icon: MapPin,
+                  variant: "outline"
+                }
+              ]}
+              variant="default"
+            />
+          )}
+        </div>
       </div>
     );
   }

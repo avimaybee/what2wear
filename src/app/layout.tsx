@@ -35,6 +35,14 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
       <body className="min-h-screen font-sans antialiased">
+        {/* Skip to main content link for accessibility */}
+        <a 
+          href="#main-content" 
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          Skip to main content
+        </a>
+        
         <WebVitalsTracker />
         <ThemeProvider
           attribute="class"
@@ -46,7 +54,7 @@ export default function RootLayout({
             <SquircleProvider>
               <div className="relative flex min-h-screen flex-col">
                 <Header />
-                <main className="flex-1">
+                <main id="main-content" className="flex-1" role="main">
                   {children}
                 </main>
               </div>

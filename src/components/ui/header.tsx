@@ -70,11 +70,12 @@ export const Header = () => {
   return (
     <>
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 w-full glass-regular border-border/40">
+      <header className="sticky top-0 z-50 w-full glass-regular border-border/40" role="banner">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link 
             href="/" 
             className="flex items-center transition-opacity hover:opacity-80"
+            aria-label="setmyfit home"
           >
             <span className="text-xl md:text-2xl font-bold tracking-tight">
               setmyfit
@@ -82,7 +83,7 @@ export const Header = () => {
           </Link>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Main navigation">
             {routes.map((route) => {
               const Icon = route.icon;
               const isActive = pathname === route.href;
@@ -99,7 +100,7 @@ export const Header = () => {
                   )}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-4 w-4" aria-hidden="true" />
                   <span>{route.label}</span>
                 </Link>
               );
@@ -107,8 +108,8 @@ export const Header = () => {
             
             <div className="ml-2 flex items-center gap-2">
               {!loading && user && (
-                <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-accent/50 text-xs">
-                  <UserIcon className="h-3 w-3" />
+                <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-accent/50 text-xs" aria-label={`Signed in as ${user.email?.split('@')[0]}`}>
+                  <UserIcon className="h-3 w-3" aria-hidden="true" />
                   <span className="max-w-[120px] truncate">
                     {user.email?.split('@')[0]}
                   </span>
@@ -121,8 +122,9 @@ export const Header = () => {
                   size="sm"
                   onClick={handleSignOut}
                   className="h-8 px-2"
+                  aria-label="Sign out"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
                 </Button>
               )}
             </div>
@@ -136,7 +138,7 @@ export const Header = () => {
       </header>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-regular border-t border-border/40 pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-regular border-t border-border/40 pb-safe" role="navigation" aria-label="Mobile navigation">
         <div className="grid h-14 grid-cols-3 gap-1 px-2">
           {routes.map((route) => {
             const Icon = route.icon;
@@ -154,11 +156,12 @@ export const Header = () => {
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 aria-current={isActive ? 'page' : undefined}
+                aria-label={route.label}
               >
                 <Icon className={cn(
                   "h-5 w-5",
                   isActive && "text-primary"
-                )} />
+                )} aria-hidden="true" />
                 <span className="text-xs font-medium">
                   {route.label}
                 </span>
@@ -169,7 +172,7 @@ export const Header = () => {
       </nav>
 
       {/* Spacer for mobile bottom nav */}
-      <div className="h-14 md:hidden" />
+      <div className="h-14 md:hidden" aria-hidden="true" />
     </>
   );
 };

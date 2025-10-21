@@ -5,6 +5,7 @@ import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -56,29 +57,84 @@ interface SheetContentProps
    * @default true
    */
   showClose?: boolean;
+  /**
+   * Enable swipe-to-close gesture on mobile
+   * @default true
+   */
+  swipeToClose?: boolean;
+  /**
+   * Callback when sheet is closed via swipe
+   */
+  onSwipeClose?: () => void;
 }
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, showClose = true, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content
-      ref={ref}
-      className={cn(sheetVariants({ side }), className)}
-      {...props}
-    >
-      {children}
-      {showClose && (
-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-accent hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
-      )}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-));
+>(({ side = "right", className, children, showClose = true, swipeToClose = true, onSwipeClose, ...props }, ref) => {
+  const y = useMotionValue(0);
+  const opacity = useTransform(y, [0, 200], [1, 0]);
+  
+  const handleDragEnd = (_event: unknown, info: PanInfo) => {
+    // If dragged down more than 120px, close the sheet
+    if (info.offset.y > 120 && side === "bottom") {
+      onSwipeClose?.();
+      // Trigger close via Radix dialog
+      const closeButton = document.querySelector('[data-state="open"] button[data-radix-dialog-close]') as HTMLButtonElement;
+      closeButton?.click();
+    }
+  };
+
+  // Separate mobile and desktop rendering
+  const isMobileBottomSheet = swipeToClose && side === "bottom";
+
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={ref}
+        className={cn(sheetVariants({ side }), className)}
+        asChild={isMobileBottomSheet}
+        {...props}
+      >
+        {isMobileBottomSheet ? (
+          <motion.div
+            style={{ y, opacity }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 300 }}
+            dragElastic={{ top: 0, bottom: 0.7 }}
+            onDragEnd={handleDragEnd}
+          >
+            {/* Drag Handle for mobile bottom sheets */}
+            <div 
+              className="mx-auto mb-4 mt-2 h-1.5 w-12 flex-shrink-0 rounded-full bg-muted-foreground/20 md:hidden cursor-grab active:cursor-grabbing" 
+              aria-label="Drag to close"
+            />
+            
+            {children}
+            
+            {showClose && (
+              <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-accent hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </SheetPrimitive.Close>
+            )}
+          </motion.div>
+        ) : (
+          <>
+            {children}
+            {showClose && (
+              <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-accent hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </SheetPrimitive.Close>
+            )}
+          </>
+        )}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+});
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 const SheetHeader = ({

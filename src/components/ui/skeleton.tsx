@@ -10,6 +10,8 @@ function Skeleton({
         "animate-pulse rounded-md bg-muted",
         className
       )}
+      role="status"
+      aria-label="Loading..."
       {...props}
     />
   );

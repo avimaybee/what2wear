@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/toaster";
-import { Save, User, MapPin, Thermometer, Shuffle, Settings as SettingsIcon, HelpCircle, Lock, Info } from "lucide-react";
+import { Save, User, MapPin, Thermometer, Shuffle, Settings as SettingsIcon, HelpCircle, Lock, Info, Palette, ChevronRight } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-type SettingsSection = "profile" | "preferences" | "privacy" | "about";
+type SettingsSection = "profile" | "preferences" | "appearance" | "privacy" | "about";
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingsSection>("profile");
@@ -53,6 +53,7 @@ export default function SettingsPage() {
   const sections = [
     { id: "profile" as const, label: "Profile", icon: User },
     { id: "preferences" as const, label: "Preferences", icon: Thermometer },
+    { id: "appearance" as const, label: "Appearance", icon: Palette },
     { id: "privacy" as const, label: "Privacy", icon: Lock },
     { id: "about" as const, label: "About", icon: Info },
   ];
@@ -257,6 +258,41 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
             </div>
+          )}
+
+          {/* Appearance Section */}
+          {activeSection === "appearance" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-primary" />
+                  Appearance
+                </CardTitle>
+                <CardDescription>Customize your app&apos;s look and feel</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Link href="/settings/appearance">
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-md bg-primary/10">
+                        <Palette className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Accent Color</p>
+                        <p className="text-xs text-muted-foreground">
+                          Personalize your experience
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </div>
+                </Link>
+                
+                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border">
+                  💡 Change your accent color to match your style and make the app truly yours
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Privacy Section */}

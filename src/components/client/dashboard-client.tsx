@@ -32,6 +32,7 @@ import {
 import { formatTemp, cn } from "@/lib/utils";
 import { HourlyForecast } from "@/components/client/hourly-forecast";
 import { createClient } from "@/lib/supabase/client";
+import { WeatherAlertBanner, generateWeatherAlerts } from "@/components/ui/weather-alert-banner";
 
 interface DashboardClientProps {
   recommendationData: any; // Data from /api/recommendation - dynamic structure
@@ -242,6 +243,9 @@ export const DashboardClient = ({
   const aqiStatus = getAQIStatus(weather.air_quality_index || 0);
   const uvStatus = getUVStatus(weather.uv_index || 0);
 
+  // Generate weather alerts
+  const weatherAlerts = generateWeatherAlerts(weather);
+
   return (
     <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-6 pb-20 md:pb-6">
       {/* Page Header */}
@@ -261,6 +265,9 @@ export const DashboardClient = ({
           Curated just for you based on weather and your schedule
         </p>
       </motion.div>
+
+      {/* Weather Alerts */}
+      <WeatherAlertBanner alerts={weatherAlerts} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Main Content */}
@@ -494,7 +501,7 @@ export const DashboardClient = ({
                         )}
                         aria-label="I like this outfit"
                       >
-                        <ThumbsUp className="h-4 w-4" />
+                        <ThumbsUp className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       <Button
                         size="icon"
@@ -506,7 +513,7 @@ export const DashboardClient = ({
                         )}
                         aria-label="I don't like this outfit"
                       >
-                        <ThumbsDown className="h-4 w-4" />
+                        <ThumbsDown className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
