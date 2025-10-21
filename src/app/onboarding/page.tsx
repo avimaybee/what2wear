@@ -82,8 +82,17 @@ export default function OnboardingPage() {
 
   const requestLocation = () => {
     if ("geolocation" in navigator) {
+      // Show immediate feedback that we're requesting location
+      toast("Requesting location permission... Please allow access in your browser.", {
+        icon: "📍",
+        duration: 3000,
+      });
+      
+      console.log("Requesting geolocation permission...");
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          console.log("Location permission granted:", position);
           const coords = {
             lat: position.coords.latitude,
             lon: position.coords.longitude,
@@ -101,6 +110,19 @@ export default function OnboardingPage() {
             toast.error("Location permission denied. Please enable it in your browser settings.", {
               duration: 5000,
             });
+          } else if (error.code === error.TIMEOUT) {
+            toast.error("Location request timed out. Please try again.", {
+              duration: 3000,
+            });
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            toast.error("Location information unavailable. Using default location.", {
+              duration: 3000,
+            });
+            // Use default location as fallback
+            const defaultLocation = { lat: 40.7128, lon: -74.0060 };
+            setUserLocation(defaultLocation);
+            setLocationGranted(true);
+            localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
           } else {
             toast.error("Failed to get location. Using default location.", {
               duration: 3000,

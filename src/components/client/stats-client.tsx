@@ -101,12 +101,6 @@ export function StatsClient({ userId }: StatsClientProps) {
   
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Statistics</h1>
-        <p className="text-sm md:text-base text-muted-foreground">Track your progress and achievements</p>
-      </div>
-
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard

@@ -227,14 +227,6 @@ export function HistoryClient({ userId }: HistoryClientProps) {
   
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Outfit History</h1>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Browse your complete style timeline and rediscover past outfits
-        </p>
-      </div>
-
       {/* Search and Filter Bar */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-4 border-b border-border/50">
         <div className="flex flex-col sm:flex-row gap-3">

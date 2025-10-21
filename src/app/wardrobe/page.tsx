@@ -344,36 +344,144 @@ export default function WardrobePage() {
   // Empty state - no items at all in wardrobe
   if (wardrobeItems.length === 0) {
     return (
-      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Virtual Wardrobe</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage your clothing collection
-            </p>
+      <>
+        <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Virtual Wardrobe</h1>
+              <p className="text-sm text-muted-foreground">
+                Manage your clothing collection
+              </p>
+            </div>
           </div>
+          <EmptyState
+            icon={PackageOpen}
+            title="Your wardrobe is empty"
+            description="Start building your digital closet! Add your first clothing item and we'll start generating personalized outfit recommendations."
+            actions={[
+              {
+                label: "Add Your First Item",
+                onClick: handleOpenAddModal,
+                icon: Plus,
+                variant: "default"
+              }
+            ]}
+            tips={[
+              "Take a photo or upload from your phone",
+              "Add details like color, season, and style tags",
+              "Track when you last wore each item",
+              "Get AI-powered outfit suggestions based on weather"
+            ]}
+            variant="illustrated"
+          />
         </div>
-        <EmptyState
-          icon={PackageOpen}
-          title="Your wardrobe is empty"
-          description="Start building your digital closet! Add your first clothing item and we'll start generating personalized outfit recommendations."
-          actions={[
-            {
-              label: "Add Your First Item",
-              onClick: handleOpenAddModal,
-              icon: Plus,
-              variant: "default"
-            }
-          ]}
-          tips={[
-            "Take a photo or upload from your phone",
-            "Add details like color, season, and style tags",
-            "Track when you last wore each item",
-            "Get AI-powered outfit suggestions based on weather"
-          ]}
-          variant="illustrated"
-        />
-      </div>
+
+        {/* Add Item Dialog - needs to be available even in empty state */}
+        <AnimatePresence>
+          {showAddModal && (
+            <Dialog open={showAddModal} onOpenChange={handleCloseAddModal}>
+              <DialogContent variant="scale" layoutId="add-item-button" className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add New Item</DialogTitle>
+                  <DialogDescription>
+                    Upload a photo of your clothing item
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4 py-4">
+                  {!imagePreview ? (
+                    // File upload area
+                    <div className="flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-lg hover:border-primary/50 transition-colors cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        id="wardrobe-file-input"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                        disabled={uploading}
+                      />
+                      <label
+                        htmlFor="wardrobe-file-input"
+                        className="flex flex-col items-center gap-3 cursor-pointer w-full"
+                      >
+                        <div className="p-4 rounded-full bg-primary/10 text-primary">
+                          <Upload className="h-8 w-8" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-medium mb-1">Tap to upload photo</p>
+                          <p className="text-xs text-muted-foreground">Camera or Gallery</p>
+                          <p className="text-xs text-muted-foreground mt-2">Max 5MB • JPG, PNG, WEBP</p>
+                        </div>
+                      </label>
+                    </div>
+                  ) : (
+                    // Image preview
+                    <div className="space-y-4">
+                      <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                        <Image
+                          src={imagePreview}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground truncate flex-1">
+                          {selectedFile?.name}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setImagePreview(null);
+                          }}
+                          disabled={uploading}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">
+                        After uploading, you&apos;ll be able to edit details like name, type, color, and season tags.
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <DialogFooter>
+                  <Button 
+                    onClick={handleCloseAddModal} 
+                    variant="outline"
+                    disabled={uploading}
+                  >
+                    Cancel
+                  </Button>
+                  {imagePreview && (
+                    <Button 
+                      onClick={handleUploadAndCreate}
+                      disabled={uploading || !selectedFile}
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Add Item
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </AnimatePresence>
+      </>
     );
   }
 
