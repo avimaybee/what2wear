@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Use Gemini 2.5 Flash to analyze the clothing item
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `You are an expert fashion stylist analyzing clothing items for an AI wardrobe system. 
 
