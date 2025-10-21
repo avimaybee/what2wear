@@ -8,7 +8,6 @@ import {
   updateClothingItemSchema,
   clothingItemIdSchema
 } from '@/lib/validation';
-import { cache } from '@/lib/cache';
 
 /**
  * GET /api/wardrobe/[id]
@@ -136,9 +135,6 @@ export const PUT = withValidation(async (
     );
   }
 
-  // Invalidate recommendation cache when wardrobe changes
-  await cache.invalidateUserCache(user.id);
-
   return NextResponse.json({
     success: true,
     data: data as IClothingItem,
@@ -192,9 +188,6 @@ export const DELETE = withValidation(async (
       { status: 500 }
     );
   }
-
-  // Invalidate recommendation cache when wardrobe changes
-  await cache.invalidateUserCache(user.id);
 
   return NextResponse.json({
     success: true,

@@ -6,13 +6,12 @@ import { cache } from '@/lib/cache';
  * Check cache health and get statistics
  */
 export async function GET(_request: NextRequest) {
-  const isHealthy = await cache.healthCheck();
   const stats = cache.getCacheStats();
 
   return NextResponse.json({
     success: true,
     data: {
-      status: isHealthy ? 'healthy' : 'unhealthy',
+      status: stats.enabled ? 'healthy' : 'disabled',
       enabled: stats.enabled,
       metrics: stats.metrics,
       hitRate: stats.hitRate,

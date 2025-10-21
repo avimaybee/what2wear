@@ -12,7 +12,6 @@ import {
   trackExternalApiCall,
   metricsCollector 
 } from '@/lib/monitoring';
-import { cache, CACHE_PREFIX, DEFAULT_TTL } from '@/lib/cache';
 import { checkRateLimit, createRateLimitResponse, addRateLimitHeaders } from '@/lib/ratelimit';
 
 /**
@@ -118,7 +117,6 @@ function generateWeatherAlerts(weather: WeatherData): WeatherAlert[] {
  * Task 3.2: Includes feels-like temperature calculation
  * UPDATED: Recommendation #4 - Added comprehensive validation
  * UPDATED: Recommendation #1 - Added monitoring and external API tracking
- * UPDATED: Recommendation #5 - Added caching with 30-minute TTL
  * UPDATED: Recommendation #6 - Added rate limiting (100 requests/hour)
  */
 export const GET = withMonitoring(withValidation(async (request: NextRequest): Promise<NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[] }>>> => {
@@ -143,35 +141,19 @@ export const GET = withMonitoring(withValidation(async (request: NextRequest): P
   // Validate query parameters
   const { lat, lon, provider } = validateQuery(request, weatherRequestSchema);
 
-  // Generate cache key based on location (rounded to 2 decimal places for wider cache hits)
-  const roundedLat = Math.round(lat * 100) / 100;
-  const roundedLon = Math.round(lon * 100) / 100;
-  const cacheKey = `${roundedLat}:${roundedLon}:${provider}`;
-
-  // Try to get from cache first (with request deduplication)
-  const cachedWeather = await cache.getOrFetch<{ weather: WeatherData; alerts: WeatherAlert[] }>(
-    cacheKey,
-    async () => {
-      // Cache miss - fetch fresh weather data
-      return fetchWeatherData(lat, lon, provider);
-    },
-    {
-      prefix: CACHE_PREFIX.WEATHER,
-      ttl: DEFAULT_TTL.LONG, // 30 minutes
-    }
-  );
+  const weatherPayload = await fetchWeatherData(lat, lon, provider);
 
   // Track weather fetch metrics
   metricsCollector.trackWeatherFetched(
     user.id,
     `${lat},${lon}`,
-    true, // Now cached!
+    false,
     { provider }
   );
 
   const response = NextResponse.json({
     success: true,
-    data: cachedWeather,
+    data: weatherPayload,
     message: `Weather data from ${provider}`,
   });
 

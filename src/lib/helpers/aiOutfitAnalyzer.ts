@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, type GenerativeModel } from '@google/generative-ai';
 import { IClothingItem } from '@/lib/types';
 import { config } from '@/lib/config';
 
@@ -21,6 +21,30 @@ const getGeminiClient = () => {
   return new GoogleGenerativeAI(config.ai.gemini.apiKey);
 };
 
+const getTextModel = (() => {
+  let cachedModel: GenerativeModel | null = null;
+  return () => {
+    if (!cachedModel) {
+      cachedModel = getGeminiClient().getGenerativeModel({ model: config.ai.gemini.model });
+    }
+    return cachedModel;
+  };
+})();
+
+const extractJsonSegment = <T>(source: string, pattern: RegExp): T | null => {
+  const match = source.match(pattern);
+  if (!match) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(match[0]) as T;
+  } catch (error) {
+    console.error('Failed to parse Gemini response JSON segment', error, { source });
+    return null;
+  }
+};
+
 /**
  * Analyze clothing item description to understand its characteristics
  */
@@ -31,8 +55,7 @@ export async function analyzeClothingDescription(item: IClothingItem): Promise<{
   color_harmony: string[];
   occasion_fit: string[];
 }> {
-  const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = getTextModel();
 
   const prompt = `Analyze this clothing item and provide a detailed assessment:
 
@@ -55,13 +78,19 @@ Provide a JSON response with:
 
   const result = await model.generateContent(prompt);
   const response = result.response.text();
-  
-  // Parse JSON from response
-  const jsonMatch = response.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    return JSON.parse(jsonMatch[0]);
+
+  const parsed = response ? extractJsonSegment<{
+    style: string;
+    formality: string;
+    season_suitability: string;
+    color_harmony: string[];
+    occasion_fit: string[];
+  }>(response, /\{[\s\S]*\}/) : null;
+
+  if (parsed) {
+    return parsed;
   }
-  
+
   // Fallback if parsing fails
   return {
     style: 'casual',
@@ -83,8 +112,7 @@ export async function generateOutfitCombinations(
     season: string;
   }
 ): Promise<IClothingItem[][]> {
-  const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = getTextModel();
 
   // Create detailed descriptions of all available items
   const itemDescriptions = items.map((item, idx) => ({
@@ -128,15 +156,13 @@ Only respond with the JSON array, no additional text.`;
 
   const result = await model.generateContent(prompt);
   const response = result.response.text();
-  
-  // Parse JSON from response
-  const jsonMatch = response.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
+
+  const combinations = response ? extractJsonSegment<number[][]>(response, /\[[\s\S]*\]/) : null;
+
+  if (!combinations) {
     throw new Error('Failed to parse outfit combinations from AI response');
   }
-  
-  const combinations: number[][] = JSON.parse(jsonMatch[0]);
-  
+
   // Map back to actual clothing items
   return combinations.map(combo =>
     combo.map(idx => items[idx]).filter(Boolean)
@@ -155,10 +181,7 @@ export async function validateOutfitImages(
   suggestions: string[];
   problemItemId?: number;
 }> {
-  const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.5-flash',
-  });
+  const model = getTextModel();
 
   // Fetch images and convert to base64
   const imageParts = await Promise.all(
@@ -214,15 +237,19 @@ Be critical but fair. An outfit is valid (isValid: true) if score >= 70.`;
 
   const result = await model.generateContent([prompt, ...validImages]);
   const response = result.response.text();
-  
-  // Parse JSON from response
-  const jsonMatch = response.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
+
+  const validation = response ? extractJsonSegment<{
+    isValid: boolean;
+    score: number;
+    issues: string[];
+    suggestions: string[];
+    problemItemId?: number;
+  }>(response, /\{[\s\S]*\}/) : null;
+
+  if (!validation) {
     throw new Error('Failed to parse validation result from AI response');
   }
-  
-  const validation = JSON.parse(jsonMatch[0]);
-  
+
   return validation;
 }
 
@@ -235,8 +262,7 @@ export async function findReplacementItem(
   availableItems: IClothingItem[],
   issues: string[]
 ): Promise<IClothingItem | null> {
-  const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = getTextModel();
 
   // Get items of the same type that aren't already in the outfit
   const candidates = availableItems.filter(
@@ -287,15 +313,15 @@ Format: {"replacementId": 0}`;
 
   const result = await model.generateContent(prompt);
   const response = result.response.text();
-  
-  // Parse JSON from response
-  const jsonMatch = response.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
+
+  const payload = response ? extractJsonSegment<{ replacementId: number }>(response, /\{[\s\S]*\}/) : null;
+
+  if (!payload) {
     return null;
   }
-  
-  const { replacementId } = JSON.parse(jsonMatch[0]);
-  
+
+  const { replacementId } = payload;
+
   if (replacementId >= 0 && replacementId < candidates.length) {
     return candidates[replacementId];
   }

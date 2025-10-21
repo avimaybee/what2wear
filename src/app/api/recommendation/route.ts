@@ -12,14 +12,12 @@ import {
   validateBody, 
   recommendationRequestSchema 
 } from '@/lib/validation';
-import { cache, CACHE_PREFIX, DEFAULT_TTL } from '@/lib/cache';
 import { checkRateLimit, createRateLimitResponse, addRateLimitHeaders } from '@/lib/ratelimit';
 
 /**
  * POST /api/recommendation
  * Generate outfit recommendation based on weather, calendar, and user preferences
  * UPDATED: Recommendation #4 - Added comprehensive validation
- * UPDATED: Recommendation #5 - Added caching with 15-minute TTL
  * UPDATED: Recommendation #6 - Added rate limiting (50 requests/hour)
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> {
@@ -46,38 +44,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const validatedData = await validateBody(request, recommendationRequestSchema);
     const { lat, lon, occasion = "" } = validatedData;
 
-    // Generate cache key based on location, occasion, and user
-    const roundedLat = Math.round(lat * 100) / 100;
-    const roundedLon = Math.round(lon * 100) / 100;
-    const cacheKey = `${user.id}:${roundedLat}:${roundedLon}:${occasion || 'default'}`;
-
-    // Try to get from cache first
-    // Note: Cache TTL is shorter for recommendations as they depend on many factors
-    const cachedRecommendation = await cache.get<OutfitRecommendation>(
-      cacheKey,
-      {
-        prefix: CACHE_PREFIX.RECOMMENDATION,
-      }
-    );
-
-    // Return cached recommendation if found and not expired
-    if (cachedRecommendation) {
-      return NextResponse.json({
-        success: true,
-        data: cachedRecommendation,
-        message: 'Recommendation from cache',
-      });
-    }
-
-    // Cache miss - generate fresh recommendation
     try {
       const recommendation = await generateRecommendation(user.id, lat, lon, occasion, request);
-
-      // Cache the recommendation (15 minutes TTL)
-      await cache.set(cacheKey, recommendation, {
-        prefix: CACHE_PREFIX.RECOMMENDATION,
-        ttl: DEFAULT_TTL.MEDIUM * 3, // 15 minutes
-      });
 
       const response = NextResponse.json({
         success: true,
