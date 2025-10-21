@@ -267,7 +267,10 @@ export default function WardrobePage() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ imageUrl: uploadResult.url }),
+          body: JSON.stringify({ 
+            imageUrl: uploadResult.url,
+            storagePath: uploadResult.path // Pass storage path for direct Supabase download
+          }),
         });
 
         if (analysisResponse.ok) {
@@ -275,10 +278,17 @@ export default function WardrobePage() {
           if (analysisResult.success) {
             analyzedData = analysisResult.data;
             toast.success('AI analysis complete! 🎯', { duration: 1500 });
+          } else {
+            console.error('AI analysis returned error:', analysisResult.error);
+            toast.error('AI analysis failed: ' + analysisResult.error);
           }
+        } else {
+          console.error('AI analysis HTTP error:', analysisResponse.status);
+          toast.error('AI analysis failed');
         }
       } catch (analysisError) {
         console.error('AI analysis failed, using defaults:', analysisError);
+        toast.error('AI analysis failed, using defaults');
         // Continue with defaults if AI fails
       }
 

@@ -44,37 +44,55 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { imageUrl } = body;
+    const { imageUrl, storagePath } = body;
 
-    if (!imageUrl) {
+    if (!imageUrl && !storagePath) {
       return NextResponse.json(
-        { success: false, error: "Image URL is required" },
+        { success: false, error: "Image URL or storage path is required" },
         { status: 400 }
       );
     }
 
-    // Fetch the image as base64 - use Supabase client if it's a Supabase Storage URL
+    // Fetch the image as base64
     let base64Image: string;
     let mimeType: string;
     
     try {
-      if (imageUrl.includes('supabase.co')) {
-        // For Supabase Storage URLs, fetch with authentication
-        const imageResponse = await fetch(imageUrl, {
-          headers: {
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          },
-        });
+      if (storagePath) {
+        // Use Supabase client to download from storage (most reliable)
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from('clothing_images')
+          .download(storagePath);
         
-        if (!imageResponse.ok) {
-          throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
+        if (downloadError || !fileData) {
+          console.error("Supabase download error:", downloadError);
+          throw new Error(`Failed to download image from storage: ${downloadError?.message || 'Unknown error'}`);
         }
         
-        const imageBuffer = await imageResponse.arrayBuffer();
-        base64Image = Buffer.from(imageBuffer).toString('base64');
-        mimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+        const arrayBuffer = await fileData.arrayBuffer();
+        base64Image = Buffer.from(arrayBuffer).toString('base64');
+        mimeType = fileData.type || 'image/jpeg';
+      } else if (imageUrl.includes('supabase.co')) {
+        // Extract storage path from URL and use Supabase client
+        const urlParts = imageUrl.split('/storage/v1/object/public/clothing_images/');
+        if (urlParts.length === 2) {
+          const path = urlParts[1];
+          const { data: fileData, error: downloadError } = await supabase.storage
+            .from('clothing_images')
+            .download(path);
+          
+          if (downloadError || !fileData) {
+            throw new Error(`Failed to download from storage: ${downloadError?.message}`);
+          }
+          
+          const arrayBuffer = await fileData.arrayBuffer();
+          base64Image = Buffer.from(arrayBuffer).toString('base64');
+          mimeType = fileData.type || 'image/jpeg';
+        } else {
+          throw new Error('Invalid Supabase storage URL format');
+        }
       } else {
-        // For other URLs
+        // For external URLs
         const imageResponse = await fetch(imageUrl);
         
         if (!imageResponse.ok) {
@@ -96,8 +114,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use Gemini 2.5 Flash to analyze the clothing item
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // Use Gemini 2.0 Flash Experimental to analyze the clothing item
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     
     const prompt = `You are an expert fashion stylist analyzing clothing items for an AI wardrobe system. 
 
