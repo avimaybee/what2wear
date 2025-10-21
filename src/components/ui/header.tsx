@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shirt, Settings, Home, LogOut, User as UserIcon, TrendingUp } from 'lucide-react';
+import { Shirt, Settings, Home, LogOut, User as UserIcon, TrendingUp, History } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { TextRollAccessible } from '@/components/ui/text-roll';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,11 @@ const routes = [
     href: '/wardrobe',
     label: 'Wardrobe',
     icon: Shirt,
+  },
+  {
+    href: '/history',
+    label: 'History',
+    icon: History,
   },
   {
     href: '/stats',
