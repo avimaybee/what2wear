@@ -42,48 +42,70 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   }
 
   // Validate and sanitize request body
-  const validatedData = await validateBody(request, recommendationRequestSchema);
-  const { lat, lon, occasion = "" } = validatedData;
+  try {
+    const validatedData = await validateBody(request, recommendationRequestSchema);
+    const { lat, lon, occasion = "" } = validatedData;
 
-  // Generate cache key based on location, occasion, and user
-  const roundedLat = Math.round(lat * 100) / 100;
-  const roundedLon = Math.round(lon * 100) / 100;
-  const cacheKey = `${user.id}:${roundedLat}:${roundedLon}:${occasion || 'default'}`;
+    // Generate cache key based on location, occasion, and user
+    const roundedLat = Math.round(lat * 100) / 100;
+    const roundedLon = Math.round(lon * 100) / 100;
+    const cacheKey = `${user.id}:${roundedLat}:${roundedLon}:${occasion || 'default'}`;
 
-  // Try to get from cache first
-  // Note: Cache TTL is shorter for recommendations as they depend on many factors
-  const cachedRecommendation = await cache.get<OutfitRecommendation>(
-    cacheKey,
-    {
-      prefix: CACHE_PREFIX.RECOMMENDATION,
+    // Try to get from cache first
+    // Note: Cache TTL is shorter for recommendations as they depend on many factors
+    const cachedRecommendation = await cache.get<OutfitRecommendation>(
+      cacheKey,
+      {
+        prefix: CACHE_PREFIX.RECOMMENDATION,
+      }
+    );
+
+    // Return cached recommendation if found and not expired
+    if (cachedRecommendation) {
+      return NextResponse.json({
+        success: true,
+        data: cachedRecommendation,
+        message: 'Recommendation from cache',
+      });
     }
-  );
 
-  // Return cached recommendation if found and not expired
-  if (cachedRecommendation) {
-    return NextResponse.json({
-      success: true,
-      data: cachedRecommendation,
-      message: 'Recommendation from cache',
-    });
+    // Cache miss - generate fresh recommendation
+    try {
+      const recommendation = await generateRecommendation(user.id, lat, lon, occasion, request);
+
+      // Cache the recommendation (15 minutes TTL)
+      await cache.set(cacheKey, recommendation, {
+        prefix: CACHE_PREFIX.RECOMMENDATION,
+        ttl: DEFAULT_TTL.MEDIUM * 3, // 15 minutes
+      });
+
+      const response = NextResponse.json({
+        success: true,
+        data: recommendation,
+      });
+
+      // Add rate limit headers
+      return addRateLimitHeaders(response, rateLimitResult) as NextResponse<ApiResponse<OutfitRecommendation>>;
+    } catch (error) {
+      console.error('Error generating recommendation:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Failed to generate recommendation' 
+        },
+        { status: 500 }
+      );
+    }
+  } catch (validationError) {
+    console.error('Validation error:', validationError);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: validationError instanceof Error ? validationError.message : 'Invalid request data' 
+      },
+      { status: 400 }
+    );
   }
-
-  // Cache miss - generate fresh recommendation
-  const recommendation = await generateRecommendation(user.id, lat, lon, occasion, request);
-
-  // Cache the recommendation (15 minutes TTL)
-  await cache.set(cacheKey, recommendation, {
-    prefix: CACHE_PREFIX.RECOMMENDATION,
-    ttl: DEFAULT_TTL.MEDIUM * 3, // 15 minutes
-  });
-
-  const response = NextResponse.json({
-    success: true,
-    data: recommendation,
-  });
-
-  // Add rate limit headers
-  return addRateLimitHeaders(response, rateLimitResult) as NextResponse<ApiResponse<OutfitRecommendation>>;
 }
 
 /**
