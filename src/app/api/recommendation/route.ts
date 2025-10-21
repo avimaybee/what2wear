@@ -88,6 +88,35 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       return addRateLimitHeaders(response, rateLimitResult) as NextResponse<ApiResponse<OutfitRecommendation>>;
     } catch (error) {
       console.error('Error generating recommendation:', error);
+      
+      // Handle special cases for empty/insufficient wardrobe
+      if (error instanceof Error) {
+        if (error.message === 'EMPTY_WARDROBE') {
+          return NextResponse.json(
+            { 
+              success: false, 
+              error: 'EMPTY_WARDROBE',
+              message: 'Your wardrobe is empty. Add some clothing items to get started!',
+              needsWardrobe: true
+            },
+            { status: 200 } // 200 because this is an expected state, not an error
+          );
+        }
+        
+        if (error.message === 'INSUFFICIENT_ITEMS') {
+          return NextResponse.json(
+            { 
+              success: false, 
+              error: 'INSUFFICIENT_ITEMS',
+              message: 'You need at least one top, one bottom, and one pair of shoes to create an outfit.',
+              needsWardrobe: true
+            },
+            { status: 200 } // 200 because this is an expected state, not an error
+          );
+        }
+      }
+      
+      // All other errors are actual server errors
       return NextResponse.json(
         { 
           success: false, 
@@ -131,8 +160,18 @@ async function generateRecommendation(
     throw new Error('Failed to fetch wardrobe items');
   }
 
+  // Handle empty wardrobe gracefully - this is expected for new users
   if (!wardrobeItems || wardrobeItems.length === 0) {
-    throw new Error('No clothing items found in wardrobe');
+    throw new Error('EMPTY_WARDROBE');
+  }
+
+  // Check if user has minimum items for a basic outfit
+  // At minimum, need: 1 top, 1 bottom, 1 footwear
+  const itemTypes = new Set(wardrobeItems.map((item: { type: string }) => item.type));
+  const hasMinimumItems = itemTypes.has('Top') && itemTypes.has('Bottom') && itemTypes.has('Footwear');
+  
+  if (!hasMinimumItems) {
+    throw new Error('INSUFFICIENT_ITEMS');
   }
 
   // Fetch weather data

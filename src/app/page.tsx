@@ -83,13 +83,15 @@ export default function HomePage() {
 
       const data = await response.json();
       
+      // Handle empty/insufficient wardrobe gracefully - this is expected for new users
+      if (!data.success && data.needsWardrobe) {
+        setError(data.message || "Add clothing items to your wardrobe to get started!");
+        setLoading(false);
+        // Don't show error toast for empty wardrobe - it's expected for new users
+        return;
+      }
+      
       if (!data.success) {
-        // Check if it's a "no wardrobe items" error
-        if (data.error && data.error.toLowerCase().includes("wardrobe")) {
-          setError("Let's add some clothes to your wardrobe first!");
-          setLoading(false);
-          return;
-        }
         throw new Error(data.error || "Failed to generate recommendation");
       }
 
@@ -99,7 +101,10 @@ export default function HomePage() {
       console.error("Error fetching recommendation:", err);
       setError(err instanceof Error ? err.message : "Failed to load recommendation");
       setLoading(false);
-      toast.error("Failed to generate outfit. Please try again.");
+      // Only show error toast for actual errors, not empty wardrobe
+      if (err instanceof Error && !err.message.toLowerCase().includes("wardrobe")) {
+        toast.error("Failed to generate outfit. Please try again.");
+      }
     }
   };
 
@@ -201,17 +206,17 @@ export default function HomePage() {
           ) : isWardrobeError ? (
             <EmptyState
               icon={Shirt}
-              title="Build Your Wardrobe First"
-              description="Add some clothing items to your wardrobe so we can generate personalized outfit recommendations for you."
+              title="Welcome! Let's Build Your Digital Wardrobe"
+              description="To get personalized outfit recommendations, start by adding your favorite clothing items. Just snap a few photos and we'll do the rest!"
               actions={[
                 {
-                  label: "Add Clothes to Wardrobe",
+                  label: "Add Your First Items",
                   onClick: () => router.push("/wardrobe"),
                   icon: Shirt,
                   variant: "default"
                 },
                 {
-                  label: "Learn More",
+                  label: "Take a Quick Tour",
                   onClick: () => router.push("/onboarding"),
                   variant: "outline"
                 }
