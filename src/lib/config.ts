@@ -109,7 +109,7 @@ export const healthConfig = {
 export const aiConfig = {
   gemini: {
     apiKey: getEnvVar('GEMINI_API_KEY', false),
-    model: 'gemini-pro',
+    model: 'gemini-2.5-flash',
     visionModel: 'gemini-pro-vision',
   },
   

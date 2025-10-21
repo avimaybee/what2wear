@@ -32,7 +32,7 @@ export async function analyzeClothingDescription(item: IClothingItem): Promise<{
   occasion_fit: string[];
 }> {
   const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = `Analyze this clothing item and provide a detailed assessment:
 
@@ -84,7 +84,7 @@ export async function generateOutfitCombinations(
   }
 ): Promise<IClothingItem[][]> {
   const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   // Create detailed descriptions of all available items
   const itemDescriptions = items.map((item, idx) => ({
@@ -157,7 +157,7 @@ export async function validateOutfitImages(
 }> {
   const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({ 
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-2.5-flash',
   });
 
   // Fetch images and convert to base64
@@ -236,7 +236,7 @@ export async function findReplacementItem(
   issues: string[]
 ): Promise<IClothingItem | null> {
   const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   // Get items of the same type that aren't already in the outfit
   const candidates = availableItems.filter(
