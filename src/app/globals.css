@@ -60,7 +60,7 @@
   --primary: oklch(0.65 0.19 35);
   --primary-foreground: oklch(0.99 0.002 264.376);
   
-  /* Secondary colors */
+  /* Secondary colors - derived from primary with reduced saturation */
   --secondary: oklch(0.96 0.006 286.375);
   --secondary-foreground: oklch(0.15 0.007 286.375);
   
@@ -68,25 +68,25 @@
   --muted: oklch(0.96 0.006 286.375);
   --muted-foreground: oklch(0.52 0.015 286.375);
   
-  /* Accent colors for highlights - Subtle warm tint */
-  --accent: oklch(0.96 0.008 35);
+  /* Accent colors for highlights - derived from primary with lighter tone */
+  --accent: oklch(from var(--primary) calc(l + 0.31) calc(c * 0.05) h);
   --accent-foreground: oklch(0.15 0.007 286.375);
   
   /* Destructive/Error colors */
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.99 0.002 264.376);
   
-  /* Border & Input colors */
+  /* Border & Input colors with primary accent */
   --border: oklch(0.92 0.006 286.375);
   --input: oklch(0.92 0.006 286.375);
-  --ring: oklch(0.65 0.19 35);
+  --ring: var(--primary);
   
-  /* Chart colors for data visualization */
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* Chart colors for data visualization - derived from primary hue */
+  --chart-1: var(--primary);
+  --chart-2: oklch(from var(--primary) l c calc(h + 120));
+  --chart-3: oklch(from var(--primary) calc(l - 0.15) c calc(h + 180));
+  --chart-4: oklch(from var(--primary) calc(l + 0.15) c calc(h - 60));
+  --chart-5: oklch(from var(--primary) calc(l + 0.10) c calc(h + 30));
   
   /* Border radius scale */
   --radius: 0.625rem;
@@ -155,7 +155,7 @@
   --primary: oklch(0.72 0.17 40); /* Brighter coral for dark mode */
   --primary-foreground: oklch(0.15 0.008 286.375); /* Dark text on bright button */
   
-  /* Secondary colors */
+  /* Secondary colors - derived from primary with reduced saturation */
   --secondary: oklch(0.26 0.012 286.375);
   --secondary-foreground: oklch(0.98 0.002 286.375);
   
@@ -163,8 +163,8 @@
   --muted: oklch(0.26 0.012 286.375);
   --muted-foreground: oklch(0.70 0.006 286.375); /* Secondary label level */
   
-  /* Accent colors - Elevated from background */
-  --accent: oklch(0.28 0.014 35);
+  /* Accent colors - derived from primary, elevated from background */
+  --accent: oklch(from var(--primary) calc(l - 0.44) calc(c * 0.10) h);
   --accent-foreground: oklch(0.98 0.002 286.375);
   
   /* Destructive/Error colors - More vibrant for dark mode */
@@ -175,14 +175,14 @@
   /* Using elevated material color for subtle separation */
   --border: oklch(0.30 0.012 286.375);
   --input: oklch(0.30 0.012 286.375);
-  --ring: oklch(0.72 0.17 40);
+  --ring: var(--primary);
   
-  /* Chart colors for dark mode */
-  --chart-1: oklch(0.7 0.18 40);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  /* Chart colors for dark mode - derived from primary hue */
+  --chart-1: var(--primary);
+  --chart-2: oklch(from var(--primary) l c calc(h + 120));
+  --chart-3: oklch(from var(--primary) calc(l + 0.05) c calc(h + 30));
+  --chart-4: oklch(from var(--primary) calc(l - 0.10) c calc(h + 240));
+  --chart-5: oklch(from var(--primary) calc(l - 0.05) c calc(h - 25));
   
   /* Sidebar colors for dark mode */
   --sidebar: oklch(0.18 0.012 286.375);
@@ -397,13 +397,13 @@
   /* Regular (default) - Primary Liquid Glass variant */
   /* Provides optimal legibility with blur and luminosity adjustment */
   .glass-regular {
-    background: oklch(from var(--card) l c h / 0.78);
-    backdrop-filter: blur(30px) saturate(180%) brightness(1.02);
-    -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(1.02);
-    border: 1px solid oklch(from var(--border) l c h / 0.28);
-    box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.06) inset,
-                0 4px 8px -4px oklch(from var(--foreground) l c h / 0.12),
-                0 0 0 1px oklch(from var(--background) l c h / 0.04);
+    background: oklch(from var(--card) l c h / 0.85);
+    backdrop-filter: blur(48px) saturate(180%) brightness(1.02);
+    -webkit-backdrop-filter: blur(48px) saturate(180%) brightness(1.02);
+    border: 1px solid oklch(from var(--border) l c h / 0.35);
+    box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.08) inset,
+                0 4px 8px -4px oklch(from var(--foreground) l c h / 0.14),
+                0 0 0 1px oklch(from var(--background) l c h / 0.06);
   }
   
   /* Thick - Maximum opacity, strongest blur */

@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shirt, Settings, Home, LogOut, User as UserIcon, TrendingUp, History } from 'lucide-react';
+import { Shirt, Settings, Home, LogOut, User as UserIcon, TrendingUp, History, Menu, X } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { TextRollAccessible } from '@/components/ui/text-roll';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const routes = [
   {
@@ -39,11 +40,22 @@ const routes = [
   },
 ];
 
+// Mobile bottom nav routes (only Home, Wardrobe, History)
+const mobileBottomRoutes = routes.filter(route => 
+  ['/', '/wardrobe', '/history'].includes(route.href)
+);
+
+// Mobile menu routes (Stats, Settings)
+const mobileMenuRoutes = routes.filter(route => 
+  ['/stats', '/settings'].includes(route.href)
+);
+
 export const Header = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -103,54 +115,115 @@ export const Header = () => {
                   key={route.href}
                   href={route.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                    "flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-medium rounded-md transition-colors",
                     "hover:bg-accent/50 hover:text-accent-foreground",
                     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                     isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground"
                   )}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" aria-hidden="true" />
                   <span>{route.label}</span>
                 </Link>
               );
             })}
             
             <div className="ml-2 flex items-center gap-2">
+              <ThemeToggle />
               {!loading && user && (
-                <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-accent/50 text-xs" aria-label={`Signed in as ${user.email?.split('@')[0]}`}>
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent/50 text-xs" aria-label={`Signed in as ${user.email?.split('@')[0]}`}>
                   <UserIcon className="h-3 w-3" aria-hidden="true" />
                   <span className="max-w-[120px] truncate">
                     {user.email?.split('@')[0]}
                   </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive ml-1"
+                    aria-label="Sign out"
+                  >
+                    <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
                 </div>
-              )}
-              <ThemeToggle />
-              {!loading && user && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="h-8 px-2"
-                  aria-label="Sign out"
-                >
-                  <LogOut className="h-4 w-4" aria-hidden="true" />
-                </Button>
               )}
             </div>
           </nav>
 
-          {/* Mobile Theme Toggle */}
-          <div className="flex md:hidden">
+          {/* Mobile Hamburger Menu */}
+          <div className="flex md:hidden items-center gap-2">
             <ThemeToggle />
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-5 w-5" aria-hidden="true" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <nav className="mt-6 flex flex-col gap-1" role="navigation">
+                  {mobileMenuRoutes.map((route) => {
+                    const Icon = route.icon;
+                    const isActive = pathname === route.href;
+                    
+                    return (
+                      <Link
+                        key={route.href}
+                        href={route.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          isActive ? "bg-accent text-accent-foreground" : "text-foreground"
+                        )}
+                      >
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                        <span>{route.label}</span>
+                      </Link>
+                    );
+                  })}
+                  
+                  {!loading && user && (
+                    <>
+                      <div className="my-3 border-t border-border" />
+                      <div className="px-4 py-2 text-xs text-muted-foreground">
+                        Signed in as
+                      </div>
+                      <div className="flex items-center gap-2 px-4 py-2 text-sm">
+                        <UserIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        <span className="truncate">{user.email}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleSignOut();
+                        }}
+                        className="justify-start gap-3 px-4 h-auto py-3 text-sm font-medium"
+                      >
+                        <LogOut className="h-5 w-5" aria-hidden="true" />
+                        <span>Sign Out</span>
+                      </Button>
+                    </>
+                  )}
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation - Only Home, Wardrobe, History */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-regular border-t border-border/40 pb-safe" role="navigation" aria-label="Mobile navigation">
         <div className="grid h-14 grid-cols-3 gap-1 px-2">
-          {routes.map((route) => {
+          {mobileBottomRoutes.map((route) => {
             const Icon = route.icon;
             const isActive = pathname === route.href;
             
@@ -169,10 +242,10 @@ export const Header = () => {
                 aria-label={route.label}
               >
                 <Icon className={cn(
-                  "h-5 w-5",
+                  "h-4 w-4 md:h-5 md:w-5",
                   isActive && "text-primary"
                 )} aria-hidden="true" />
-                <span className="text-xs font-medium">
+                <span className="text-[10px] md:text-xs font-medium">
                   {route.label}
                 </span>
               </Link>

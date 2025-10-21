@@ -9,13 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown } from "lucide-react";
+import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon } from "lucide-react";
 import { getRelativeTime } from "@/lib/utils";
 import { motionVariants, motionDurations } from "@/lib/motion";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
+import { uploadClothingImage } from "@/lib/supabase/storage";
 import type { ClothingType, IClothingItem, DressCode } from "@/types";
 import { EmptyState } from "@/components/ui/empty-state";
+import Image from "next/image";
 
 const clothingTypes: ClothingType[] = ["Outerwear", "Top", "Bottom", "Footwear", "Accessory", "Headwear"];
 const dressCodeOptions: DressCode[] = ["Casual", "Business Casual", "Formal", "Athletic", "Loungewear"];
@@ -41,6 +43,11 @@ export default function WardrobePage() {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [modalSource, setModalSource] = useState<"add-button" | "delete" | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Fetch wardrobe items from API
   const fetchWardrobe = async () => {
@@ -190,7 +197,100 @@ export default function WardrobePage() {
 
   const handleCloseAddModal = () => {
     setShowAddModal(false);
+    setSelectedFile(null);
+    setImagePreview(null);
     setTimeout(() => setModalSource(null), 300);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error('Image must be smaller than 5MB');
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadAndCreate = async () => {
+    if (!selectedFile) {
+      toast.error('Please select an image');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        toast.error('You must be signed in to upload images');
+        return;
+      }
+
+      // Upload image to Supabase Storage
+      const uploadResult = await uploadClothingImage(selectedFile, user.id);
+
+      if (!uploadResult.success) {
+        toast.error(uploadResult.error || 'Upload failed');
+        return;
+      }
+
+      // Create wardrobe item with default values
+      const newItem = {
+        name: selectedFile.name.split('.')[0] || 'New Item',
+        type: 'Top' as ClothingType,
+        material: 'Cotton',
+        insulation_value: 2,
+        image_url: uploadResult.url!,
+        dress_code: ['Casual'] as DressCode[],
+      };
+
+      const response = await fetch('/api/wardrobe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newItem),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create wardrobe item');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Item added successfully! 🎉');
+        handleCloseAddModal();
+        fetchWardrobe(); // Refresh the wardrobe
+      } else {
+        throw new Error(data.error || 'Failed to create item');
+      }
+    } catch (error) {
+      console.error('Error creating item:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to add item');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleOpenDeleteModal = (item: IClothingItem) => {
@@ -764,32 +864,102 @@ export default function WardrobePage() {
       <AnimatePresence>
         {showAddModal && (
           <Dialog open={showAddModal} onOpenChange={handleCloseAddModal}>
-            <DialogContent variant="scale" layoutId="add-item-button">
+            <DialogContent variant="scale" layoutId="add-item-button" className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Add New Item</DialogTitle>
                 <DialogDescription>
-                  This feature would integrate with POST /api/wardrobe to add new items to your collection.
+                  Upload a photo of your clothing item
                 </DialogDescription>
               </DialogHeader>
+              
               <div className="space-y-4 py-4">
-                <p className="text-sm text-muted-foreground">
-                  In a production version, this would include:
-                </p>
-                <ul className="text-sm text-muted-foreground space-y-2 ml-4">
-                  <li>• Image upload with preview</li>
-                  <li>• Name, type, and material selection</li>
-                  <li>• Color picker for accurate matching</li>
-                  <li>• Season and style tags</li>
-                  <li>• Insulation value slider</li>
-                </ul>
+                {!imagePreview ? (
+                  // File upload area
+                  <div className="flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-lg hover:border-primary/50 transition-colors cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      id="wardrobe-file-input"
+                      className="hidden"
+                      onChange={handleFileSelect}
+                      disabled={uploading}
+                    />
+                    <label
+                      htmlFor="wardrobe-file-input"
+                      className="flex flex-col items-center gap-3 cursor-pointer w-full"
+                    >
+                      <div className="p-4 rounded-full bg-primary/10 text-primary">
+                        <Upload className="h-8 w-8" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium mb-1">Tap to upload photo</p>
+                        <p className="text-xs text-muted-foreground">Camera or Gallery</p>
+                        <p className="text-xs text-muted-foreground mt-2">Max 5MB • JPG, PNG, WEBP</p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  // Image preview
+                  <div className="space-y-4">
+                    <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground truncate flex-1">
+                        {selectedFile?.name}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setImagePreview(null);
+                        }}
+                        disabled={uploading}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      After uploading, you&apos;ll be able to edit details like name, type, color, and season tags.
+                    </p>
+                  </div>
+                )}
               </div>
+              
               <DialogFooter>
-                <Button onClick={handleCloseAddModal} variant="outline">
-                  Close
+                <Button 
+                  onClick={handleCloseAddModal} 
+                  variant="outline"
+                  disabled={uploading}
+                >
+                  Cancel
                 </Button>
-                <Button onClick={handleCloseAddModal}>
-                  Add Item
-                </Button>
+                {imagePreview && (
+                  <Button 
+                    onClick={handleUploadAndCreate}
+                    disabled={uploading || !selectedFile}
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Add Item
+                      </>
+                    )}
+                  </Button>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>

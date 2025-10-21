@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,23 +23,69 @@ export default function SettingsPage() {
   const [name, setName] = useState("John Doe");
   const [region, setRegion] = useState("New York, USA");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load current settings on mount
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const response = await fetch('/api/settings/profile');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            setName(data.data.name || "John Doe");
+            setRegion(data.data.region || "New York, USA");
+            if (data.data.preferences) {
+              setTemperatureSensitivity(data.data.preferences.temperature_sensitivity || 0);
+              setVarietyDays(data.data.preferences.variety_days || 7);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadSettings();
+  }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
-    const settings = {
-      name,
-      region,
-      preferences: {
-        temperature_sensitivity: temperatureSensitivity,
-        variety_days: varietyDays,
-      },
-    };
-    console.log("Saving settings:", settings);
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    
-    toast.success("Settings saved successfully! 🎉");
+    try {
+      const settings = {
+        name,
+        region,
+        preferences: {
+          temperature_sensitivity: temperatureSensitivity,
+          variety_days: varietyDays,
+        },
+      };
+      
+      const response = await fetch('/api/settings/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save settings');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Settings saved successfully! 🎉");
+      } else {
+        throw new Error(data.error || 'Failed to save settings');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error("Failed to save settings. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getSensitivityLabel = (value: number) => {

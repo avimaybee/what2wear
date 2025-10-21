@@ -30,13 +30,6 @@ export default async function HistoryPage() {
       <Header />
       
       <main className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Outfit History</h1>
-          <p className="text-muted-foreground">
-            Browse your complete style timeline and rediscover past outfits
-          </p>
-        </div>
-        
         <Suspense fallback={<HistoryLoadingSkeleton />}>
           <HistoryClient userId={user.id} />
         </Suspense>
