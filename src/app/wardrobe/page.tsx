@@ -243,25 +243,61 @@ export default function WardrobePage() {
 
       if (!user) {
         toast.error('You must be signed in to upload images');
+        setUploading(false);
         return;
       }
 
       // Upload image to Supabase Storage
+      toast('Uploading image...', { icon: '📤' });
       const uploadResult = await uploadClothingImage(selectedFile, user.id);
 
       if (!uploadResult.success) {
         toast.error(uploadResult.error || 'Upload failed');
+        setUploading(false);
         return;
       }
 
-      // Create wardrobe item with default values
+      // Use AI to analyze the clothing item
+      toast('Analyzing clothing with AI...', { icon: '🤖', duration: 2000 });
+      
+      let analyzedData;
+      try {
+        const analysisResponse = await fetch('/api/wardrobe/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ imageUrl: uploadResult.url }),
+        });
+
+        if (analysisResponse.ok) {
+          const analysisResult = await analysisResponse.json();
+          if (analysisResult.success) {
+            analyzedData = analysisResult.data;
+            toast.success('AI analysis complete! 🎯', { duration: 1500 });
+          }
+        }
+      } catch (analysisError) {
+        console.error('AI analysis failed, using defaults:', analysisError);
+        // Continue with defaults if AI fails
+      }
+
+      // Create wardrobe item with ALL AI-analyzed data or defaults
       const newItem = {
-        name: selectedFile.name.split('.')[0] || 'New Item',
-        type: 'Top' as ClothingType,
-        material: 'Cotton',
-        insulation_value: 2,
+        name: analyzedData?.name || selectedFile.name.split('.')[0] || 'New Item',
+        type: (analyzedData?.type as ClothingType) || 'Top',
+        material: analyzedData?.material || 'Cotton',
+        color: analyzedData?.color || undefined,
+        insulation_value: analyzedData?.insulation_value || 2,
         image_url: uploadResult.url!,
-        dress_code: ['Casual'] as DressCode[],
+        dress_code: (analyzedData?.dress_code as DressCode[]) || ['Casual'],
+        season_tags: analyzedData?.season_tags || undefined,
+        // Enhanced AI properties for better outfit recommendations
+        pattern: analyzedData?.pattern || undefined,
+        fit: analyzedData?.fit || undefined,
+        style: analyzedData?.style || undefined,
+        occasion: analyzedData?.occasion || undefined,
+        description: analyzedData?.description || undefined,
       };
 
       const response = await fetch('/api/wardrobe', {
@@ -279,7 +315,12 @@ export default function WardrobePage() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success('Item added successfully! 🎉');
+        toast.success(
+          analyzedData 
+            ? '✨ Item added with AI-detected properties!' 
+            : 'Item added successfully! 🎉', 
+          { duration: 3000 }
+        );
         handleCloseAddModal();
         fetchWardrobe(); // Refresh the wardrobe
       } else {
@@ -504,33 +545,33 @@ export default function WardrobePage() {
         </motion.div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-        <Input
-          type="text"
-          placeholder="Search by name, color, or material..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 pr-10"
-          aria-label="Search wardrobe items"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Clear search"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        )}
-      </div>
-
-      {/* Filter and Sort Bar - Mobile uses Sheet, Desktop inline */}
-      <div className="block lg:hidden">
+      {/* Search Bar and Filter Row */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <Input
+            type="text"
+            placeholder="Search by name, color, or material..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10"
+            aria-label="Search wardrobe items"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        
+        {/* Filter Button - Both Mobile and Desktop */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="w-full" aria-label="Open filters menu">
+            <Button variant="outline" size="default" aria-label="Open filters menu">
               <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
               Filters {hasActiveFilters && `(${[filterType !== "All", filterColor !== "All", filterSeason !== "All", filterDressCode !== "All"].filter(Boolean).length})`}
             </Button>
@@ -690,155 +731,62 @@ export default function WardrobePage() {
             </div>
           </SheetContent>
         </Sheet>
+        
+        {/* Sort Quick Selector */}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortOption)}
+          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label="Sort wardrobe items"
+        >
+          <option value="recent">Recently Added</option>
+          <option value="lastWorn">Last Worn</option>
+          <option value="name">Name (A-Z)</option>
+          <option value="type">By Type</option>
+        </select>
       </div>
-
-      {/* Desktop Filter Bar */}
-      <Card className="hidden lg:block">
-        <CardContent className="py-4">
-          <div className="space-y-4">
-            {/* Sort and Filter Row */}
-            <div className="flex items-center justify-between gap-4">
-              {/* Sort Dropdown */}
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                <span className="text-sm text-muted-foreground">Sort:</span>
-                <div className="flex gap-2">
-                  {[
-                    { value: "recent" as SortOption, label: "Recent" },
-                    { value: "lastWorn" as SortOption, label: "Last Worn" },
-                    { value: "name" as SortOption, label: "Name" },
-                    { value: "type" as SortOption, label: "Type" },
-                  ].map(({ value, label }) => (
-                    <Button
-                      key={value}
-                      size="sm"
-                      variant={sortBy === value ? "secondary" : "outline"}
-                      onClick={() => setSortBy(value)}
-                    >
-                      {label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Clear Filters */}
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearAllFilters}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Clear Filters
-                </Button>
-              )}
-            </div>
-
-            {/* Type Filter Row */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <span className="text-sm text-muted-foreground mr-2">Type:</span>
-              <Button
-                size="sm"
-                variant={filterType === "All" ? "secondary" : "outline"}
-                onClick={() => setFilterType("All")}
-              >
-                All
-              </Button>
-              {clothingTypes.map((type) => (
-                <Button
-                  key={type}
-                  size="sm"
-                  variant={filterType === type ? "secondary" : "outline"}
-                  onClick={() => setFilterType(type)}
-                >
-                  {type}
-                </Button>
-              ))}
-            </div>
-
-            {/* Color Filter Row */}
-            {availableColors.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground mr-2">Color:</span>
-                <Button
-                  size="sm"
-                  variant={filterColor === "All" ? "secondary" : "outline"}
-                  onClick={() => setFilterColor("All")}
-                >
-                  All
-                </Button>
-                {availableColors.slice(0, 8).map((color) => (
-                  <Button
-                    key={color}
-                    size="sm"
-                    variant={filterColor === color ? "secondary" : "outline"}
-                    onClick={() => setFilterColor(color)}
-                    className="gap-2"
-                  >
-                    <div
-                      className="w-3 h-3 rounded-full border"
-                      style={{ backgroundColor: color.toLowerCase() }}
-                    />
-                    {color}
-                  </Button>
-                ))}
-                {availableColors.length > 8 && (
-                  <span className="text-xs text-muted-foreground">+{availableColors.length - 8} more</span>
-                )}
-              </div>
-            )}
-
-            {/* Season & Dress Code Filter Row */}
-            <div className="flex items-center gap-4 flex-wrap">
-              {/* Season */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Season:</span>
-                <Button
-                  size="sm"
-                  variant={filterSeason === "All" ? "secondary" : "outline"}
-                  onClick={() => setFilterSeason("All")}
-                >
-                  All
-                </Button>
-                {seasonOptions.map((season) => (
-                  <Button
-                    key={season}
-                    size="sm"
-                    variant={filterSeason === season ? "secondary" : "outline"}
-                    onClick={() => setFilterSeason(season)}
-                  >
-                    {season}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Dress Code */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Dress Code:</span>
-                <Button
-                  size="sm"
-                  variant={filterDressCode === "All" ? "secondary" : "outline"}
-                  onClick={() => setFilterDressCode("All")}
-                >
-                  All
-                </Button>
-                {dressCodeOptions.slice(0, 3).map((code) => (
-                  <Button
-                    key={code}
-                    size="sm"
-                    variant={filterDressCode === code ? "secondary" : "outline"}
-                    onClick={() => setFilterDressCode(code)}
-                  >
-                    {code}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      
+      {/* Active Filters Display */}
+      {hasActiveFilters && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-muted-foreground">Active filters:</span>
+          {filterType !== "All" && (
+            <Badge variant="secondary" className="gap-1">
+              Type: {filterType}
+              <button onClick={() => setFilterType("All")} className="ml-1 hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {filterColor !== "All" && (
+            <Badge variant="secondary" className="gap-1">
+              Color: {filterColor}
+              <button onClick={() => setFilterColor("All")} className="ml-1 hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {filterSeason !== "All" && (
+            <Badge variant="secondary" className="gap-1">
+              Season: {filterSeason}
+              <button onClick={() => setFilterSeason("All")} className="ml-1 hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {filterDressCode !== "All" && (
+            <Badge variant="secondary" className="gap-1">
+              Dress Code: {filterDressCode}
+              <button onClick={() => setFilterDressCode("All")} className="ml-1 hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+            Clear All
+          </Button>
+        </div>
+      )}
 
       {/* Wardrobe Grid with Enhanced Cards */}
       <AnimatePresence mode="popLayout">
@@ -865,15 +813,17 @@ export default function WardrobePage() {
               >
                 {/* Image with zoom on hover */}
                 <div className="relative aspect-square overflow-hidden bg-muted">
-                  <motion.img
+                  <Image
                     src={item.image_url}
                     alt={item.name}
-                    className="w-full h-full object-cover"
-                    
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                    priority={idx < 6}
                   />
                   
                   {/* Type Badge */}
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 z-10">
                     <Badge variant="secondary" className="backdrop-blur-sm bg-black/50 text-white border-0">
                       {item.type}
                     </Badge>

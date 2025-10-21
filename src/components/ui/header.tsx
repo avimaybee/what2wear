@@ -7,6 +7,7 @@ import { Shirt, Settings, Home, LogOut, User as UserIcon, TrendingUp, History, M
 import { ThemeToggle } from '@/components/theme-toggle';
 import { TextRollAccessible } from '@/components/ui/text-roll';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -94,15 +95,22 @@ export const Header = () => {
       {/* Desktop Header */}
       <header className="sticky top-0 z-50 w-full glass-regular border-border/40" role="banner">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link 
-            href="/" 
-            className="flex items-center transition-opacity hover:opacity-80"
-            aria-label="setmyfit home"
-          >
-            <span className="text-xl md:text-2xl font-bold tracking-tight">
-              setmyfit
-            </span>
-          </Link>
+          <div className="flex items-center gap-4">
+            {/* Show back button on non-home pages */}
+            {pathname !== '/' && (
+              <BackButton className="hidden md:flex" />
+            )}
+            
+            <Link 
+              href="/" 
+              className="flex items-center transition-opacity hover:opacity-80"
+              aria-label="setmyfit home"
+            >
+              <span className="text-xl md:text-2xl font-bold tracking-tight">
+                setmyfit
+              </span>
+            </Link>
+          </div>
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Main navigation">

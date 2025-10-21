@@ -135,6 +135,7 @@ export const dateStringSchema = z
 
 /**
  * Schema for creating a new clothing item
+ * Updated to include AI-enhanced properties for better outfit recommendations
  */
 export const createClothingItemSchema = z.object({
   name: sanitizedString(1, 100),
@@ -151,6 +152,12 @@ export const createClothingItemSchema = z.object({
   season_tags: z.array(SeasonEnum).nullable().optional(),
   style_tags: z.array(sanitizedString(1, 50)).max(10, 'Maximum 10 style tags').nullable().optional(),
   dress_code: z.array(DressCodeEnum).min(1, 'At least one dress code required').default(['Casual']),
+  // AI-enhanced properties for better outfit recommendations
+  pattern: sanitizedString(0, 50).nullable().optional(),
+  fit: sanitizedString(0, 50).nullable().optional(),
+  style: sanitizedString(0, 50).nullable().optional(),
+  occasion: z.array(sanitizedString(1, 50)).max(10, 'Maximum 10 occasions').nullable().optional(),
+  description: sanitizedString(0, 1000).nullable().optional(),
 });
 
 /**

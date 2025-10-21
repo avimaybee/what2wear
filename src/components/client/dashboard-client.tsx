@@ -54,7 +54,8 @@ export const DashboardClient = ({
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [occasionPrompt, setOccasionPrompt] = useState("");
 
-  const { recommendation, weather } = recommendationData;
+  // Safely destructure with fallbacks
+  const { recommendation = null, weather = null } = recommendationData || {};
 
   const handleWearOutfit = async () => {
     setIsLogging(true);
@@ -240,11 +241,40 @@ export const DashboardClient = ({
     return { label: "Very High", variant: "destructive" as const };
   };
 
-  const aqiStatus = getAQIStatus(weather.air_quality_index || 0);
-  const uvStatus = getUVStatus(weather.uv_index || 0);
+  // Safely get status with null checks
+  const aqiStatus = weather ? getAQIStatus(weather.air_quality_index || 0) : { label: "Unknown", variant: "default" as const };
+  const uvStatus = weather ? getUVStatus(weather.uv_index || 0) : { label: "Unknown", variant: "default" as const };
 
-  // Generate weather alerts
-  const weatherAlerts = generateWeatherAlerts(weather);
+  // Generate weather alerts only if weather data exists
+  const weatherAlerts = weather ? generateWeatherAlerts(weather) : [];
+  
+  // If no recommendation data, show empty state
+  if (!recommendation || !weather) {
+    return (
+      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+        <Card className="p-12 text-center">
+          <div className="space-y-4">
+            <div className="flex justify-center">
+              <Sparkles className="h-16 w-16 text-muted-foreground" />
+            </div>
+            <h2 className="text-2xl font-bold">Building Your First Outfit</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              We need a few more clothing items in your wardrobe to create personalized outfit recommendations. Add at least 5-7 items to get started!
+            </p>
+            <div className="flex gap-3 justify-center pt-4">
+              <Button onClick={() => window.location.href = '/wardrobe'}>
+                Add Clothing Items
+              </Button>
+              <Button variant="outline" onClick={onRefresh}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-6 pb-20 md:pb-6">

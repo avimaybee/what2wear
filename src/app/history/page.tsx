@@ -9,7 +9,6 @@ import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { HistoryClient } from '@/components/client/history-client';
-import { Header } from '@/components/ui/header';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const metadata = {
@@ -27,8 +26,6 @@ export default async function HistoryPage() {
   
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         <Suspense fallback={<HistoryLoadingSkeleton />}>
           <HistoryClient userId={user.id} />

@@ -9,7 +9,6 @@ import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { StatsClient } from '@/components/client/stats-client';
-import { Header } from '@/components/ui/header';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const metadata = {
@@ -27,8 +26,6 @@ export default async function StatsPage() {
   
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         <Suspense fallback={<StatsLoadingSkeleton />}>
           <StatsClient userId={user.id} />

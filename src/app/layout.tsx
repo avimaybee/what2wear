@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SquircleProvider } from "@/components/ui/squircle-filter";
 import { FirstVisitStairs } from "@/components/client/first-visit-stairs";
 import { WebVitalsTracker } from "@/components/client/web-vitals-tracker";
+import { AccentColorLoader } from "@/components/client/accent-color-loader";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -50,6 +51,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <AccentColorLoader />
           <FirstVisitStairs>
             <SquircleProvider>
               <div className="relative flex min-h-screen flex-col">

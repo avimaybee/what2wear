@@ -45,6 +45,12 @@ export interface IClothingItem {
   style_tags: string[] | null;
   dress_code: DressCode[];
   created_at: string;
+  // Enhanced AI-generated properties for better outfit recommendations
+  pattern?: string | null; // e.g., "Solid", "Striped", "Plaid"
+  fit?: string | null; // e.g., "Slim Fit", "Regular Fit", "Loose Fit"
+  style?: string | null; // e.g., "Modern", "Vintage", "Streetwear"
+  occasion?: string[] | null; // e.g., ["Work", "Casual Outing"]
+  description?: string | null; // Detailed AI description for outfit matching
 }
 
 export interface WeatherAlert {

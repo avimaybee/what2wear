@@ -81,7 +81,7 @@ export const POST = withMonitoring(withValidation(async (request: NextRequest): 
   // Validate and sanitize request body using Zod schema
   const validatedData = await validateBody(request, createClothingItemSchema);
 
-  // Create new clothing item with validated data
+  // Create new clothing item with validated data including AI-enhanced properties
   const newItem = {
     user_id: user.id,
     name: validatedData.name,
@@ -95,6 +95,12 @@ export const POST = withMonitoring(withValidation(async (request: NextRequest): 
     style_tags: validatedData.style_tags || null,
     dress_code: validatedData.dress_code,
     last_worn_date: null,
+    // AI-enhanced properties for better outfit recommendations
+    pattern: validatedData.pattern || null,
+    fit: validatedData.fit || null,
+    style: validatedData.style || null,
+    occasion: validatedData.occasion || null,
+    description: validatedData.description || null,
   };
 
   // Insert with performance tracking
