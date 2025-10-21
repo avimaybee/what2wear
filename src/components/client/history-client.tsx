@@ -406,7 +406,7 @@ export function HistoryClient({ userId }: HistoryClientProps) {
         >
           <Sparkles className="h-8 w-8 text-primary mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">
-            You've reached the beginning of your style journey! 🎉
+            You&apos;ve reached the beginning of your style journey! 🎉
           </p>
         </motion.div>
       )}

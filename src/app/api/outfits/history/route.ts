@@ -99,14 +99,17 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Transform data
-    const history: OutfitHistoryItem[] = (outfits || []).map((outfit: any) => ({
+    // Transform data - outfit_items is an array of objects with clothing_items property
+    const history: OutfitHistoryItem[] = (outfits || []).map(outfit => ({
       id: outfit.id,
       outfit_date: outfit.outfit_date,
       rendered_image_url: outfit.rendered_image_url,
       feedback: outfit.feedback,
       created_at: outfit.created_at,
-      items: (outfit.outfit_items || []).map((oi: any) => oi.clothing_items).filter(Boolean)
+      items: (outfit.outfit_items || [])
+        .map(outfitItem => outfitItem.clothing_items)
+        .flat()
+        .filter((item): item is OutfitHistoryItem['items'][0] => Boolean(item))
     }));
     
     // Apply season filter (client-side since season is stored in items)

@@ -167,7 +167,16 @@ export function WeatherAlertBanner({ alerts, onDismiss, className }: WeatherAler
 }
 
 // Helper function to generate weather alerts from weather data
-export function generateWeatherAlerts(weather: any): WeatherAlertData[] {
+export function generateWeatherAlerts(weather: {
+  precipitation_probability?: number;
+  temperature_2m?: number;
+  wind_speed_10m?: number;
+  uv_index?: number;
+  temperature_change?: number;
+  wind_speed?: number;
+  weather_code?: number;
+  feels_like?: number;
+}): WeatherAlertData[] {
   const alerts: WeatherAlertData[] = [];
   
   // Rain alert

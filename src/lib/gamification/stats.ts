@@ -79,7 +79,7 @@ export async function calculateStreak(userId: string): Promise<{ current: number
   let currentStreak = 0;
   let longestStreak = 0;
   let tempStreak = 0;
-  let expectedDate = new Date(today);
+  const expectedDate = new Date(today);
   
   // Calculate current streak
   for (const date of dates) {
@@ -95,7 +95,7 @@ export async function calculateStreak(userId: string): Promise<{ current: number
   }
   
   // Calculate longest streak
-  let checkDate = dates[0];
+  const checkDate = dates[0];
   tempStreak = 1;
   
   for (let i = 1; i < dates.length; i++) {
@@ -147,7 +147,7 @@ export async function calculateStyleConsistency(userId: string): Promise<{
   
   // Get clothing items with dress codes
   const itemIds = outfits.flatMap(outfit => 
-    outfit.outfit_items?.map((oi: any) => oi.clothing_item_id) || []
+    outfit.outfit_items?.map((oi: { clothing_item_id: number }) => oi.clothing_item_id) || []
   );
   
   if (itemIds.length === 0) {
@@ -165,7 +165,7 @@ export async function calculateStyleConsistency(userId: string): Promise<{
   
   // Count style occurrences
   const styleCount: Record<string, number> = {};
-  items.forEach((item: any) => {
+  items.forEach((item: { id: number; dress_code: string[] | null }) => {
     if (item.dress_code && Array.isArray(item.dress_code)) {
       item.dress_code.forEach((style: string) => {
         styleCount[style] = (styleCount[style] || 0) + 1;
@@ -217,7 +217,7 @@ export async function calculateWardrobeDiversity(userId: string): Promise<{
   const categoryCount: Record<string, number> = {};
   const colorSet = new Set<string>();
   
-  items.forEach((item: any) => {
+  items.forEach((item: { category?: string; color?: string }) => {
     if (item.category) {
       categoryCount[item.category] = (categoryCount[item.category] || 0) + 1;
     }
@@ -239,9 +239,11 @@ export async function calculateWardrobeDiversity(userId: string): Promise<{
   if (wornItems && wornItems.length > 0) {
     const wornCount: Record<number, { name: string; count: number }> = {};
     
-    wornItems.forEach((item: any) => {
+    wornItems.forEach(item => {
       const id = item.clothing_item_id;
-      const name = item.clothing_items?.name || 'Unknown';
+      const name = Array.isArray(item.clothing_items) && item.clothing_items.length > 0 
+        ? item.clothing_items[0].name 
+        : 'Unknown';
       
       if (!wornCount[id]) {
         wornCount[id] = { name, count: 0 };
@@ -299,7 +301,7 @@ export async function calculateWeeklyActivity(userId: string): Promise<{
   const weeklyActivity = new Array(7).fill(0);
   
   if (recentOutfits && recentOutfits.length > 0) {
-    recentOutfits.forEach((outfit: any) => {
+    recentOutfits.forEach(outfit => {
       const date = new Date(outfit.outfit_date);
       const daysAgo = Math.floor((today.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
       if (daysAgo >= 0 && daysAgo < 7) {
