@@ -53,13 +53,48 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch the image as base64
-    const imageResponse = await fetch(imageUrl);
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    // Fetch the image as base64 - use Supabase client if it's a Supabase Storage URL
+    let base64Image: string;
+    let mimeType: string;
     
-    // Determine mime type
-    const mimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+    try {
+      if (imageUrl.includes('supabase.co')) {
+        // For Supabase Storage URLs, fetch with authentication
+        const imageResponse = await fetch(imageUrl, {
+          headers: {
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+        });
+        
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
+        }
+        
+        const imageBuffer = await imageResponse.arrayBuffer();
+        base64Image = Buffer.from(imageBuffer).toString('base64');
+        mimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+      } else {
+        // For other URLs
+        const imageResponse = await fetch(imageUrl);
+        
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to fetch image: ${imageResponse.status}`);
+        }
+        
+        const imageBuffer = await imageResponse.arrayBuffer();
+        base64Image = Buffer.from(imageBuffer).toString('base64');
+        mimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
+      }
+    } catch (fetchError) {
+      console.error("Error fetching image:", fetchError);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Failed to fetch image: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}` 
+        },
+        { status: 400 }
+      );
+    }
 
     // Use Gemini 2.5 Flash to analyze the clothing item
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
