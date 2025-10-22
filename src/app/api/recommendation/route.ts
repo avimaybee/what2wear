@@ -1,24 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, CalendarEvent, HealthActivity } from '@/lib/types';
-import { 
-  filterByLastWorn, 
-  filterByDressCode, 
-  getDressCodeFromEvents, 
-  adjustInsulationForActivity,
-  getRecommendation,
-} from '@/lib/helpers/recommendationEngine';
-import { 
-  validateBody, 
-  recommendationRequestSchema 
-} from '@/lib/validation';
-import { checkRateLimit, createRateLimitResponse, addRateLimitHeaders } from '@/lib/ratelimit';
+import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData } from '@/lib/types';
+import { filterByLastWorn, getRecommendation } from '@/lib/helpers/recommendationEngine';
+import { validateBody, recommendationRequestSchema } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
 /**
  * POST /api/recommendation
- * Generate outfit recommendation based on weather, calendar, and user preferences
- * UPDATED: Recommendation #4 - Added comprehensive validation
- * UPDATED: Recommendation #6 - Added rate limiting (50 requests/hour)
+ * Generate outfit recommendation based on weather and user wardrobe
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> {
   const supabase = await createClient();
@@ -33,74 +22,52 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     );
   }
 
-  // Check rate limit
-  const rateLimitResult = await checkRateLimit(request, { policy: 'recommendation' });
-  if (!rateLimitResult.success) {
-    return createRateLimitResponse(rateLimitResult) as NextResponse<ApiResponse<OutfitRecommendation>>;
-  }
-
-  // Validate and sanitize request body
   try {
-    const validatedData = await validateBody(request, recommendationRequestSchema);
+    const validatedData = await validateBody(request, recommendationRequestSchema) as { lat: number; lon: number; occasion?: string };
     const { lat, lon, occasion = "" } = validatedData;
 
-    try {
-      const recommendation = await generateRecommendation(user.id, lat, lon, occasion, request);
+    const recommendation = await generateRecommendation(user.id, lat, lon, occasion, request);
 
-      const response = NextResponse.json({
-        success: true,
-        data: recommendation,
-      });
-
-      // Add rate limit headers
-      return addRateLimitHeaders(response, rateLimitResult) as NextResponse<ApiResponse<OutfitRecommendation>>;
-    } catch (error) {
-      console.error('Error generating recommendation:', error);
-      
-      // Handle special cases for empty/insufficient wardrobe
-      if (error instanceof Error) {
-        if (error.message === 'EMPTY_WARDROBE') {
-          return NextResponse.json(
-            { 
-              success: false, 
-              error: 'EMPTY_WARDROBE',
-              message: 'Your wardrobe is empty. Add some clothing items to get started!',
-              needsWardrobe: true
-            },
-            { status: 200 } // 200 because this is an expected state, not an error
-          );
-        }
-        
-        if (error.message === 'INSUFFICIENT_ITEMS') {
-          return NextResponse.json(
-            { 
-              success: false, 
-              error: 'INSUFFICIENT_ITEMS',
-              message: 'You need at least one top, one bottom, and one pair of shoes to create an outfit.',
-              needsWardrobe: true
-            },
-            { status: 200 } // 200 because this is an expected state, not an error
-          );
-        }
+    return NextResponse.json({
+      success: true,
+      data: recommendation,
+    });
+  } catch (error) {
+    logger.error('Error generating recommendation:', error);
+    
+    // Handle special cases for empty/insufficient wardrobe
+    if (error instanceof Error) {
+      if (error.message === 'EMPTY_WARDROBE') {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'EMPTY_WARDROBE',
+            message: 'Your wardrobe is empty. Add some clothing items to get started!',
+            needsWardrobe: true
+          },
+          { status: 200 }
+        );
       }
       
-      // All other errors are actual server errors
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Failed to generate recommendation' 
-        },
-        { status: 500 }
-      );
+      if (error.message === 'INSUFFICIENT_ITEMS') {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'INSUFFICIENT_ITEMS',
+            message: 'You need at least one top, one bottom, and one pair of shoes to create an outfit.',
+            needsWardrobe: true
+          },
+          { status: 200 }
+        );
+      }
     }
-  } catch (validationError) {
-    console.error('Validation error:', validationError);
+    
     return NextResponse.json(
       { 
         success: false, 
-        error: validationError instanceof Error ? validationError.message : 'Invalid request data' 
+        error: error instanceof Error ? error.message : 'Failed to generate recommendation' 
       },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }
@@ -160,44 +127,6 @@ async function generateRecommendation(
   const weather: WeatherData = weatherData.data.weather;
   const alerts = weatherData.data.alerts;
 
-  // Fetch calendar events
-  let calendarEvents: CalendarEvent[] = [];
-  try {
-    const calendarUrl = new URL('/api/calendar/events', request.url);
-    calendarUrl.searchParams.set('hours', '24');
-    
-    const calendarResponse = await fetch(calendarUrl.toString(), {
-      headers: request.headers,
-    });
-    
-    if (calendarResponse.ok) {
-      const calendarData = await calendarResponse.json();
-      calendarEvents = calendarData.data || [];
-    }
-  } catch (error) {
-    console.error('Calendar fetch error:', error);
-    // Continue without calendar data
-  }
-
-  // Fetch health activity data
-  let healthActivity: HealthActivity | undefined;
-  try {
-    const healthUrl = new URL('/api/health/activity', request.url);
-    healthUrl.searchParams.set('date', new Date().toISOString().split('T')[0]);
-    
-    const healthResponse = await fetch(healthUrl.toString(), {
-      headers: request.headers,
-    });
-    
-    if (healthResponse.ok) {
-      const healthData = await healthResponse.json();
-      healthActivity = healthData.data;
-    }
-  } catch (error) {
-    console.error('Health fetch error:', error);
-    // Continue without health data
-  }
-
   // Fetch user preferences
   const { data: profile } = await supabase
     .from('profiles')
@@ -213,28 +142,14 @@ async function generateRecommendation(
   // Filter by last worn date
   availableItems = filterByLastWorn(availableItems);
 
-  // Filter by dress code if there are calendar events
-  const dressCode = getDressCodeFromEvents(calendarEvents);
-  if (dressCode) {
-    const dressCodeItems = filterByDressCode(availableItems, dressCode);
-    // Only use dress code filtering if we have matching items
-    if (dressCodeItems.length > 0) {
-      availableItems = dressCodeItems;
-    }
-  }
-
   // Generate the recommendation
   const recommendation = getRecommendation(
     availableItems,
     {
       weather,
-      calendar_events: calendarEvents,
-      health_activity: healthActivity,
       user_preferences: userPreferences,
     },
     {
-      dress_code: dressCode,
-      activity_level: healthActivity?.planned_activity_level,
       weather_alerts: alerts,
     }
   );
@@ -254,8 +169,7 @@ async function generateRecommendation(
     .single();
 
   if (saveError) {
-    console.error('Failed to save recommendation:', saveError);
-    // Continue anyway, just log the error
+    logger.error('Failed to save recommendation:', saveError);
   }
 
   return {

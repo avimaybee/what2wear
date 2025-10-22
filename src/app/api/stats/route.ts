@@ -2,17 +2,17 @@
  * User Statistics API Endpoint
  * GET /api/stats
  * 
- * Returns comprehensive gamification statistics for authenticated user
+ * Returns basic usage statistics for authenticated user
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getUserStats } from '@/lib/gamification/stats';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
     
@@ -26,20 +26,29 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Calculate user statistics
-    const stats = await getUserStats(user.id);
+    // Get basic statistics from database
+    const { data: outfitLogs, error: logsError } = await supabase
+      .from('outfit_logs')
+      .select('id')
+      .eq('user_id', user.id);
+    
+    const { data: wardrobeItems, error: wardrobeError } = await supabase
+      .from('clothing_items')
+      .select('id')
+      .eq('user_id', user.id);
+
+    const stats = {
+      totalOutfits: logsError ? 0 : (outfitLogs?.length || 0),
+      wardrobeSize: wardrobeError ? 0 : (wardrobeItems?.length || 0),
+    };
     
     return NextResponse.json({
       success: true,
       data: stats
-    }, {
-      headers: {
-        'Cache-Control': 'private, max-age=300', // Cache for 5 minutes
-      }
     });
     
   } catch (error) {
-    console.error('Error fetching user stats:', error);
+    logger.error('Error fetching user stats:', error);
     return NextResponse.json(
       { 
         error: 'Failed to fetch statistics',

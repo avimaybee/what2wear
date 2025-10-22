@@ -2,17 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { WeatherData, WeatherAlert, ApiResponse } from '@/lib/types';
 import { config } from '@/lib/config';
-import { 
-  validateQuery, 
-  withValidation, 
-  weatherRequestSchema 
-} from '@/lib/validation';
-import { 
-  withMonitoring, 
-  trackExternalApiCall,
-  metricsCollector 
-} from '@/lib/monitoring';
-import { checkRateLimit, createRateLimitResponse, addRateLimitHeaders } from '@/lib/ratelimit';
+import { validateQuery, weatherRequestSchema } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
 /**
  * Calculate apparent temperature (feels-like) using heat index and wind chill
@@ -119,7 +110,7 @@ function generateWeatherAlerts(weather: WeatherData): WeatherAlert[] {
  * UPDATED: Recommendation #1 - Added monitoring and external API tracking
  * UPDATED: Recommendation #6 - Added rate limiting (100 requests/hour)
  */
-export const GET = withMonitoring(withValidation(async (request: NextRequest): Promise<NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[] }>>> => {
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[] }>>> {
   const supabase = await createClient();
   
   // Get authenticated user
@@ -132,34 +123,25 @@ export const GET = withMonitoring(withValidation(async (request: NextRequest): P
     );
   }
 
-  // Check rate limit
-  const rateLimitResult = await checkRateLimit(request, { policy: 'weather' });
-  if (!rateLimitResult.success) {
-    return createRateLimitResponse(rateLimitResult) as NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[] }>>;
+  try {
+    // Validate query parameters
+    const { lat, lon, provider } = validateQuery(request, weatherRequestSchema) as { lat: number; lon: number; provider: string };
+
+    const weatherPayload = await fetchWeatherData(lat, lon, provider);
+
+    return NextResponse.json({
+      success: true,
+      data: weatherPayload,
+      message: `Weather data from ${provider}`,
+    });
+  } catch (error) {
+    logger.error('Weather API error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch weather data' },
+      { status: 500 }
+    );
   }
-
-  // Validate query parameters
-  const { lat, lon, provider } = validateQuery(request, weatherRequestSchema);
-
-  const weatherPayload = await fetchWeatherData(lat, lon, provider);
-
-  // Track weather fetch metrics
-  metricsCollector.trackWeatherFetched(
-    user.id,
-    `${lat},${lon}`,
-    false,
-    { provider }
-  );
-
-  const response = NextResponse.json({
-    success: true,
-    data: weatherPayload,
-    message: `Weather data from ${provider}`,
-  });
-
-  // Add rate limit headers
-  return addRateLimitHeaders(response, rateLimitResult) as NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[] }>>;
-}));
+}
 
 /**
  * Fetch weather data from provider
@@ -173,20 +155,15 @@ async function fetchWeatherData(
   // Try to fetch real weather data
   let weatherData: WeatherData | null = null;
   
-  // OpenWeatherMap integration with monitoring
+  // OpenWeatherMap integration
   if (provider === 'openWeather' && config.weather.openWeather.apiKey) {
     try {
       const apiUrl = `${config.weather.openWeather.baseUrl}${config.weather.openWeather.endpoints.onecall}?lat=${lat}&lon=${lon}&appid=${config.weather.openWeather.apiKey}&units=metric`;
       
-      // Track external API call performance
-      const response = await trackExternalApiCall(
-        'OpenWeatherMap',
-        '/onecall',
-        async () => fetch(apiUrl)
-      );
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
-        console.error('OpenWeatherMap API error:', await response.text());
+        logger.error('OpenWeatherMap API error:', await response.text());
       } else {
         const data = await response.json();
         
@@ -196,32 +173,27 @@ async function fetchWeatherData(
           humidity: data.current.humidity,
           wind_speed: data.current.wind_speed * 3.6, // Convert m/s to km/h
           uv_index: data.current.uvi || 0,
-          air_quality_index: 0, // OpenWeather requires separate air pollution API call
-          pollen_count: 0, // Not available in free tier
+          air_quality_index: 0,
+          pollen_count: 0,
           weather_condition: data.current.weather[0]?.description || 'Unknown',
           timestamp: new Date(),
         };
         
-        // Fetch air quality data if available
+        // Fetch air quality data
         try {
           const aqiUrl = `http://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${config.weather.openWeather.apiKey}`;
-          const aqiResponse = await trackExternalApiCall(
-            'OpenWeatherMap',
-            '/air_pollution',
-            async () => fetch(aqiUrl)
-          );
+          const aqiResponse = await fetch(aqiUrl);
           if (aqiResponse.ok) {
             const aqiData = await aqiResponse.json();
-            // AQI scale: 1-5 -> convert to 0-500 scale
             const aqiIndex = aqiData.list[0]?.main?.aqi || 1;
             weatherData.air_quality_index = aqiIndex * 50;
           }
         } catch (aqiError) {
-          console.error('AQI fetch error:', aqiError);
+          logger.error('AQI fetch error:', aqiError);
         }
       }
     } catch (error) {
-      console.error('OpenWeatherMap fetch error:', error);
+      logger.error('OpenWeatherMap fetch error:', error);
     }
   }
   
