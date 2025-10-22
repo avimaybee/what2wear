@@ -1,19 +1,12 @@
 /**
  * Error Boundary Component
  * 
- * Catches React errors and displays a fallback UI while
- * automatically reporting errors to Sentry.
- * 
- * Usage:
- * <ErrorBoundary fallback={<ErrorFallback />}>
- *   <YourComponent />
- * </ErrorBoundary>
+ * Catches React errors and displays a fallback UI.
  */
 
 'use client';
 
 import React, { Component, ReactNode } from 'react';
-import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -48,15 +41,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    // Log error to Sentry
-    Sentry.captureException(error, {
-      contexts: {
-        react: {
-          componentStack: errorInfo.componentStack,
-        },
-      },
-    });
-
     // Update state with error info
     this.setState({
       errorInfo,
@@ -67,10 +51,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       this.props.onError(error, errorInfo);
     }
 
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error Boundary caught an error:', error, errorInfo);
-    }
+    // Log to console
+    console.error('Error Boundary caught an error:', error, errorInfo);
   }
 
   handleReset = (): void => {
@@ -208,12 +190,6 @@ export function MinimalErrorFallback({ error, onReset }: { error?: Error; onRese
  */
 export function useErrorHandler() {
   return (error: Error, context?: Record<string, unknown>) => {
-    Sentry.captureException(error, {
-      extra: context,
-    });
-
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Manually reported error:', error, context);
-    }
+    console.error('Manually reported error:', error, context);
   };
 }

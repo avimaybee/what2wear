@@ -125,7 +125,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
   try {
     // Validate query parameters
-    const { lat, lon, provider } = validateQuery(request, weatherRequestSchema);
+    const { lat, lon, provider } = validateQuery(request, weatherRequestSchema) as { lat: number; lon: number; provider: string };
 
     const weatherPayload = await fetchWeatherData(lat, lon, provider);
 
