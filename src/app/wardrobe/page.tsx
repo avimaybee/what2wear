@@ -303,18 +303,20 @@ export default function WardrobePage() {
         name: analyzedData?.name || selectedFile.name.split('.')[0] || 'New Item',
         type: (analyzedData?.type as ClothingType) || 'Top',
         material: analyzedData?.material || 'Cotton',
-        color: analyzedData?.color || undefined,
+        color: analyzedData?.color || null,
         insulation_value: analyzedData?.insulation_value || 2,
         image_url: uploadResult.url!,
         dress_code: (analyzedData?.dress_code as DressCode[]) || ['Casual'],
-        season_tags: analyzedData?.season_tags || undefined,
+        season_tags: analyzedData?.season_tags || null,
         // Enhanced AI properties for better outfit recommendations
-        pattern: analyzedData?.pattern || undefined,
-        fit: analyzedData?.fit || undefined,
-        style: analyzedData?.style || undefined,
-        occasion: analyzedData?.occasion || undefined,
-        description: analyzedData?.description || undefined,
+        pattern: analyzedData?.pattern || null,
+        fit: analyzedData?.fit || null,
+        style: analyzedData?.style || null,
+        occasion: analyzedData?.occasion || null,
+        description: analyzedData?.description || null,
       };
+
+      console.log('Creating wardrobe item:', newItem);
 
       const response = await fetch('/api/wardrobe', {
         method: 'POST',
@@ -324,24 +326,22 @@ export default function WardrobePage() {
         body: JSON.stringify(newItem),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create wardrobe item');
-      }
-
       const data = await response.json();
 
-      if (data.success) {
-        toast.success(
-          analyzedData 
-            ? '✨ Item added with AI-detected properties!' 
-            : 'Item added successfully! 🎉', 
-          { duration: 3000 }
-        );
-        handleCloseAddModal();
-        fetchWardrobe(); // Refresh the wardrobe
-      } else {
-        throw new Error(data.error || 'Failed to create item');
+      if (!response.ok || !data.success) {
+        const errorMsg = data.error || data.message || 'Failed to create wardrobe item';
+        console.error('Failed to create wardrobe item:', errorMsg, 'Response status:', response.status);
+        throw new Error(errorMsg);
       }
+
+      toast.success(
+        analyzedData 
+          ? '✨ Item added with AI-detected properties!' 
+          : 'Item added successfully! 🎉', 
+        { duration: 3000 }
+      );
+      handleCloseAddModal();
+      fetchWardrobe(); // Refresh the wardrobe
     } catch (error) {
       console.error('Error creating item:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to add item');
