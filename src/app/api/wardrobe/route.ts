@@ -73,7 +73,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       image_url: body.image_url || null,
       season_tags: body.season_tags || null,
       style_tags: body.style_tags || null,
-      dress_code: body.dress_code || 'casual',
+      dress_code: body.dress_code || ['Casual'],
       last_worn_date: null,
       pattern: body.pattern || null,
       fit: body.fit || null,

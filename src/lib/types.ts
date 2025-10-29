@@ -59,14 +59,20 @@ export interface IClothingItem {
   type: ClothingType;
   category: string | null; // Legacy field, kept for backwards compatibility
   color: string | null;
-  material: ClothingMaterial;
+  material: string; // Changed to string for flexibility with AI-generated materials
   insulation_value: number; // 0-10 scale, higher = warmer
-  last_worn_date: Date | null;
+  last_worn_date: string | null; // ISO date string from database
   image_url: string;
   season_tags: string[] | null;
   style_tags: string[] | null;
-  dress_code: DressCode[];
+  dress_code: DressCode[] | string[]; // Allow string array for flexibility
   created_at: string;
+  // Enhanced AI-generated properties for better outfit recommendations
+  pattern?: string | null;
+  fit?: string | null;
+  style?: string | null;
+  occasion?: string[] | null;
+  description?: string | null;
 }
 
 /**
