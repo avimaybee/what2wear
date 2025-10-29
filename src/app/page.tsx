@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense, lazy } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { MapPin, AlertCircle, LogIn, Shirt } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";

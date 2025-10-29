@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1332,11 +1332,26 @@ export default function WardrobePage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setDeleteItem(null)} variant="outline">
+            <Button 
+              onClick={() => setDeleteItem(null)} 
+              variant="outline"
+              disabled={deleting}
+            >
               Cancel
             </Button>
-            <Button onClick={handleDeleteConfirm} variant="destructive">
-              Delete
+            <Button 
+              onClick={handleDeleteConfirm} 
+              variant="destructive"
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
