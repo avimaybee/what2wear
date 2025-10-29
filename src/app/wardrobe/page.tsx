@@ -316,7 +316,9 @@ export default function WardrobePage() {
         description: analyzedData?.description || null,
       };
 
-      console.log('Creating wardrobe item:', newItem);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Creating wardrobe item:', newItem);
+      }
 
       const response = await fetch('/api/wardrobe', {
         method: 'POST',
@@ -330,7 +332,9 @@ export default function WardrobePage() {
 
       if (!response.ok || !data.success) {
         const errorMsg = data.error || data.message || 'Failed to create wardrobe item';
-        console.error('Failed to create wardrobe item:', errorMsg, 'Response status:', response.status);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to create wardrobe item:', errorMsg, 'Response status:', response.status);
+        }
         throw new Error(errorMsg);
       }
 
