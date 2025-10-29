@@ -78,6 +78,11 @@ export async function PUT(
   try {
     const body = await request.json();
     
+    // Normalize season_tags to lowercase to match database enum
+    if (body.season_tags && Array.isArray(body.season_tags)) {
+      body.season_tags = body.season_tags.map((season: string) => season.toLowerCase());
+    }
+    
     // Update the item
     const { data, error } = await supabase
       .from('clothing_items')

@@ -126,7 +126,7 @@ export default function WardrobePage() {
       
       // Season filter
       if (filterSeason !== "All") {
-        if (!item.season_tags || !item.season_tags.includes(filterSeason)) return false;
+        if (!item.season_tags || !item.season_tags.some(s => s.toLowerCase() === filterSeason.toLowerCase())) return false;
       }
       
       // Dress code filter
@@ -1234,7 +1234,7 @@ export default function WardrobePage() {
                 <Label>Seasons</Label>
                 <div className="flex flex-wrap gap-2">
                   {seasonOptions.map((season) => {
-                    const isSelected = editFormData.season_tags?.includes(season);
+                    const isSelected = editFormData.season_tags?.some(s => s.toLowerCase() === season.toLowerCase()) || false;
                     return (
                       <Badge
                         key={season}
@@ -1243,8 +1243,8 @@ export default function WardrobePage() {
                         onClick={() => {
                           const current = editFormData.season_tags || [];
                           const updated = isSelected
-                            ? current.filter((s) => s !== season)
-                            : [...current, season];
+                            ? current.filter((s) => s.toLowerCase() !== season.toLowerCase())
+                            : [...current, season.toLowerCase()];
                           setEditFormData({ ...editFormData, season_tags: updated });
                         }}
                       >
