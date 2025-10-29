@@ -8,7 +8,7 @@ import { normalizeMaterial } from '../validation';
 console.log('🧪 Testing Material Normalization\n');
 
 // Test cases for material normalization
-const testCases = [
+const testCases: Array<{ input: string | null | undefined; expected: string }> = [
   // Direct matches
   { input: 'Cotton', expected: 'Cotton' },
   { input: 'cotton', expected: 'Cotton' },
@@ -65,7 +65,7 @@ let failed = 0;
 console.log('Running material normalization tests...\n');
 
 testCases.forEach(({ input, expected }) => {
-  const result = normalizeMaterial(input as string);
+  const result = normalizeMaterial(input);
   const status = result === expected ? '✅' : '❌';
   
   if (result === expected) {
