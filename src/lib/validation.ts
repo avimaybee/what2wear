@@ -37,3 +37,60 @@ export async function validateBody(request: NextRequest, schema: z.ZodSchema) {
   const body = await request.json();
   return schema.parse(body);
 }
+
+// Valid clothing materials enum values
+const VALID_MATERIALS = [
+  'Cotton',
+  'Wool',
+  'Synthetic',
+  'Gore-Tex',
+  'Fleece',
+  'Leather',
+  'Denim',
+  'Silk',
+  'Linen',
+  'Polyester',
+  'Nylon',
+] as const;
+
+/**
+ * Normalizes material values to match database enum
+ * Maps common variations and blends to closest valid material
+ */
+export function normalizeMaterial(material: string | null | undefined): string {
+  if (!material) return 'Cotton'; // Default fallback
+  
+  const normalized = material.trim();
+  
+  // Direct match (case-insensitive)
+  const directMatch = VALID_MATERIALS.find(
+    valid => valid.toLowerCase() === normalized.toLowerCase()
+  );
+  if (directMatch) return directMatch;
+  
+  // Handle common blends and variations
+  const lowerMaterial = normalized.toLowerCase();
+  
+  // Cotton blends
+  if (lowerMaterial.includes('cotton')) return 'Cotton';
+  
+  // Wool blends
+  if (lowerMaterial.includes('wool') || lowerMaterial.includes('cashmere') || lowerMaterial.includes('merino')) return 'Wool';
+  
+  // Synthetic materials
+  if (lowerMaterial.includes('polyester') || lowerMaterial.includes('poly')) return 'Polyester';
+  if (lowerMaterial.includes('nylon')) return 'Nylon';
+  if (lowerMaterial.includes('spandex') || lowerMaterial.includes('elastane') || lowerMaterial.includes('lycra')) return 'Synthetic';
+  if (lowerMaterial.includes('acrylic') || lowerMaterial.includes('rayon') || lowerMaterial.includes('viscose')) return 'Synthetic';
+  
+  // Special materials
+  if (lowerMaterial.includes('fleece')) return 'Fleece';
+  if (lowerMaterial.includes('gore') || lowerMaterial.includes('waterproof') || lowerMaterial.includes('technical')) return 'Gore-Tex';
+  if (lowerMaterial.includes('leather') || lowerMaterial.includes('suede')) return 'Leather';
+  if (lowerMaterial.includes('denim') || lowerMaterial.includes('jean')) return 'Denim';
+  if (lowerMaterial.includes('silk')) return 'Silk';
+  if (lowerMaterial.includes('linen')) return 'Linen';
+  
+  // Default fallback for unknown materials
+  return 'Cotton';
+}
