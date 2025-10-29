@@ -36,14 +36,14 @@ export interface IClothingItem {
   user_id: string;
   name: string;
   type: ClothingType;
-  material: ClothingMaterial;
+  material: string; // Changed to string for flexibility with AI-generated materials
   insulation_value: number;
   last_worn_date: string | null; // ISO Date String
   image_url: string;
   color: string | null;
   season_tags: string[] | null;
   style_tags: string[] | null;
-  dress_code: DressCode[];
+  dress_code: DressCode[] | string[]; // Allow string array for flexibility
   created_at: string;
   // Enhanced AI-generated properties for better outfit recommendations
   pattern?: string | null; // e.g., "Solid", "Striped", "Plaid"

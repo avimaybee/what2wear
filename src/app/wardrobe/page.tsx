@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon } from "lucide-react";
+import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit } from "lucide-react";
 import { getRelativeTime } from "@/lib/utils";
 import { motionVariants, motionDurations } from "@/lib/motion";
 import { toast } from "@/components/ui/toaster";
@@ -41,8 +42,13 @@ export default function WardrobePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteItem, setDeleteItem] = useState<IClothingItem | null>(null);
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
-  const [modalSource, setModalSource] = useState<"add-button" | "delete" | null>(null);
+  const [modalSource, setModalSource] = useState<"add-button" | "delete" | "edit" | null>(null);
   const [deleting, setDeleting] = useState(false);
+  
+  // Edit state
+  const [editItem, setEditItem] = useState<IClothingItem | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<IClothingItem>>({});
+  const [saving, setSaving] = useState(false);
 
   // Upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -297,18 +303,22 @@ export default function WardrobePage() {
         name: analyzedData?.name || selectedFile.name.split('.')[0] || 'New Item',
         type: (analyzedData?.type as ClothingType) || 'Top',
         material: analyzedData?.material || 'Cotton',
-        color: analyzedData?.color || undefined,
+        color: analyzedData?.color || null,
         insulation_value: analyzedData?.insulation_value || 2,
         image_url: uploadResult.url!,
         dress_code: (analyzedData?.dress_code as DressCode[]) || ['Casual'],
-        season_tags: analyzedData?.season_tags || undefined,
+        season_tags: analyzedData?.season_tags || null,
         // Enhanced AI properties for better outfit recommendations
-        pattern: analyzedData?.pattern || undefined,
-        fit: analyzedData?.fit || undefined,
-        style: analyzedData?.style || undefined,
-        occasion: analyzedData?.occasion || undefined,
-        description: analyzedData?.description || undefined,
+        pattern: analyzedData?.pattern || null,
+        fit: analyzedData?.fit || null,
+        style: analyzedData?.style || null,
+        occasion: analyzedData?.occasion || null,
+        description: analyzedData?.description || null,
       };
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Creating wardrobe item:', newItem);
+      }
 
       const response = await fetch('/api/wardrobe', {
         method: 'POST',
@@ -318,24 +328,24 @@ export default function WardrobePage() {
         body: JSON.stringify(newItem),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create wardrobe item');
-      }
-
       const data = await response.json();
 
-      if (data.success) {
-        toast.success(
-          analyzedData 
-            ? '✨ Item added with AI-detected properties!' 
-            : 'Item added successfully! 🎉', 
-          { duration: 3000 }
-        );
-        handleCloseAddModal();
-        fetchWardrobe(); // Refresh the wardrobe
-      } else {
-        throw new Error(data.error || 'Failed to create item');
+      if (!response.ok || !data.success) {
+        const errorMsg = data.error || data.message || 'Failed to create wardrobe item';
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to create wardrobe item:', errorMsg, 'Response status:', response.status);
+        }
+        throw new Error(errorMsg);
       }
+
+      toast.success(
+        analyzedData 
+          ? '✨ Item added with AI-detected properties!' 
+          : 'Item added successfully! 🎉', 
+        { duration: 3000 }
+      );
+      handleCloseAddModal();
+      fetchWardrobe(); // Refresh the wardrobe
     } catch (error) {
       console.error('Error creating item:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to add item');
@@ -347,6 +357,63 @@ export default function WardrobePage() {
   const handleOpenDeleteModal = (item: IClothingItem) => {
     setModalSource("delete");
     setDeleteItem(item);
+  };
+
+  const handleOpenEditModal = (item: IClothingItem) => {
+    setModalSource("edit");
+    setEditItem(item);
+    setEditFormData({
+      name: item.name,
+      type: item.type,
+      material: item.material,
+      color: item.color,
+      insulation_value: item.insulation_value,
+      season_tags: item.season_tags,
+      dress_code: item.dress_code,
+      pattern: item.pattern,
+      fit: item.fit,
+      style: item.style,
+      occasion: item.occasion,
+      description: item.description,
+    });
+  };
+
+  const handleCloseEditModal = () => {
+    setEditItem(null);
+    setEditFormData({});
+    setModalSource(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editItem) return;
+
+    setSaving(true);
+
+    try {
+      const response = await fetch(`/api/wardrobe/${editItem.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update item");
+      }
+
+      toast.success("Item updated successfully!", { duration: 2000 });
+      
+      // Refresh wardrobe
+      await fetchWardrobe();
+      
+      handleCloseEditModal();
+    } catch (err) {
+      console.error("Error updating item:", err);
+      toast.error("Failed to update item. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Loading state
@@ -817,20 +884,26 @@ export default function WardrobePage() {
               <Card 
                 hoverable
                 squircle
-                className="group overflow-hidden transition-shadow hover:shadow-md"
+                className="group overflow-hidden transition-shadow hover:shadow-md cursor-pointer"
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
+                onClick={() => handleOpenEditModal(item)}
               >
                 {/* Image with zoom on hover */}
-                <div className="relative aspect-square overflow-hidden bg-muted">
-                  <Image
-                    src={item.image_url}
-                    alt={item.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                    priority={idx < 6}
-                  />
+                <div className="relative aspect-square overflow-hidden bg-muted flex items-center justify-center">
+                  {item.image_url ? (
+                    <Image
+                      src={item.image_url}
+                      alt={item.name}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                      priority={idx < 6}
+                      unoptimized
+                    />
+                  ) : (
+                    <Shirt className="h-12 w-12 text-muted-foreground" />
+                  )}
                   
                   {/* Type Badge */}
                   <div className="absolute top-2 right-2 z-10">
@@ -863,7 +936,10 @@ export default function WardrobePage() {
                       size="icon"
                       variant="destructive"
                       className="h-8 w-8 shadow-lg"
-                      onClick={() => handleOpenDeleteModal(item)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent card click when deleting
+                        handleOpenDeleteModal(item);
+                      }}
                       aria-label={`Delete ${item.name}`}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -1034,6 +1110,222 @@ export default function WardrobePage() {
         )}
       </AnimatePresence>
 
+      {/* Edit Item Dialog */}
+      <Dialog open={editItem !== null} onOpenChange={(open) => !open && handleCloseEditModal()}>
+        <DialogContent variant="scale" className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Item Details</DialogTitle>
+            <DialogDescription>
+              Update the clothing item information. The AI may have detected some details automatically.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Image Preview */}
+            {editItem && (
+              <div className="relative aspect-square w-32 rounded-lg overflow-hidden bg-muted mx-auto">
+                <Image
+                  src={editItem.image_url}
+                  alt={editItem.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Name */}
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editFormData.name || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  placeholder="e.g., Navy Blue T-Shirt"
+                />
+              </div>
+
+              {/* Type */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-type">Type</Label>
+                <select
+                  id="edit-type"
+                  value={editFormData.type || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value as ClothingType })}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {clothingTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Material */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-material">Material</Label>
+                <Input
+                  id="edit-material"
+                  value={editFormData.material || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, material: e.target.value })}
+                  placeholder="e.g., Cotton, Denim, Leather"
+                />
+              </div>
+
+              {/* Color */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-color">Color</Label>
+                <Input
+                  id="edit-color"
+                  value={editFormData.color || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, color: e.target.value })}
+                  placeholder="e.g., Navy Blue, Black"
+                />
+              </div>
+
+              {/* Insulation Value */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-insulation">Warmth Level (1-5)</Label>
+                <Input
+                  id="edit-insulation"
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={editFormData.insulation_value || 2}
+                  onChange={(e) => setEditFormData({ ...editFormData, insulation_value: parseInt(e.target.value) })}
+                />
+                <p className="text-xs text-muted-foreground">1 = Very Light, 5 = Very Warm</p>
+              </div>
+
+              {/* Pattern */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-pattern">Pattern</Label>
+                <Input
+                  id="edit-pattern"
+                  value={editFormData.pattern || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, pattern: e.target.value })}
+                  placeholder="e.g., Solid, Striped, Plaid"
+                />
+              </div>
+
+              {/* Fit */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-fit">Fit</Label>
+                <Input
+                  id="edit-fit"
+                  value={editFormData.fit || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, fit: e.target.value })}
+                  placeholder="e.g., Slim Fit, Regular, Loose"
+                />
+              </div>
+
+              {/* Style */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-style">Style</Label>
+                <Input
+                  id="edit-style"
+                  value={editFormData.style || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, style: e.target.value })}
+                  placeholder="e.g., Modern, Vintage, Streetwear"
+                />
+              </div>
+
+              {/* Season Tags */}
+              <div className="space-y-2 md:col-span-2">
+                <Label>Seasons</Label>
+                <div className="flex flex-wrap gap-2">
+                  {seasonOptions.map((season) => {
+                    const isSelected = editFormData.season_tags?.includes(season);
+                    return (
+                      <Badge
+                        key={season}
+                        variant={isSelected ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => {
+                          const current = editFormData.season_tags || [];
+                          const updated = isSelected
+                            ? current.filter((s) => s !== season)
+                            : [...current, season];
+                          setEditFormData({ ...editFormData, season_tags: updated });
+                        }}
+                      >
+                        {season}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Dress Codes */}
+              <div className="space-y-2 md:col-span-2">
+                <Label>Dress Codes</Label>
+                <div className="flex flex-wrap gap-2">
+                  {dressCodeOptions.map((code) => {
+                    const dressCodeArray = Array.isArray(editFormData.dress_code) 
+                      ? editFormData.dress_code 
+                      : [];
+                    const isSelected = dressCodeArray.includes(code);
+                    return (
+                      <Badge
+                        key={code}
+                        variant={isSelected ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => {
+                          const current = dressCodeArray;
+                          const updated = isSelected
+                            ? current.filter((c) => c !== code)
+                            : [...current, code];
+                          setEditFormData({ ...editFormData, dress_code: updated });
+                        }}
+                      >
+                        {code}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <textarea
+                  id="edit-description"
+                  value={editFormData.description || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  placeholder="Add any additional details about this item..."
+                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              onClick={handleCloseEditModal} 
+              variant="outline"
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveEdit}
+              disabled={saving}
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteItem !== null} onOpenChange={(open) => !open && setDeleteItem(null)}>
         <DialogContent variant="scale">
@@ -1044,11 +1336,26 @@ export default function WardrobePage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setDeleteItem(null)} variant="outline">
+            <Button 
+              onClick={() => setDeleteItem(null)} 
+              variant="outline"
+              disabled={deleting}
+            >
               Cancel
             </Button>
-            <Button onClick={handleDeleteConfirm} variant="destructive">
-              Delete
+            <Button 
+              onClick={handleDeleteConfirm} 
+              variant="destructive"
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
