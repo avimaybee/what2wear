@@ -886,15 +886,20 @@ export default function WardrobePage() {
                 onClick={() => handleOpenEditModal(item)}
               >
                 {/* Image with zoom on hover */}
-                <div className="relative aspect-square overflow-hidden bg-muted">
-                  <Image
-                    src={item.image_url}
-                    alt={item.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                    priority={idx < 6}
-                  />
+                <div className="relative aspect-square overflow-hidden bg-muted flex items-center justify-center">
+                  {item.image_url ? (
+                    <Image
+                      src={item.image_url}
+                      alt={item.name}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                      priority={idx < 6}
+                      unoptimized
+                    />
+                  ) : (
+                    <Shirt className="h-12 w-12 text-muted-foreground" />
+                  )}
                   
                   {/* Type Badge */}
                   <div className="absolute top-2 right-2 z-10">

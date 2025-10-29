@@ -177,7 +177,11 @@ export default function HomePage() {
 
   // Error state
   if (error) {
-    const isWardrobeError = error.toLowerCase().includes("wardrobe") || error.toLowerCase().includes("clothes");
+    const isWardrobeError = error.toLowerCase().includes("wardrobe") || 
+                           error.toLowerCase().includes("clothes") ||
+                           error.toLowerCase().includes("top") ||
+                           error.toLowerCase().includes("bottom") ||
+                           error.toLowerCase().includes("shoes");
     
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -206,11 +210,11 @@ export default function HomePage() {
           ) : isWardrobeError ? (
             <EmptyState
               icon={Shirt}
-              title="Welcome! Let's Build Your Digital Wardrobe"
-              description="To get personalized outfit recommendations, start by adding your favorite clothing items. Just snap a few photos and we'll do the rest!"
+              title="Let's Build Your Digital Wardrobe!"
+              description="To get AI-powered outfit recommendations, you need at least one top, one bottom, and one pair of shoes. Start by adding some clothing items to your wardrobe."
               actions={[
                 {
-                  label: "Add Your First Items",
+                  label: "Add Clothing Items",
                   onClick: () => router.push("/wardrobe"),
                   icon: Shirt,
                   variant: "default"
@@ -222,10 +226,10 @@ export default function HomePage() {
                 }
               ]}
               tips={[
-                "Take photos of your favorite clothes",
-                "Add details like color and season",
-                "We'll suggest outfits based on weather",
-                "Start with at least 5-10 items"
+                "Snap photos of your favorite clothes",
+                "AI will detect colors, materials, and styles",
+                "Get weather-based outfit suggestions",
+                "Track what you wear and when"
               ]}
               variant="illustrated"
             />
