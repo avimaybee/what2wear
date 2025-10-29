@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { IClothingItem, ApiResponse } from '@/lib/types';
 import { logger } from '@/lib/logger';
+import { normalizeMaterial } from '@/lib/validation';
 
 /**
  * GET /api/wardrobe
@@ -70,6 +71,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       ? body.season_tags.map((season: string) => season.toLowerCase())
       : null;
 
+    // Normalize material to match database enum
+    const normalizedMaterial = normalizeMaterial(body.material);
+
     // Create new clothing item
     const newItem = {
       user_id: user.id,
@@ -77,7 +81,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       type: body.type,
       category: body.category || null,
       color: body.color || null,
-      material: body.material || null,
+      material: normalizedMaterial,
       insulation_value: body.insulation_value || 5,
       image_url: body.image_url || null,
       season_tags: normalizedSeasonTags,

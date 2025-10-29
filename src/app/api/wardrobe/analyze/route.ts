@@ -127,7 +127,7 @@ Return ONLY valid JSON with no markdown, code blocks, or explanations. Use these
   "name": "descriptive name including color and type (e.g., 'Navy Blue Cotton Crew Neck T-Shirt')",
   "type": "EXACTLY one of: Outerwear, Top, Bottom, Footwear, Accessory, Headwear",
   "color": "primary color name (e.g., 'Navy Blue', 'Black', 'White', 'Olive Green')",
-  "material": "primary material (e.g., 'Cotton', 'Denim', 'Leather', 'Wool', 'Polyester')",
+  "material": "primary material - use EXACTLY one of these: Cotton, Wool, Synthetic, Gore-Tex, Fleece, Leather, Denim, Silk, Linen, Polyester, Nylon",
   "pattern": "pattern type (e.g., 'Solid', 'Striped', 'Plaid', 'Floral', 'Graphic Print', 'Polka Dot')",
   "fit": "fit style (e.g., 'Slim Fit', 'Regular Fit', 'Loose Fit', 'Oversized', 'Tailored')",
   "style": "fashion style (e.g., 'Modern', 'Vintage', 'Streetwear', 'Classic', 'Minimalist', 'Sporty')",
@@ -137,6 +137,14 @@ Return ONLY valid JSON with no markdown, code blocks, or explanations. Use these
   "insulation_value": number from 1-5 (1=very light/summer, 3=medium, 5=very warm/winter),
   "description": "2-3 sentence detailed description explaining: visual characteristics, styling suggestions, what it pairs well with, and any standout features that will help AI match it with other items"
 }
+
+IMPORTANT for material field:
+- If the item is a cotton blend, use "Cotton"
+- If the item is a wool blend, use "Wool"
+- For synthetic blends (polyester/spandex/elastane), use "Synthetic"
+- For waterproof/technical fabrics, use "Gore-Tex"
+- For jean material, use "Denim"
+- You MUST use one of the exact materials listed above
 
 Be specific and detailed. The description field is CRITICAL for AI outfit generation - include texture, visual weight, formality level, and complementary items.
 
