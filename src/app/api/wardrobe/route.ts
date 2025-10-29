@@ -65,6 +65,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       console.log('Received wardrobe POST request with body:', JSON.stringify(body, null, 2));
     }
 
+    // Normalize season_tags to lowercase to match database enum
+    const normalizedSeasonTags = body.season_tags 
+      ? body.season_tags.map((season: string) => season.toLowerCase())
+      : null;
+
     // Create new clothing item
     const newItem = {
       user_id: user.id,
@@ -75,7 +80,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       material: body.material || null,
       insulation_value: body.insulation_value || 5,
       image_url: body.image_url || null,
-      season_tags: body.season_tags || null,
+      season_tags: normalizedSeasonTags,
       style_tags: body.style_tags || null,
       dress_code: body.dress_code || ['Casual'],
       last_worn_date: null,
