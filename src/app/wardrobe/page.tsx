@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit, Heart } from "lucide-react";
+import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit } from "lucide-react";
 import { getRelativeTime } from "@/lib/utils";
 import { motionVariants, motionDurations } from "@/lib/motion";
 import { toast } from "@/components/ui/toaster";
@@ -23,7 +23,7 @@ import Image from "next/image";
 const clothingTypes: ClothingType[] = ["Outerwear", "Top", "Bottom", "Footwear", "Accessory", "Headwear"];
 const dressCodeOptions: DressCode[] = ["Casual", "Business Casual", "Formal", "Athletic", "Loungewear"];
 const seasonOptions = ["Spring", "Summer", "Fall", "Winter"];
-type SortOption = "recent" | "lastWorn" | "name" | "type" | "favorites";
+type SortOption = "recent" | "lastWorn" | "name" | "type";
 
 export default function WardrobePage() {
   const [wardrobeItems, setWardrobeItems] = useState<IClothingItem[]>([]);
@@ -36,7 +36,6 @@ export default function WardrobePage() {
   const [filterColor, setFilterColor] = useState<string | "All">("All");
   const [filterSeason, setFilterSeason] = useState<string | "All">("All");
   const [filterDressCode, setFilterDressCode] = useState<DressCode | "All">("All");
-  const [filterFavorites, setFilterFavorites] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   
   // UI state
@@ -135,9 +134,6 @@ export default function WardrobePage() {
         if (!item.dress_code || !item.dress_code.includes(filterDressCode)) return false;
       }
       
-      // Favorites filter
-      if (filterFavorites && !item.is_favorite) return false;
-
       return true;
     })
     .sort((a, b) => {
@@ -154,15 +150,13 @@ export default function WardrobePage() {
           return a.name.localeCompare(b.name);
         case "type":
           return a.type.localeCompare(b.type);
-        case "favorites":
-          return (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0);
         default:
           return 0;
       }
     });
 
   // Check if any filters are active
-  const hasActiveFilters = searchQuery !== "" || filterType !== "All" || filterColor !== "All" || filterSeason !== "All" || filterDressCode !== "All" || filterFavorites;
+  const hasActiveFilters = searchQuery !== "" || filterType !== "All" || filterColor !== "All" || filterSeason !== "All" || filterDressCode !== "All";
 
   // Clear all filters
   const clearAllFilters = () => {
@@ -171,7 +165,6 @@ export default function WardrobePage() {
     setFilterColor("All");
     setFilterSeason("All");
     setFilterDressCode("All");
-    setFilterFavorites(false);
   };
 
   const handleDeleteConfirm = async () => {
@@ -432,40 +425,6 @@ export default function WardrobePage() {
     }
   };
 
-  const handleToggleFavorite = async (item: IClothingItem) => {
-    try {
-      const newFavoriteStatus = !item.is_favorite;
-
-      // Optimistically update UI
-      setWardrobeItems(prev =>
-        prev.map(i => i.id === item.id ? { ...i, is_favorite: newFavoriteStatus } : i)
-      );
-
-      const response = await fetch(`/api/wardrobe/${item.id}/favorite`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ is_favorite: newFavoriteStatus }),
-      });
-
-      if (!response.ok) {
-        // Revert UI on failure
-        setWardrobeItems(prev =>
-          prev.map(i => i.id === item.id ? { ...i, is_favorite: item.is_favorite } : i)
-        );
-        toast.error('Failed to update favorite status');
-      }
-    } catch (err) {
-      console.error('Error toggling favorite:', err);
-      // Revert UI on failure
-      setWardrobeItems(prev =>
-        prev.map(i => i.id === item.id ? { ...i, is_favorite: item.is_favorite } : i)
-      );
-      toast.error('Failed to update favorite status');
-    }
-  };
-
   // Loading state
   if (loading) {
     return (
@@ -717,7 +676,6 @@ export default function WardrobePage() {
                 <div className="space-y-2">
                   {[
                     { value: "recent" as SortOption, label: "Recently Added" },
-                    { value: "favorites" as SortOption, label: "Favorites First" },
                     { value: "lastWorn" as SortOption, label: "Last Worn" },
                     { value: "name" as SortOption, label: "Name (A-Z)" },
                     { value: "type" as SortOption, label: "Type" },
@@ -733,22 +691,6 @@ export default function WardrobePage() {
                     </Button>
                   ))}
                 </div>
-              </div>
-
-              {/* Favorites Filter */}
-              <div>
-                <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <Heart className="h-4 w-4" aria-hidden="true" />
-                  Favorites
-                </h3>
-                <Button
-                  className="w-full justify-start"
-                  size="sm"
-                  variant={filterFavorites ? "secondary" : "ghost"}
-                  onClick={() => setFilterFavorites(!filterFavorites)}
-                >
-                  Show Favorites Only
-                </Button>
               </div>
 
               {/* Type Filter */}
@@ -884,7 +826,6 @@ export default function WardrobePage() {
           aria-label="Sort wardrobe items"
         >
           <option value="recent">Recently Added</option>
-          <option value="favorites">Favorites First</option>
           <option value="lastWorn">Last Worn</option>
           <option value="name">Name (A-Z)</option>
           <option value="type">By Type</option>
@@ -895,15 +836,6 @@ export default function WardrobePage() {
       {hasActiveFilters && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted-foreground">Active filters:</span>
-          {filterFavorites && (
-            <Badge variant="secondary" className="gap-1">
-              <Heart className="h-3 w-3" />
-              Favorites
-              <button onClick={() => setFilterFavorites(false)} className="ml-1 hover:text-destructive">
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          )}
           {filterType !== "All" && (
             <Badge variant="secondary" className="gap-1">
               Type: {filterType}
@@ -959,15 +891,12 @@ export default function WardrobePage() {
               layout
             >
               <Card 
-                hoverable
-                squircle
-                className="group overflow-hidden transition-shadow hover:shadow-md cursor-pointer"
+                className="group overflow-hidden transition-shadow hover:shadow-md cursor-pointer rounded-lg border"
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
-                onClick={() => handleOpenEditModal(item)}
               >
                 {/* Image with zoom on hover */}
-                <div className="relative aspect-square overflow-hidden bg-muted flex items-center justify-center">
+                <div className="relative aspect-square overflow-hidden bg-muted flex items-center justify-center" onClick={() => handleOpenEditModal(item)}>
                   {item.image_url ? (
                     <Image
                       src={item.image_url}
@@ -983,58 +912,58 @@ export default function WardrobePage() {
                   )}
                   
                   {/* Type Badge */}
-                  <div className="absolute top-2 right-2 z-10 flex flex-col gap-2 items-end">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite(item);
-                      }}
-                      className="p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
-                      aria-label={item.is_favorite ? "Unmark as favorite" : "Mark as favorite"}
-                    >
-                      <Heart className={`h-4 w-4 ${item.is_favorite ? 'fill-red-500 text-red-500' : ''}`} />
-                    </button>
+                  <div className="absolute top-2 right-2 z-10">
                     <Badge variant="secondary" className="backdrop-blur-sm bg-black/50 text-white border-0">
                       {item.type}
                     </Badge>
                   </div>
 
                   {/* "Most Worn" or "Never Worn" Badge */}
-                  {!item.last_worn_date && (
-                    <div className="absolute top-2 left-2">
-                      <Badge className="backdrop-blur-sm bg-primary/90 border-0">
-                        <Sparkles className="h-3 w-3 mr-1" aria-hidden="true" />
-                        New
-                      </Badge>
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {!item.last_worn_date && hoveredItem !== item.id && (
+                      <motion.div
+                        className="absolute top-2 left-2"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Badge className="backdrop-blur-sm bg-primary/90 border-0">
+                          <Sparkles className="h-3 w-3 mr-1" aria-hidden="true" />
+                          New
+                        </Badge>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Delete Button on Hover */}
-                  <motion.div
-                    className="absolute top-2 left-2"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ 
-                      opacity: hoveredItem === item.id ? 1 : 0,
-                      scale: hoveredItem === item.id ? 1 : 0.8
-                    }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      className="h-8 w-8 shadow-lg"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent card click when deleting
-                        handleOpenDeleteModal(item);
-                      }}
-                      aria-label={`Delete ${item.name}`}
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </motion.div>
+                  <AnimatePresence>
+                    {hoveredItem === item.id && (
+                      <motion.div
+                        className="absolute top-2 left-2"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="h-8 w-8 shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click when deleting
+                            handleOpenDeleteModal(item);
+                          }}
+                          aria-label={`Delete ${item.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </Button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
-                <CardContent className="p-4 space-y-3">
+                <CardContent className="p-3 space-y-2" onClick={() => handleOpenEditModal(item)}>
                   <div>
                     <h3 className="font-semibold text-foreground truncate">{item.name}</h3>
                     <p className="text-sm text-muted-foreground">{item.material}</p>
@@ -1042,15 +971,15 @@ export default function WardrobePage() {
                   
                   <div className="flex items-center justify-between pt-2 border-t">
                     <div className="text-xs">
-                      <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                      <div className="flex items-center gap-1 text-muted-foreground">
                         <Calendar className="h-3 w-3" aria-hidden="true" />
                         <span>Last Worn</span>
                       </div>
-                      <p className="text-primary font-medium">{getRelativeTime(item.last_worn_date)}</p>
+                      <p className="font-medium">{getRelativeTime(item.last_worn_date)}</p>
                     </div>
                     {item.color && (
                       <div
-                        className="w-7 h-7 rounded-full border-2 shadow-sm"
+                        className="w-6 h-6 rounded-full border shadow-sm"
                         style={{ backgroundColor: item.color.toLowerCase() }}
                         title={item.color}
                       />
