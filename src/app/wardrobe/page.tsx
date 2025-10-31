@@ -42,8 +42,8 @@ export default function WardrobePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteItem, setDeleteItem] = useState<IClothingItem | null>(null);
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
-  const [modalSource, setModalSource] = useState<"add-button" | "delete" | "edit" | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [_modalSource, setModalSource] = useState<"add-button" | "delete" | "edit" | null>(null);
+  const [_deleting, setDeleting] = useState(false);
   
   // Edit state
   const [editItem, setEditItem] = useState<IClothingItem | null>(null);
@@ -399,12 +399,20 @@ export default function WardrobePage() {
     setSaving(true);
 
     try {
+      // Create a payload to avoid mutating state directly
+      const payload = { ...editFormData };
+
+      // Normalize season_tags to lowercase before sending to the backend
+      if (payload.season_tags && Array.isArray(payload.season_tags)) {
+        payload.season_tags = payload.season_tags.map((season: string) => season.toLowerCase());
+      }
+
       const response = await fetch(`/api/wardrobe/${editItem.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(editFormData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
