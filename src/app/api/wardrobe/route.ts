@@ -36,9 +36,40 @@ export async function GET(_request: NextRequest): Promise<NextResponse<ApiRespon
     );
   }
 
+  const items = data || [];
+
+  const updatedData = await Promise.all(
+    items.map(async (item) => {
+      if (item.image_url) {
+        try {
+          const url = new URL(item.image_url);
+          const pathSegments = url.pathname.split('/clothing_images/');
+
+          if (pathSegments.length > 1 && pathSegments[1]) {
+            const path = pathSegments[1];
+            const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+              .from('clothing_images')
+              .createSignedUrl(path, 60); // 60-second validity
+
+            if (signedUrlError) {
+              throw signedUrlError;
+            }
+
+            return { ...item, image_url: signedUrlData.signedUrl };
+          }
+        } catch (e) {
+          logger.error(`Error processing image URL for item ${item.id}:`, e);
+          // Return original item if URL processing fails
+          return item;
+        }
+      }
+      return item;
+    })
+  );
+
   return NextResponse.json({
-    success: true,
-    data: data as IClothingItem[],
+      success: true,
+      data: updatedData as IClothingItem[],
   });
 }
 
