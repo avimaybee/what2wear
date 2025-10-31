@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit } from "lucide-react";
+import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit, Heart } from "lucide-react";
 import { getRelativeTime } from "@/lib/utils";
 import { motionVariants, motionDurations } from "@/lib/motion";
 import { toast } from "@/components/ui/toaster";
@@ -23,7 +23,7 @@ import Image from "next/image";
 const clothingTypes: ClothingType[] = ["Outerwear", "Top", "Bottom", "Footwear", "Accessory", "Headwear"];
 const dressCodeOptions: DressCode[] = ["Casual", "Business Casual", "Formal", "Athletic", "Loungewear"];
 const seasonOptions = ["Spring", "Summer", "Fall", "Winter"];
-type SortOption = "recent" | "lastWorn" | "name" | "type";
+type SortOption = "recent" | "lastWorn" | "name" | "type" | "favorites";
 
 export default function WardrobePage() {
   const [wardrobeItems, setWardrobeItems] = useState<IClothingItem[]>([]);
@@ -36,14 +36,15 @@ export default function WardrobePage() {
   const [filterColor, setFilterColor] = useState<string | "All">("All");
   const [filterSeason, setFilterSeason] = useState<string | "All">("All");
   const [filterDressCode, setFilterDressCode] = useState<DressCode | "All">("All");
+  const [filterFavorites, setFilterFavorites] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   
   // UI state
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteItem, setDeleteItem] = useState<IClothingItem | null>(null);
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
-  const [_modalSource, setModalSource] = useState<"add-button" | "delete" | "edit" | null>(null);
-  const [_deleting, setDeleting] = useState(false);
+  const [modalSource, setModalSource] = useState<"add-button" | "delete" | "edit" | null>(null);
+  const [deleting, setDeleting] = useState(false);
   
   // Edit state
   const [editItem, setEditItem] = useState<IClothingItem | null>(null);
@@ -134,6 +135,9 @@ export default function WardrobePage() {
         if (!item.dress_code || !item.dress_code.includes(filterDressCode)) return false;
       }
       
+      // Favorites filter
+      if (filterFavorites && !item.is_favorite) return false;
+
       return true;
     })
     .sort((a, b) => {
@@ -150,13 +154,15 @@ export default function WardrobePage() {
           return a.name.localeCompare(b.name);
         case "type":
           return a.type.localeCompare(b.type);
+        case "favorites":
+          return (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0);
         default:
           return 0;
       }
     });
 
   // Check if any filters are active
-  const hasActiveFilters = searchQuery !== "" || filterType !== "All" || filterColor !== "All" || filterSeason !== "All" || filterDressCode !== "All";
+  const hasActiveFilters = searchQuery !== "" || filterType !== "All" || filterColor !== "All" || filterSeason !== "All" || filterDressCode !== "All" || filterFavorites;
 
   // Clear all filters
   const clearAllFilters = () => {
@@ -165,6 +171,7 @@ export default function WardrobePage() {
     setFilterColor("All");
     setFilterSeason("All");
     setFilterDressCode("All");
+    setFilterFavorites(false);
   };
 
   const handleDeleteConfirm = async () => {
@@ -399,20 +406,12 @@ export default function WardrobePage() {
     setSaving(true);
 
     try {
-      // Create a payload to avoid mutating state directly
-      const payload = { ...editFormData };
-
-      // Normalize season_tags to lowercase before sending to the backend
-      if (payload.season_tags && Array.isArray(payload.season_tags)) {
-        payload.season_tags = payload.season_tags.map((season: string) => season.toLowerCase());
-      }
-
       const response = await fetch(`/api/wardrobe/${editItem.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(editFormData),
       });
 
       if (!response.ok) {
@@ -430,6 +429,40 @@ export default function WardrobePage() {
       toast.error("Failed to update item. Please try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleToggleFavorite = async (item: IClothingItem) => {
+    try {
+      const newFavoriteStatus = !item.is_favorite;
+
+      // Optimistically update UI
+      setWardrobeItems(prev =>
+        prev.map(i => i.id === item.id ? { ...i, is_favorite: newFavoriteStatus } : i)
+      );
+
+      const response = await fetch(`/api/wardrobe/${item.id}/favorite`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_favorite: newFavoriteStatus }),
+      });
+
+      if (!response.ok) {
+        // Revert UI on failure
+        setWardrobeItems(prev =>
+          prev.map(i => i.id === item.id ? { ...i, is_favorite: item.is_favorite } : i)
+        );
+        toast.error('Failed to update favorite status');
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      // Revert UI on failure
+      setWardrobeItems(prev =>
+        prev.map(i => i.id === item.id ? { ...i, is_favorite: item.is_favorite } : i)
+      );
+      toast.error('Failed to update favorite status');
     }
   };
 
@@ -684,6 +717,7 @@ export default function WardrobePage() {
                 <div className="space-y-2">
                   {[
                     { value: "recent" as SortOption, label: "Recently Added" },
+                    { value: "favorites" as SortOption, label: "Favorites First" },
                     { value: "lastWorn" as SortOption, label: "Last Worn" },
                     { value: "name" as SortOption, label: "Name (A-Z)" },
                     { value: "type" as SortOption, label: "Type" },
@@ -699,6 +733,22 @@ export default function WardrobePage() {
                     </Button>
                   ))}
                 </div>
+              </div>
+
+              {/* Favorites Filter */}
+              <div>
+                <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <Heart className="h-4 w-4" aria-hidden="true" />
+                  Favorites
+                </h3>
+                <Button
+                  className="w-full justify-start"
+                  size="sm"
+                  variant={filterFavorites ? "secondary" : "ghost"}
+                  onClick={() => setFilterFavorites(!filterFavorites)}
+                >
+                  Show Favorites Only
+                </Button>
               </div>
 
               {/* Type Filter */}
@@ -834,6 +884,7 @@ export default function WardrobePage() {
           aria-label="Sort wardrobe items"
         >
           <option value="recent">Recently Added</option>
+          <option value="favorites">Favorites First</option>
           <option value="lastWorn">Last Worn</option>
           <option value="name">Name (A-Z)</option>
           <option value="type">By Type</option>
@@ -844,6 +895,15 @@ export default function WardrobePage() {
       {hasActiveFilters && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted-foreground">Active filters:</span>
+          {filterFavorites && (
+            <Badge variant="secondary" className="gap-1">
+              <Heart className="h-3 w-3" />
+              Favorites
+              <button onClick={() => setFilterFavorites(false)} className="ml-1 hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
           {filterType !== "All" && (
             <Badge variant="secondary" className="gap-1">
               Type: {filterType}
@@ -923,7 +983,17 @@ export default function WardrobePage() {
                   )}
                   
                   {/* Type Badge */}
-                  <div className="absolute top-2 right-2 z-10">
+                  <div className="absolute top-2 right-2 z-10 flex flex-col gap-2 items-end">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(item);
+                      }}
+                      className="p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                      aria-label={item.is_favorite ? "Unmark as favorite" : "Mark as favorite"}
+                    >
+                      <Heart className={`h-4 w-4 ${item.is_favorite ? 'fill-red-500 text-red-500' : ''}`} />
+                    </button>
                     <Badge variant="secondary" className="backdrop-blur-sm bg-black/50 text-white border-0">
                       {item.type}
                     </Badge>
@@ -1356,16 +1426,16 @@ export default function WardrobePage() {
             <Button 
               onClick={() => setDeleteItem(null)} 
               variant="outline"
-              disabled={_deleting}
+              disabled={deleting}
             >
               Cancel
             </Button>
             <Button 
               onClick={handleDeleteConfirm} 
               variant="destructive"
-              disabled={_deleting}
+              disabled={deleting}
             >
-              {_deleting ? (
+              {deleting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Deleting...

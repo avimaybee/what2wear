@@ -51,6 +51,7 @@ export interface IClothingItem {
   style?: string | null; // e.g., "Modern", "Vintage", "Streetwear"
   occasion?: string[] | null; // e.g., ["Work", "Casual Outing"]
   description?: string | null; // Detailed AI description for outfit matching
+  is_favorite?: boolean;
 }
 
 export interface WeatherAlert {
