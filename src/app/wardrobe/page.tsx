@@ -1356,16 +1356,16 @@ export default function WardrobePage() {
             <Button 
               onClick={() => setDeleteItem(null)} 
               variant="outline"
-              disabled={deleting}
+              disabled={_deleting}
             >
               Cancel
             </Button>
             <Button 
               onClick={handleDeleteConfirm} 
               variant="destructive"
-              disabled={deleting}
+              disabled={_deleting}
             >
-              {deleting ? (
+              {_deleting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Deleting...
