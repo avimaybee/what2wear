@@ -119,6 +119,8 @@ export async function POST(req: NextRequest) {
     
     const prompt = `You are an expert fashion stylist analyzing clothing items for an AI wardrobe system. 
 
+If the image does not contain any clothing items, return the following JSON and nothing else: {"error": "No clothing item detected"}
+
 Analyze this clothing image thoroughly and extract ALL relevant properties to help AI create perfect outfit combinations later.
 
 Return ONLY valid JSON with no markdown, code blocks, or explanations. Use these exact fields:
@@ -131,7 +133,7 @@ Return ONLY valid JSON with no markdown, code blocks, or explanations. Use these
   "pattern": "pattern type (e.g., 'Solid', 'Striped', 'Plaid', 'Floral', 'Graphic Print', 'Polka Dot')",
   "fit": "fit style (e.g., 'Slim Fit', 'Regular Fit', 'Loose Fit', 'Oversized', 'Tailored')",
   "style": "fashion style (e.g., 'Modern', 'Vintage', 'Streetwear', 'Classic', 'Minimalist', 'Sporty')",
-  "season_tags": ["array of applicable seasons: spring, summer, fall, winter"],
+  "season_tags": ["array of applicable seasons: spring, summer, autumn, winter"],
   "dress_code": ["array of suitable dress codes: Casual, Business Casual, Formal, Athletic, Loungewear"],
   "occasion": ["suitable occasions: Work, Casual Outing, Date Night, Formal Event, Sports, Home"],
   "insulation_value": number from 1-5 (1=very light/summer, 3=medium, 5=very warm/winter),

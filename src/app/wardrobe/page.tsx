@@ -15,7 +15,7 @@ import { getRelativeTime } from "@/lib/utils";
 import { motionVariants, motionDurations } from "@/lib/motion";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
-import { uploadClothingImage } from "@/lib/supabase/storage";
+import { uploadClothingImage, deleteClothingImage } from "@/lib/supabase/storage";
 import type { ClothingType, IClothingItem, DressCode } from "@/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import Image from "next/image";
@@ -283,6 +283,15 @@ export default function WardrobePage() {
           const analysisResult = await analysisResponse.json();
           if (analysisResult.success) {
             analyzedData = analysisResult.data;
+            if (analyzedData?.error === 'No clothing item detected') {
+              toast.error('AI could not detect a clothing item. Please try another image.');
+              // Clean up the uploaded image from storage
+              await deleteClothingImage(uploadResult.path!);
+              setUploading(false);
+              setSelectedFile(null);
+              setImagePreview(null);
+              return; // Stop the process
+            }
             toast.success('AI analysis complete! 🎯', { duration: 1500 });
           } else {
             console.error('AI analysis returned error:', analysisResult.error);
