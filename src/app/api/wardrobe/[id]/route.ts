@@ -79,8 +79,16 @@ export async function PUT(
     const body = await request.json();
     
     // Normalize season_tags to lowercase to match database enum
-    if (body.season_tags && Array.isArray(body.season_tags)) {
+    if (body.season_tags) {
+      if (!Array.isArray(body.season_tags)) {
+        body.season_tags = [body.season_tags];
+      }
       body.season_tags = body.season_tags.map((season: string) => season.toLowerCase());
+    }
+
+    // Ensure dress_code is an array
+    if (body.dress_code && !Array.isArray(body.dress_code)) {
+      body.dress_code = [body.dress_code];
     }
     
     // Update the item

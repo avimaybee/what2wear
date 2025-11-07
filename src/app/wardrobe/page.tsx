@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit } from "lucide-react";
 import { getRelativeTime } from "@/lib/utils";
@@ -1145,6 +1146,7 @@ export default function WardrobePage() {
                   alt={editItem.name}
                   fill
                   className="object-cover"
+                  unoptimized
                 />
               </div>
             )}
@@ -1200,14 +1202,17 @@ export default function WardrobePage() {
 
               {/* Insulation Value */}
               <div className="space-y-2">
-                <Label htmlFor="edit-insulation">Warmth Level (1-5)</Label>
-                <Input
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="edit-insulation">Warmth Level</Label>
+                  <span className="text-sm font-medium">{editFormData.insulation_value || ''}</span>
+                </div>
+                <Slider
                   id="edit-insulation"
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={editFormData.insulation_value || 2}
-                  onChange={(e) => setEditFormData({ ...editFormData, insulation_value: parseInt(e.target.value) })}
+                  min={1}
+                  max={5}
+                  step={1}
+                  value={[editFormData.insulation_value || 2]}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, insulation_value: value[0] })}
                 />
                 <p className="text-xs text-muted-foreground">1 = Very Light, 5 = Very Warm</p>
               </div>
