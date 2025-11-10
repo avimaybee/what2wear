@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, useEffect, Suspense, lazy, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -53,7 +53,7 @@ export default function HomePage() {
   };
 
   // Fetch outfit recommendation
-  const fetchRecommendation = async (coords: { lat: number; lon: number }, retryCount = 0) => {
+  const fetchRecommendation = useCallback(async (coords: { lat: number; lon: number }, retryCount = 0) => {
     try {
       setLoading(true);
       setError(null);
@@ -125,7 +125,7 @@ export default function HomePage() {
         toast.error("Failed to generate outfit. Please try again.");
       }
     }
-  };
+  }, []);
 
   // Initialize: Get location and fetch recommendation
   useEffect(() => {
@@ -144,14 +144,14 @@ export default function HomePage() {
       requestLocation();
     };
     init();
-  }, []); // Run only once on mount
+  }, [fetchRecommendation]); // Run only once on mount
 
   // This effect is now primarily for when the user MANUALLY changes location
   useEffect(() => {
     if (location) {
       fetchRecommendation(location);
     }
-  }, [location]);
+  }, [location, fetchRecommendation]);
 
   // Loading state
   if (loading || !location) {

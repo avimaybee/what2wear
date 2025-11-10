@@ -8,6 +8,16 @@ interface InsufficientItemsError extends Error {
 }
 import { validateBody, recommendationRequestSchema } from '@/lib/validation';
 import { logger } from '@/lib/logger';
+ 
+// DB row type used for items fetched from Supabase
+type DBClothingRow = Partial<IClothingItem> & {
+  id?: number;
+  category?: string | null;
+  type?: string | null;
+  rawType?: string | null;
+  rawCategory?: string | null;
+  normalizedType?: ClothingType | null;
+};
 
 const TYPE_ALIASES: Record<string, ClothingType> = {
   top: 'Top',
@@ -198,15 +208,15 @@ async function generateRecommendation(
     throw new Error('EMPTY_WARDROBE');
   }
 
-  const normalizedWardrobeItems = wardrobeItems.map((item: any) => {
-    const normalizedType = deriveClothingType(item);
+  const normalizedWardrobeItems = (wardrobeItems as DBClothingRow[]).map((item) => {
+    const normalizedType = deriveClothingType(item as DBClothingRow);
     return {
-      ...item,
+      ...(item as DBClothingRow),
       normalizedType,
       rawType: (item.type ?? null) as string | null,
       rawCategory: (item.category ?? null) as string | null,
-    };
-  }) as Array<any & { normalizedType: ClothingType | null; rawType: string | null; rawCategory: string | null; }>;
+    } as DBClothingRow & { normalizedType: ClothingType | null; rawType: string | null; rawCategory: string | null };
+  });
 
   const itemsNeedingBackfill = normalizedWardrobeItems.filter(item => (!item.rawType || !item.rawType.trim()) && item.normalizedType);
 
