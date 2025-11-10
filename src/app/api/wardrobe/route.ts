@@ -105,11 +105,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // Normalize material to match database enum
     const normalizedMaterial = normalizeMaterial(body.material);
 
+    // Normalize type to be capitalized
+    const normalizedType = body.type 
+      ? body.type.charAt(0).toUpperCase() + body.type.slice(1).toLowerCase()
+      : null;
+
     // Create new clothing item
     const newItem = {
       user_id: user.id,
       name: body.name,
-      type: body.type,
+      type: normalizedType,
       category: body.category || null,
       color: body.color || null,
       material: normalizedMaterial,

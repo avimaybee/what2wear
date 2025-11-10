@@ -106,15 +106,18 @@ async function generateRecommendation(
   }
 
   // Check if user has minimum items for a basic outfit
-  const requiredTypes = ['Top', 'Bottom', 'Footwear'];
-  const itemTypes = new Set(wardrobeItems.map((item: { type: string }) => item.type));
-  const missingTypes = requiredTypes.filter(type => !itemTypes.has(type));
+  const hasTop = wardrobeItems.some(item => item.type === 'Top' || item.type === 'Outerwear');
+  const hasBottom = wardrobeItems.some(item => item.type === 'Bottom');
+  const hasFootwear = wardrobeItems.some(item => item.type === 'Footwear');
 
-  if (missingTypes.length > 0) {
-    // Dynamically create the error message
-    const missingItemsMessage = `You need to add at least one of each: ${missingTypes.join(', ')}.`;
+  const missingCategories = [];
+  if (!hasTop) missingCategories.push('Top or Outerwear');
+  if (!hasBottom) missingCategories.push('Bottom');
+  if (!hasFootwear) missingCategories.push('Footwear');
+
+  if (missingCategories.length > 0) {
+    const missingItemsMessage = `To get a recommendation, please add at least one item for each of the following categories: ${missingCategories.join(', ')}.`;
     const error: InsufficientItemsError = new Error('INSUFFICIENT_ITEMS');
-    // Attach the dynamic message to the error object
     error.customMessage = missingItemsMessage;
     throw error;
   }
