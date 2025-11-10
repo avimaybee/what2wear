@@ -1,6 +1,6 @@
-import { 
-  IClothingItem, 
-  RecommendationContext, 
+import {
+  IClothingItem,
+  RecommendationContext,
   RecommendationConstraints,
   OutfitRecommendation,
   DressCode,
@@ -8,6 +8,12 @@ import {
   CalendarEvent,
 } from '@/lib/types';
 import { config } from '@/lib/config';
+import chroma from 'chroma-js';
+
+// ============================================================================
+// NEW SCORING LOGIC
+// ============================================================================
+
 
 /**
  * Task 1.4: Filter items by last_worn_date to ensure variety
@@ -124,11 +130,115 @@ export function calculateRequiredInsulation(temperature: number): number {
   // Above 25°C: 0-2 (minimal)
   
   if (temperature < 0) return 9;
-  if (temperature < 10) return 7;
-  if (temperature < 20) return 5;
-  if (temperature < 25) return 3;
+  if (temperature <= 10) return 7;
+  if (temperature <= 20) return 5;
+  if (temperature <= 25) return 3;
   return 1;
 }
+
+import chroma from 'chroma-js';
+
+// ============================================================================
+// NEW SCORING LOGIC
+// ============================================================================
+
+const NEUTRAL_COLORS = ['black', 'white', 'gray', 'grey', 'silver', 'ivory', 'beige', 'navy', 'khaki'];
+
+/**
+ * Scores the color harmony of an outfit.
+ * @param items - The items in the outfit.
+ * @returns A score from 0 to 100.
+ */
+function scoreColorHarmony(items: IClothingItem[]): number {
+  const colors = items.map(item => {
+    if (item.material && item.material.toLowerCase() === 'denim') {
+      return 'navy'; // Treat denim as a neutral navy color
+    }
+    return item.color ? item.color.toLowerCase() : 'white';
+  });
+
+  const mainColors = colors.filter(color => !NEUTRAL_COLORS.includes(color));
+  const uniqueMainColors = [...new Set(mainColors)];
+
+  if (uniqueMainColors.length <= 1) {
+    // Monochromatic or one accent color - very harmonious
+    return 100;
+  }
+
+  if (uniqueMainColors.length === 2) {
+    const [color1, color2] = uniqueMainColors;
+    try {
+      const distance = chroma.distance(color1, color2);
+      // CIEDE2000 distance: <10 is imperceptible, >50 is opposite.
+      // We want colors that are not too similar but not clashing.
+      // Ideal distance might be in the 30-70 range.
+      if (distance > 30 && distance < 80) {
+        return 80; // Good separation
+      }
+      if (distance >= 80) {
+        return 90; // High contrast, likely complementary
+      }
+      return 40; // Too similar
+    } catch (e) {
+      return 20; // Invalid color string
+    }
+  }
+
+  // More than 2 main colors - likely chaotic
+  return 0;
+}
+
+function scoreStyleMatch(items: IClothingItem[]): number {
+  const setsOfTags = items.map(item => new Set(item.style_tags || []));
+  if (setsOfTags.length < 2) return 2.5; // Return a baseline score (equates to 50 after normalization)
+
+  let sharedTags = 0;
+  for (let i = 0; i < setsOfTags.length; i++) {
+    for (let j = i + 1; j < setsOfTags.length; j++) {
+      const intersection = new Set([...setsOfTags[i]].filter(x => setsOfTags[j].has(x)));
+      sharedTags += intersection.size;
+    }
+  }
+  // Return the raw score. Let the caller normalize it.
+  return sharedTags;
+}
+
+/**
+ * Scores an outfit based on how recently its items were worn.
+ * @param items - The items in the outfit.
+ * @returns A score from 0 to 100.
+ */
+function scoreLastWorn(items: IClothingItem[]): number {
+    const now = new Date().getTime();
+    const daysSinceWorn = items.map(item => {
+        if (!item.last_worn_date) return 365; // Treat never-worn items as worn a year ago
+        const lastWorn = new Date(item.last_worn_date).getTime();
+        return (now - lastWorn) / (1000 * 3600 * 24);
+    });
+
+    const averageDays = daysSinceWorn.reduce((sum, days) => sum + days, 0) / daysSinceWorn.length;
+
+    // Normalize score: 100 if avg is > 30 days, linear otherwise
+    return Math.min(100, (averageDays / 30) * 100);
+}
+
+
+/**
+ * Calculates a total score for a given outfit combination.
+ * Weights: Color 50%, Style 30%, Last Worn 20%.
+ */
+function scoreOutfit(items: IClothingItem[]): number {
+  const colorScore = scoreColorHarmony(items);
+  const rawStyleScore = scoreStyleMatch(items);
+  const lastWornScore = scoreLastWorn(items);
+
+  // Normalize style score. Assume a max of 10 shared tags is a "perfect" 100.
+  const normalizedStyleScore = Math.min(100, (rawStyleScore / 10) * 100);
+
+  const totalScore = (colorScore * 0.5) + (normalizedStyleScore * 0.3) + (lastWornScore * 0.2);
+  return totalScore;
+}
+
 
 /**
  * Task 1.4, 2.4, 3.3: Core recommendation logic
@@ -174,7 +284,7 @@ export function getRecommendation(
 
   // Filter items by insulation (with some tolerance)
   const insulationTolerance = 2;
-  availableItems = availableItems.filter(item => 
+  const insulationFilteredItems = availableItems.filter(item => 
     Math.abs(item.insulation_value - requiredInsulation) <= insulationTolerance
   );
   reasoning.push(`Filtered by insulation value (target: ${requiredInsulation}±${insulationTolerance})`);
@@ -183,7 +293,7 @@ export function getRecommendation(
   const alerts = constraints?.weather_alerts || [];
   if (alerts.length > 0) {
     // Prioritize items suitable for weather alerts
-    const alertSuitableItems = availableItems.filter(item => 
+    const alertSuitableItems = insulationFilteredItems.filter(item => 
       isItemSuitableForAlerts(item, alerts)
     );
     
@@ -192,34 +302,117 @@ export function getRecommendation(
     }
   }
 
-  // Simple outfit selection (one item per type)
-  const selectedItems: IClothingItem[] = [];
-  const itemTypes: Array<IClothingItem['type']> = ['Top', 'Bottom', 'Footwear', 'Outerwear'];
+  // --- NEW: Outfit Generation and Scoring ---
+
+  const itemsByType = {
+    Tops: insulationFilteredItems.filter(i => i.type === 'Top'),
+    Bottoms: insulationFilteredItems.filter(i => i.type === 'Bottom'),
+    Footwear: insulationFilteredItems.filter(i => i.type === 'Footwear'),
+    Outerwear: insulationFilteredItems.filter(i => i.type === 'Outerwear'),
+  };
+
+  // Ensure we have at least one of each core item type
+  if (itemsByType.Tops.length === 0 || itemsByType.Bottoms.length === 0 || itemsByType.Footwear.length === 0) {
+    // Fallback to old logic if not enough items for new logic
+    return getLegacyRecommendation(wardrobe, context, constraints);
+  }
+
+  const combinations: { outfit: IClothingItem[], score: number }[] = [];
+  for (const top of itemsByType.Tops) {
+    for (const bottom of itemsByType.Bottoms) {
+      for (const footwear of itemsByType.Footwear) {
+        const baseOutfit = [top, bottom, footwear];
+        combinations.push({
+          outfit: baseOutfit,
+          score: scoreOutfit(baseOutfit),
+        });
+      }
+    }
+  }
   
-  for (const type of itemTypes) {
-    const itemsOfType = availableItems.filter(item => item.type === type);
-    if (itemsOfType.length > 0) {
-      // Prefer items with lowest last_worn_date (least recently worn)
-      const sorted = itemsOfType.sort((a, b) => {
-        if (!a.last_worn_date) return -1;
-        if (!b.last_worn_date) return 1;
-        return new Date(a.last_worn_date).getTime() - new Date(b.last_worn_date).getTime();
-      });
-      selectedItems.push(sorted[0]);
+  if (combinations.length === 0) {
+    return getLegacyRecommendation(wardrobe, context, constraints);
+  }
+
+  combinations.sort((a, b) => b.score - a.score);
+
+  let bestOutfitItems = combinations[0].outfit;
+  const bestScore = combinations[0].score;
+  reasoning.push(`Found ${combinations.length} potential outfits. Best score: ${bestScore.toFixed(0)}/100.`);
+
+  const baseOutfitInsulation = bestOutfitItems.reduce((sum, item) => sum + item.insulation_value, 0);
+  const insulationDeficit = requiredInsulation - baseOutfitInsulation;
+
+  // Add outerwear if needed and available
+  if (insulationDeficit > 1 && itemsByType.Outerwear.length > 0) {
+    let bestOuterwear: IClothingItem | null = null;
+    let bestOutfitWithOuterwearScore = -1;
+
+    for (const outerwear of itemsByType.Outerwear) {
+      // Only consider outerwear that helps meet the insulation deficit
+      if (outerwear.insulation_value >= insulationDeficit - insulationTolerance) {
+        const outfitWithOuterwear = [...bestOutfitItems, outerwear];
+        const score = scoreOutfit(outfitWithOuterwear);
+        if (score > bestOutfitWithOuterwearScore) {
+          bestOutfitWithOuterwearScore = score;
+          bestOuterwear = outerwear;
+        }
+      }
+    }
+
+    if (bestOuterwear) {
+      bestOutfitItems.push(bestOuterwear);
+      reasoning.push(`Added outerwear for warmth and style compatibility.`);
     }
   }
 
-  // Calculate confidence score
-  const hasAllTypes = itemTypes.every(type => 
-    selectedItems.some(item => item.type === type)
-  );
-  const confidence = hasAllTypes ? 0.9 : 0.6;
 
   return {
-    items: selectedItems,
-    confidence_score: confidence,
+    items: bestOutfitItems,
+    confidence_score: bestScore / 100,
     reasoning: reasoning.join('. '),
     alerts,
     context,
   };
+}
+
+/**
+ * Fallback to the old recommendation logic if the new one fails.
+ */
+function getLegacyRecommendation(
+  wardrobe: IClothingItem[],
+  context: RecommendationContext,
+  constraints?: RecommendationConstraints
+): OutfitRecommendation {
+    // This is the original simple selection logic
+    let availableItems = [...wardrobe];
+    // Apply filters again for this self-contained fallback
+    const minDaysSinceWorn = constraints?.min_days_since_worn || config.app.recommendations.minDaysSinceWorn;
+    availableItems = filterByLastWorn(availableItems, minDaysSinceWorn);
+    const requiredInsulation = calculateRequiredInsulation(context.weather.feels_like);
+    const insulationTolerance = 2;
+    availableItems = availableItems.filter(item => Math.abs(item.insulation_value - requiredInsulation) <= insulationTolerance);
+
+    const selectedItems: IClothingItem[] = [];
+    const itemTypes: Array<IClothingItem['type']> = ['Top', 'Bottom', 'Footwear', 'Outerwear'];
+    
+    for (const type of itemTypes) {
+        const itemsOfType = availableItems.filter(item => item.type === type);
+        if (itemsOfType.length > 0) {
+            const sorted = itemsOfType.sort((a, b) => {
+                if (!a.last_worn_date) return -1;
+                if (!b.last_worn_date) return 1;
+                return new Date(a.last_worn_date).getTime() - new Date(b.last_worn_date).getTime();
+            });
+            selectedItems.push(sorted[0]);
+        }
+    }
+
+    return {
+        items: selectedItems,
+        confidence_score: 0.5, // Lower confidence for fallback
+        reasoning: "Used fallback logic due to insufficient item variety for advanced recommendations.",
+        alerts: constraints?.weather_alerts || [],
+        context,
+    };
 }
