@@ -121,7 +121,7 @@ const describeDetectedTypes = (items: Array<{ normalizedType: ClothingType | nul
  * POST /api/recommendation
  * Generate outfit recommendation based on weather and user wardrobe
  */
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
   
   // Get authenticated user
@@ -195,7 +195,7 @@ async function generateRecommendation(
   lon: number,
   occasion: string,
   request: NextRequest
-): Promise<OutfitRecommendation> {
+): Promise<Record<string, any>> {
   const supabase = await createClient();
 
   // Fetch user's wardrobe
@@ -383,10 +383,21 @@ async function generateRecommendation(
     logger.error('Failed to save recommendation:', saveError);
   }
 
-  return {
-    ...recommendation,
-    id: savedRecommendation?.id,
-  } as OutfitRecommendation & { id?: string };
+  // Transform recommendation data to match frontend expectations
+  const transformedData = {
+    recommendation: {
+      outfit: recommendation.items,
+      confidence_score: recommendation.confidence_score,
+      reasoning: recommendation.reasoning,
+      dress_code: 'Casual', // Default, could be enhanced from context
+      weather_alerts: recommendation.alerts || [],
+      id: savedRecommendation?.id,
+    },
+    weather: weather,
+    alerts: recommendation.alerts || [],
+  };
+
+  return transformedData;
 }
 
 /**
