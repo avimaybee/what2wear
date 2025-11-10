@@ -8,6 +8,16 @@ import { MapPin, AlertCircle, LogIn, Shirt } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 // Lazy load heavy components
 const DashboardClient = lazy(() => 
@@ -21,6 +31,9 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthError, setIsAuthError] = useState(false);
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [manualLat, setManualLat] = useState("");
+  const [manualLon, setManualLon] = useState("");
 
   // Request user location
   const requestLocation = () => {
@@ -299,10 +312,93 @@ export default function HomePage() {
         <DashboardClient 
           recommendationData={recommendationData}
           location={location}
-          onLocationChange={requestLocation}
+          onLocationChange={() => setShowLocationDialog(true)}
           onRefresh={() => location && fetchRecommendation(location)}
         />
       </Suspense>
+
+      {/* Location Change Dialog */}
+      <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Location</DialogTitle>
+            <DialogDescription>
+              Update your location to get accurate weather and outfit recommendations.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Button
+              onClick={() => {
+                requestLocation();
+                setShowLocationDialog(false);
+                toast("Requesting current location...", { icon: "📍" });
+              }}
+              className="w-full"
+              size="lg"
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Use Current Location
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or enter coordinates
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="latitude">Latitude</Label>
+                <Input
+                  id="latitude"
+                  placeholder="e.g., 40.7128"
+                  value={manualLat}
+                  onChange={(e) => setManualLat(e.target.value)}
+                  type="number"
+                  step="0.0001"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input
+                  id="longitude"
+                  placeholder="e.g., -74.0060"
+                  value={manualLon}
+                  onChange={(e) => setManualLon(e.target.value)}
+                  type="number"
+                  step="0.0001"
+                />
+              </div>
+            </div>
+
+            <Button
+              onClick={() => {
+                const lat = parseFloat(manualLat);
+                const lon = parseFloat(manualLon);
+                if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                  const coords = { lat, lon };
+                  setLocation(coords);
+                  localStorage.setItem("userLocation", JSON.stringify(coords));
+                  setShowLocationDialog(false);
+                  toast("Location updated successfully", { icon: "✅" });
+                } else {
+                  toast.error("Please enter valid coordinates");
+                }
+              }}
+              className="w-full"
+              variant="outline"
+              disabled={!manualLat || !manualLon}
+            >
+              Set Manual Location
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

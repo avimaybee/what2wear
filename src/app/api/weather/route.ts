@@ -110,7 +110,7 @@ function generateWeatherAlerts(weather: WeatherData): WeatherAlert[] {
  * UPDATED: Recommendation #1 - Added monitoring and external API tracking
  * UPDATED: Recommendation #6 - Added rate limiting (100 requests/hour)
  */
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[] }>>> {
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[]; hourly_forecast?: any[] }>>> {
   const supabase = await createClient();
   
   // Get authenticated user
@@ -151,9 +151,10 @@ async function fetchWeatherData(
   lat: number,
   lon: number,
   provider: string
-): Promise<{ weather: WeatherData; alerts: WeatherAlert[] }> {
+): Promise<{ weather: WeatherData; alerts: WeatherAlert[]; hourly_forecast?: any[] }> {
   // Try to fetch real weather data
   let weatherData: WeatherData | null = null;
+  let hourlyForecast: any[] = [];
   
   // OpenWeatherMap integration
   if (provider === 'openWeather' && config.weather.openWeather.apiKey) {
@@ -178,6 +179,19 @@ async function fetchWeatherData(
           weather_condition: data.current.weather[0]?.description || 'Unknown',
           timestamp: new Date(),
         };
+        
+        // Parse hourly forecast data
+        if (data.hourly && Array.isArray(data.hourly)) {
+          hourlyForecast = data.hourly.slice(0, 12).map((hour: any) => ({
+            timestamp: new Date(hour.dt * 1000).toISOString(),
+            temperature: hour.temp,
+            weather_condition: hour.weather[0]?.description || 'Unknown',
+            condition: hour.weather[0]?.main || 'Unknown',
+            feels_like: hour.feels_like,
+            humidity: hour.humidity,
+            wind_speed: hour.wind_speed * 3.6,
+          }));
+        }
         
         // Fetch air quality data
         try {
@@ -217,6 +231,25 @@ async function fetchWeatherData(
       weather_condition: 'Partly Cloudy',
       timestamp: new Date(),
     };
+    
+    // Generate mock hourly forecast
+    const now = new Date();
+    hourlyForecast = Array.from({ length: 12 }, (_, i) => {
+      const hourTemp = temperature + (Math.random() * 4 - 2); // ±2°C variation
+      const hourDate = new Date(now.getTime() + i * 60 * 60 * 1000);
+      const conditions = ['Clear', 'Partly Cloudy', 'Cloudy', 'Light Rain'];
+      const condition = conditions[Math.floor(Math.random() * conditions.length)];
+      
+      return {
+        timestamp: hourDate.toISOString(),
+        temperature: Math.round(hourTemp * 10) / 10,
+        weather_condition: condition.toLowerCase(),
+        condition: condition,
+        feels_like: calculateFeelsLike(hourTemp, humidity, windSpeed),
+        humidity: Math.round(humidity),
+        wind_speed: Math.round(windSpeed * 10) / 10,
+      };
+    });
   }
 
   // Generate alerts based on weather conditions
@@ -225,5 +258,6 @@ async function fetchWeatherData(
   return {
     weather: weatherData,
     alerts,
+    hourly_forecast: hourlyForecast,
   };
 }

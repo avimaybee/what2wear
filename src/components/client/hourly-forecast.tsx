@@ -119,19 +119,26 @@ export function HourlyForecast({ location }: HourlyForecastProps) {
             Hourly Forecast
           </CardTitle>
           <CardDescription>
-            {loading ? "Loading forecast..." : error || "Next 12 hours"}
+            {loading ? "Loading forecast..." : error ? "Unable to load forecast" : "Next 12 hours"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
-            {Array.from({ length: 12 }).map((_, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-2 p-4 rounded-lg border min-w-[90px] snap-center">
-                <Skeleton className="h-4 w-12" />
-                <Skeleton className="h-6 w-6 rounded-full" />
-                <Skeleton className="h-5 w-10" />
-              </div>
-            ))}
-          </div>
+          {error ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm">{error}</p>
+              <p className="text-xs mt-2">Weather data may be temporarily unavailable</p>
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-2 p-4 rounded-lg border min-w-[90px] snap-center">
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                  <Skeleton className="h-5 w-10" />
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     );

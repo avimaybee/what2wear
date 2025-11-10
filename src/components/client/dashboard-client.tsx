@@ -34,6 +34,9 @@ import { HourlyForecast } from "@/components/client/hourly-forecast";
 import { createClient } from "@/lib/supabase/client";
 import { WeatherAlertBanner, generateWeatherAlerts } from "@/components/ui/weather-alert-banner";
 
+// Placeholder image as data URI (simple clothing icon)
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%23f3f4f6' width='400' height='400'/%3E%3Cpath fill='%239ca3af' d='M150 100h100v200h-100z'/%3E%3Ccircle fill='%239ca3af' cx='200' cy='100' r='40'/%3E%3Ctext x='200' y='350' font-family='system-ui' font-size='20' fill='%236b7280' text-anchor='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
+
 interface DashboardClientProps {
   recommendationData: any; // Data from /api/recommendation - dynamic structure
   location: { lat: number; lon: number };
@@ -339,22 +342,27 @@ export const DashboardClient = ({
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.3, delay: index * 0.1 }}
-                              className="group relative aspect-square overflow-hidden hover:shadow-lg squircle-filter transition-all"
+                              className="group relative aspect-square overflow-hidden hover:shadow-lg squircle-filter transition-all bg-muted"
                             >
                               <Image
-                                src={item.image_url}
-                                alt={item.name}
+                                src={item.image_url || PLACEHOLDER_IMAGE}
+                                alt={item.name || 'Clothing item'}
                                 fill
                                 sizes="75vw"
                                 className="object-cover transition-opacity group-hover:opacity-90"
                                 priority={index === 0}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = PLACEHOLDER_IMAGE;
+                                }}
+                                unoptimized={!item.image_url || item.image_url.startsWith('data:')}
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent">
                                 <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1">
                                   <p className="text-white font-semibold text-base">
-                                    {item.name}
+                                    {item.name || 'Clothing Item'}
                                   </p>
-                                  <p className="text-white/80 text-sm">{item.type}</p>
+                                  <p className="text-white/80 text-sm">{item.type || 'Unknown Type'}</p>
                                 </div>
                               </div>
                             </motion.div>
@@ -374,22 +382,27 @@ export const DashboardClient = ({
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, delay: index * 0.1 }}
-                        className="group relative aspect-square overflow-hidden hover:shadow-lg squircle-filter transition-all"
+                        className="group relative aspect-square overflow-hidden hover:shadow-lg squircle-filter transition-all bg-muted"
                       >
                         <Image
-                          src={item.image_url}
-                          alt={item.name}
+                          src={item.image_url || PLACEHOLDER_IMAGE}
+                          alt={item.name || 'Clothing item'}
                           fill
                           sizes="(max-width: 1200px) 25vw, 200px"
                           className="object-cover transition-opacity group-hover:opacity-90"
                           priority={index === 0}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = PLACEHOLDER_IMAGE;
+                          }}
+                          unoptimized={!item.image_url || item.image_url.startsWith('data:')}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all">
                           <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
                             <p className="text-white font-semibold text-sm line-clamp-1">
-                              {item.name}
+                              {item.name || 'Clothing Item'}
                             </p>
-                            <p className="text-white/80 text-xs">{item.type}</p>
+                            <p className="text-white/80 text-xs">{item.type || 'Unknown Type'}</p>
                           </div>
                         </div>
                       </motion.div>

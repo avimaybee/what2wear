@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppearanceSettings } from "@/components/settings/appearance-settings";
 
 type SettingsSection = "profile" | "preferences" | "appearance" | "privacy" | "about";
 type FitPreference = 'Slim' | 'Regular' | 'Oversized';
@@ -331,7 +332,7 @@ export default function SettingsPage() {
             </Card>
           )}
           {activeSection === "preferences" && renderPreferences()}
-          {activeSection === "appearance" && <Card><CardHeader><CardTitle>Appearance</CardTitle></CardHeader><CardContent><Link href="/settings/appearance"><p>Go to Appearance Settings</p></Link></CardContent></Card>}
+          {activeSection === "appearance" && <AppearanceSettings />}
           {activeSection === "privacy" && <Card><CardHeader><CardTitle>Privacy</CardTitle></CardHeader><CardContent><p>Privacy settings coming soon.</p></CardContent></Card>}
           {activeSection === "about" && <Card><CardHeader><CardTitle>About</CardTitle></CardHeader><CardContent><p>what2wear v1.0</p></CardContent></Card>}
 
