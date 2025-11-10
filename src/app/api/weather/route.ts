@@ -5,6 +5,31 @@ import { config } from '@/lib/config';
 import { validateQuery, weatherRequestSchema } from '@/lib/validation';
 import { logger } from '@/lib/logger';
 
+// Types for OpenWeather hourly payload (subset used by the app)
+interface OpenWeatherHourly {
+  dt: number; // unix timestamp
+  temp: number;
+  feels_like?: number;
+  humidity?: number;
+  wind_speed?: number;
+  weather?: Array<{
+    id?: number;
+    main?: string;
+    description?: string;
+    icon?: string;
+  }>;
+}
+
+// Normalized hourly forecast item returned by our API
+interface HourlyForecastItem {
+  timestamp: string; // ISO timestamp
+  temperature: number;
+  weather_condition: string;
+  condition: string;
+  feels_like?: number;
+  humidity?: number;
+  wind_speed?: number;
+}
 /**
  * Calculate apparent temperature (feels-like) using heat index and wind chill
  * Task 3.2: Wind Chill/Heat Index Logic
@@ -110,7 +135,7 @@ function generateWeatherAlerts(weather: WeatherData): WeatherAlert[] {
  * UPDATED: Recommendation #1 - Added monitoring and external API tracking
  * UPDATED: Recommendation #6 - Added rate limiting (100 requests/hour)
  */
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[]; hourly_forecast?: any[] }>>> {
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<{ weather: WeatherData; alerts: WeatherAlert[]; hourly_forecast?: HourlyForecastItem[] }>>> {
   const supabase = await createClient();
   
   // Get authenticated user
@@ -151,10 +176,10 @@ async function fetchWeatherData(
   lat: number,
   lon: number,
   provider: string
-): Promise<{ weather: WeatherData; alerts: WeatherAlert[]; hourly_forecast?: any[] }> {
+): Promise<{ weather: WeatherData; alerts: WeatherAlert[]; hourly_forecast?: HourlyForecastItem[] }> {
   // Try to fetch real weather data
   let weatherData: WeatherData | null = null;
-  let hourlyForecast: any[] = [];
+  let hourlyForecast: HourlyForecastItem[] = [];
   
   // OpenWeatherMap integration
   if (provider === 'openWeather' && config.weather.openWeather.apiKey) {
@@ -182,14 +207,14 @@ async function fetchWeatherData(
         
         // Parse hourly forecast data
         if (data.hourly && Array.isArray(data.hourly)) {
-          hourlyForecast = data.hourly.slice(0, 12).map((hour: any) => ({
+          hourlyForecast = data.hourly.slice(0, 12).map((hour: OpenWeatherHourly) => ({
             timestamp: new Date(hour.dt * 1000).toISOString(),
             temperature: hour.temp,
-            weather_condition: hour.weather[0]?.description || 'Unknown',
-            condition: hour.weather[0]?.main || 'Unknown',
+            weather_condition: hour.weather?.[0]?.description || 'Unknown',
+            condition: hour.weather?.[0]?.main || 'Unknown',
             feels_like: hour.feels_like,
             humidity: hour.humidity,
-            wind_speed: hour.wind_speed * 3.6,
+            wind_speed: hour.wind_speed ? hour.wind_speed * 3.6 : undefined,
           }));
         }
         
