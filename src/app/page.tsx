@@ -210,7 +210,7 @@ export default function HomePage() {
           ) : isWardrobeError ? (
             <EmptyState
               icon={Shirt}
-              title="Let's Build Your Digital Wardrobe!"
+              title="Missing Essential Clothing"
               description={error}
               actions={[
                 {
@@ -220,8 +220,8 @@ export default function HomePage() {
                   variant: "default"
                 },
                 {
-                  label: "Take a Quick Tour",
-                  onClick: () => router.push("/onboarding"),
+                  label: "Try Again",
+                  onClick: () => location && fetchRecommendation(location),
                   variant: "outline"
                 }
               ]}

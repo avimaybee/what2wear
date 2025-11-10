@@ -1,7 +1,6 @@
 Core Logic & AI Improvements
 
-   1. Implement Color & Style Coordination: The current recommendation engine picks the least-recently-worn item. A major improvement would be to replace this with a
-      scoring system that rewards items with complementary colors and matching styles (e.g., 'Streetwear' with 'Streetwear').
+   1. Implement Color & Style Coordination (DONE): The recommendation engine now utilizes a scoring system that prioritizes items with complementary colors and matching styles (e.g., 'Streetwear' with 'Streetwear'), moving beyond simply picking the least-recently-worn item.
    2. Normalize Insulation Scale: There's a mismatch between the AI's 1-5 insulation scale and the recommendation engine's 1-10 scale. This should be fixed to make
       temperature-based recommendations more accurate.
    3. Create Flexible Outfit Templates: Move beyond the hardcoded ['Top', 'Bottom', 'Footwear', 'Outerwear'] structure. Define different outfit templates (e.g., [Dress,
