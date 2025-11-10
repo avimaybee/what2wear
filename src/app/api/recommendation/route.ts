@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, ClothingType } from '@/lib/types';
+import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, ClothingType, WeatherAlert } from '@/lib/types';
 import { filterByLastWorn, getRecommendation } from '@/lib/helpers/recommendationEngine';
 
 interface InsufficientItemsError extends Error {
@@ -195,7 +195,18 @@ async function generateRecommendation(
   lon: number,
   occasion: string,
   request: NextRequest
-): Promise<Record<string, any>> {
+): Promise<{
+  recommendation: {
+    outfit: IClothingItem[];
+    confidence_score: number;
+    reasoning: string;
+    dress_code: string;
+    weather_alerts: WeatherAlert[];
+    id?: string | number;
+  };
+  weather: WeatherData;
+  alerts: WeatherAlert[];
+}> {
   const supabase = await createClient();
 
   // Fetch user's wardrobe
