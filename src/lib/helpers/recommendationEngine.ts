@@ -158,8 +158,6 @@ export function calculateRequiredInsulation(temperature: number): number {
   return 1;
 }
 
-import chroma from 'chroma-js';
-
 // ============================================================================
 // NEW SCORING LOGIC
 // ============================================================================
