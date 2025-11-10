@@ -188,6 +188,11 @@ function scoreColorHarmony(items: IClothingItem[]): number {
   return 0;
 }
 
+/**
+ * Scores the style compatibility of an outfit.
+ * @param items - The items in the outfit.
+ * @returns A raw score based on number of shared style tags.
+ */
 function scoreStyleMatch(items: IClothingItem[]): number {
   const setsOfTags = items.map(item => new Set(item.style_tags || []));
   if (setsOfTags.length < 2) return 2.5; // Return a baseline score (equates to 50 after normalization)
@@ -222,20 +227,94 @@ function scoreLastWorn(items: IClothingItem[]): number {
     return Math.min(100, (averageDays / 30) * 100);
 }
 
+/**
+ * Penalizes outfits with clashing patterns.
+ * @param items - The items in the outfit.
+ * @returns A large negative number if patterns clash, otherwise 0.
+ */
+function scorePatternCohesion(items: IClothingItem[]): number {
+  const patternedItems = items.filter(item => 
+    item.pattern && item.pattern.toLowerCase() !== 'solid'
+  ).length;
+
+  // Allow one patterned item, penalize heavily for more.
+  return patternedItems > 1 ? -1000 : 0;
+}
+
+const MATERIAL_TEXTURE_MAP: Record<string, number> = {
+  leather: 9, wool: 8, denim: 7, fleece: 6, linen: 5, 
+  cotton: 4, silk: 3, synthetic: 2, 'gore-tex': 2, polyester: 2, nylon: 2,
+  default: 4,
+};
+
+/**
+ * Scores the harmony of materials/textures in an outfit.
+ * @param items - The items in the outfit.
+ * @returns A score from 0 to 100 based on texture variety.
+ */
+function scoreMaterialHarmony(items: IClothingItem[]): number {
+  if (items.length < 2) return 50;
+
+  const textureWeights = items.map(item => 
+    MATERIAL_TEXTURE_MAP[item.material?.toLowerCase()] || MATERIAL_TEXTURE_MAP.default
+  );
+
+  // Calculate standard deviation of texture weights
+  const mean = textureWeights.reduce((a, b) => a + b, 0) / textureWeights.length;
+  const variance = textureWeights.map(w => (w - mean) ** 2).reduce((a, b) => a + b, 0) / textureWeights.length;
+  const stdDev = Math.sqrt(variance);
+
+  // Normalize score. A std dev of 2-3 is good variety.
+  return Math.min(100, (stdDev / 2.5) * 100);
+}
+
+/**
+ * Scores the balance of fits in an outfit (e.g., baggy top with slim bottoms).
+ * @param items - The items in the outfit.
+ * @returns A score from 0 to 100.
+ */
+function scoreFitBalance(items: IClothingItem[]): number {
+  const top = items.find(i => i.type === 'Top');
+  const bottom = items.find(i => i.type === 'Bottom');
+
+  if (!top?.fit || !bottom?.fit) return 50; // Neutral score if fit is unknown
+
+  const topFit = top.fit.toLowerCase();
+  const bottomFit = bottom.fit.toLowerCase();
+
+  if (topFit === 'oversized' && bottomFit === 'slim') return 100;
+  if (topFit === 'slim' && (bottomFit === 'relaxed' || bottomFit === 'oversized')) return 100;
+  if (topFit === 'regular' && bottomFit === 'regular') return 80;
+  if (topFit === 'oversized' && bottomFit === 'oversized') return 10; // Penalize baggy-on-baggy
+
+  return 60; // Default for other combos
+}
+
 
 /**
  * Calculates a total score for a given outfit combination.
- * Weights: Color 50%, Style 30%, Last Worn 20%.
+ * Weights are adjusted to incorporate new, more nuanced metrics.
  */
 function scoreOutfit(items: IClothingItem[]): number {
+  const patternPenalty = scorePatternCohesion(items);
+  if (patternPenalty < 0) return patternPenalty;
+
   const colorScore = scoreColorHarmony(items);
   const rawStyleScore = scoreStyleMatch(items);
+  const materialScore = scoreMaterialHarmony(items);
+  const fitScore = scoreFitBalance(items);
   const lastWornScore = scoreLastWorn(items);
 
   // Normalize style score. Assume a max of 10 shared tags is a "perfect" 100.
   const normalizedStyleScore = Math.min(100, (rawStyleScore / 10) * 100);
 
-  const totalScore = (colorScore * 0.5) + (normalizedStyleScore * 0.3) + (lastWornScore * 0.2);
+  const totalScore = 
+      (colorScore * 0.35) + 
+      (normalizedStyleScore * 0.25) + 
+      (materialScore * 0.15) +
+      (fitScore * 0.10) +
+      (lastWornScore * 0.15);
+      
   return totalScore;
 }
 
