@@ -20,12 +20,27 @@ type DBClothingRow = Partial<IClothingItem> & {
 };
 
 const TYPE_ALIASES: Record<string, ClothingType> = {
+  // Type field values (Title Case)
   top: 'Top',
   tops: 'Top',
-  shirt: 'Top',
+  outerwear: 'Outerwear',
+  bottom: 'Bottom',
+  bottoms: 'Bottom',
+  footwear: 'Footwear',
+  accessory: 'Accessory',
+  accessories: 'Accessory',
+  headwear: 'Headwear',
+  
+  // Old schema ENUM values (original clothing_category enum)
+  'shirt': 'Top',
+  't-shirt': 'Top',
+  'jacket': 'Outerwear',
+  'pants': 'Bottom',
+  'shoes': 'Footwear',
+  
+  // Common variations
   shirts: 'Top',
   tee: 'Top',
-  't-shirt': 'Top',
   tshirt: 'Top',
   blouse: 'Top',
   sweater: 'Top',
@@ -33,8 +48,6 @@ const TYPE_ALIASES: Record<string, ClothingType> = {
   polo: 'Top',
   tank: 'Top',
   crewneck: 'Top',
-  outerwear: 'Outerwear',
-  jacket: 'Outerwear',
   jackets: 'Outerwear',
   coat: 'Outerwear',
   coats: 'Outerwear',
@@ -44,9 +57,6 @@ const TYPE_ALIASES: Record<string, ClothingType> = {
   cardigans: 'Outerwear',
   blazer: 'Outerwear',
   windbreaker: 'Outerwear',
-  bottom: 'Bottom',
-  bottoms: 'Bottom',
-  pants: 'Bottom',
   trousers: 'Bottom',
   jeans: 'Bottom',
   joggers: 'Bottom',
@@ -54,8 +64,6 @@ const TYPE_ALIASES: Record<string, ClothingType> = {
   skirt: 'Bottom',
   leggings: 'Bottom',
   sweats: 'Bottom',
-  footwear: 'Footwear',
-  shoes: 'Footwear',
   shoe: 'Footwear',
   sneakers: 'Footwear',
   boots: 'Footwear',
@@ -63,15 +71,12 @@ const TYPE_ALIASES: Record<string, ClothingType> = {
   loafers: 'Footwear',
   heels: 'Footwear',
   trainers: 'Footwear',
-  accessory: 'Accessory',
-  accessories: 'Accessory',
   belt: 'Accessory',
   scarf: 'Accessory',
   bag: 'Accessory',
   bags: 'Accessory',
   jewelry: 'Accessory',
   watch: 'Accessory',
-  headwear: 'Headwear',
   hat: 'Headwear',
   hats: 'Headwear',
   cap: 'Headwear',
@@ -208,7 +213,7 @@ async function generateRecommendation(
     throw new Error('EMPTY_WARDROBE');
   }
 
-  const normalizedWardrobeItems = (wardrobeItems as DBClothingRow[]).map((item) => {
+  let normalizedWardrobeItems = (wardrobeItems as DBClothingRow[]).map((item) => {
     const normalizedType = deriveClothingType(item as DBClothingRow);
     return {
       ...(item as DBClothingRow),
@@ -218,17 +223,60 @@ async function generateRecommendation(
     } as DBClothingRow & { normalizedType: ClothingType | null; rawType: string | null; rawCategory: string | null };
   });
 
+  // Log normalized items for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('=== Wardrobe Items Debug ===');
+    console.log('Total items:', wardrobeItems.length);
+    console.log('Normalized items:', normalizedWardrobeItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      rawType: item.rawType,
+      rawCategory: item.rawCategory,
+      normalizedType: item.normalizedType
+    })));
+  }
+
   const itemsNeedingBackfill = normalizedWardrobeItems.filter(item => (!item.rawType || !item.rawType.trim()) && item.normalizedType);
 
   if (itemsNeedingBackfill.length > 0) {
+    console.log(`Backfilling ${itemsNeedingBackfill.length} items with missing types`);
     try {
-      await Promise.all(itemsNeedingBackfill.map(item =>
+      const results = await Promise.all(itemsNeedingBackfill.map(item =>
         supabase
           .from('clothing_items')
           .update({ type: item.normalizedType })
           .eq('id', item.id)
           .eq('user_id', userId)
       ));
+      console.log('Backfill results:', results.map(r => ({ error: r.error, count: r.count })));
+      
+      // CRITICAL: Refetch the items after backfilling to get the updated types
+      const { data: updatedWardrobeItems, error: refetchError } = await supabase
+        .from('clothing_items')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (!refetchError && updatedWardrobeItems) {
+        // Re-normalize with the updated data
+        normalizedWardrobeItems = (updatedWardrobeItems as DBClothingRow[]).map((item) => {
+          const normalizedType = deriveClothingType(item as DBClothingRow);
+          return {
+            ...(item as DBClothingRow),
+            normalizedType,
+            rawType: (item.type ?? null) as string | null,
+            rawCategory: (item.category ?? null) as string | null,
+          } as DBClothingRow & { normalizedType: ClothingType | null; rawType: string | null; rawCategory: string | null };
+        });
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Re-fetched items after backfill:', normalizedWardrobeItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            rawType: item.rawType,
+            normalizedType: item.normalizedType
+          })));
+        }
+      }
     } catch (updateError) {
       logger.error('Failed to backfill missing clothing item types', updateError);
     }
@@ -237,6 +285,10 @@ async function generateRecommendation(
   const hasTop = normalizedWardrobeItems.some(item => item.normalizedType === 'Top' || item.normalizedType === 'Outerwear');
   const hasBottom = normalizedWardrobeItems.some(item => item.normalizedType === 'Bottom');
   const hasFootwear = normalizedWardrobeItems.some(item => item.normalizedType === 'Footwear');
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Category check:', { hasTop, hasBottom, hasFootwear });
+  }
 
   const missingCategories: string[] = [];
   if (!hasTop) missingCategories.push('Top or Outerwear');

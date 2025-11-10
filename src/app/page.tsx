@@ -82,22 +82,29 @@ export default function HomePage() {
 
       const data = await response.json();
       
+      console.log('Recommendation API response:', data);
+      
       // Handle empty/insufficient wardrobe gracefully - this is expected for new users
       if (!data.success && data.needsWardrobe) {
+        console.log('Wardrobe error detected:', data.error, data.message);
+        
         // Check if the error mentions missing types - if so, try to fix them automatically
-        if (retryCount === 0 && data.message?.toLowerCase().includes('type')) {
+        if (retryCount === 0 && (data.message?.toLowerCase().includes('type') || data.message?.toLowerCase().includes('category'))) {
           console.log('Attempting to fix missing item types...');
           try {
             const fixResponse = await fetch("/api/wardrobe/fix-types", {
               method: "POST",
             });
             const fixData = await fixResponse.json();
+            console.log('Fix response:', fixData);
             
             if (fixData.success && fixData.fixed > 0) {
               console.log(`Fixed ${fixData.fixed} items, retrying recommendation...`);
               toast(`Fixed ${fixData.fixed} wardrobe items, trying again...`, { icon: "🔧" });
               // Retry once after fixing
               return fetchRecommendation(coords, retryCount + 1);
+            } else {
+              console.log('No items were fixed or fix failed');
             }
           } catch (fixError) {
             console.error('Failed to auto-fix item types:', fixError);
