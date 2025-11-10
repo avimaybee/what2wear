@@ -53,7 +53,7 @@ export default function HomePage() {
   };
 
   // Fetch outfit recommendation
-  const fetchRecommendation = async (coords: { lat: number; lon: number }) => {
+  const fetchRecommendation = async (coords: { lat: number; lon: number }, retryCount = 0) => {
     try {
       setLoading(true);
       setError(null);
@@ -84,6 +84,26 @@ export default function HomePage() {
       
       // Handle empty/insufficient wardrobe gracefully - this is expected for new users
       if (!data.success && data.needsWardrobe) {
+        // Check if the error mentions missing types - if so, try to fix them automatically
+        if (retryCount === 0 && data.message?.toLowerCase().includes('type')) {
+          console.log('Attempting to fix missing item types...');
+          try {
+            const fixResponse = await fetch("/api/wardrobe/fix-types", {
+              method: "POST",
+            });
+            const fixData = await fixResponse.json();
+            
+            if (fixData.success && fixData.fixed > 0) {
+              console.log(`Fixed ${fixData.fixed} items, retrying recommendation...`);
+              toast(`Fixed ${fixData.fixed} wardrobe items, trying again...`, { icon: "🔧" });
+              // Retry once after fixing
+              return fetchRecommendation(coords, retryCount + 1);
+            }
+          } catch (fixError) {
+            console.error('Failed to auto-fix item types:', fixError);
+          }
+        }
+        
         setError(data.message || "Add clothing items to your wardrobe to get started!");
         setLoading(false);
         // Don't show error toast for empty wardrobe - it's expected for new users

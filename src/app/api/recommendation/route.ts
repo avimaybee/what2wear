@@ -106,9 +106,13 @@ async function generateRecommendation(
   }
 
   // Check if user has minimum items for a basic outfit
-  const hasTop = wardrobeItems.some(item => item.type?.trim().toUpperCase() === 'TOP' || item.type?.trim().toUpperCase() === 'OUTERWEAR');
-  const hasBottom = wardrobeItems.some(item => item.type?.trim().toUpperCase() === 'BOTTOM');
-  const hasFootwear = wardrobeItems.some(item => item.type?.trim().toUpperCase() === 'FOOTWEAR');
+  // Normalize type comparison to handle both database format (Title Case) and potential variations
+  const hasTop = wardrobeItems.some(item => {
+    const normalizedType = item.type?.trim();
+    return normalizedType === 'Top' || normalizedType === 'Outerwear';
+  });
+  const hasBottom = wardrobeItems.some(item => item.type?.trim() === 'Bottom');
+  const hasFootwear = wardrobeItems.some(item => item.type?.trim() === 'Footwear');
 
   const missingCategories = [];
   if (!hasTop) missingCategories.push('Top or Outerwear');
@@ -116,8 +120,19 @@ async function generateRecommendation(
   if (!hasFootwear) missingCategories.push('Footwear');
 
   if (missingCategories.length > 0) {
-    const foundTypes = [...new Set(wardrobeItems.map(item => item.type?.trim() || ''))];
-    const missingItemsMessage = `To get a recommendation, please add at least one item for each of the following categories: ${missingCategories.join(', ')}. Your wardrobe currently has items of these types: ${foundTypes.join(', ')}.`;
+    const foundTypes = [...new Set(wardrobeItems.map(item => item.type?.trim() || 'Unknown'))].filter(t => t !== 'Unknown');
+    const wardrobeCount = wardrobeItems.length;
+    
+    // Log detailed debug info in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Wardrobe validation failed:');
+      console.log('Total items:', wardrobeCount);
+      console.log('Found types:', foundTypes);
+      console.log('Missing categories:', missingCategories);
+      console.log('Sample item:', wardrobeItems[0]);
+    }
+    
+    const missingItemsMessage = `You need at least one item from each category: ${missingCategories.join(', ')}. You have ${wardrobeCount} items in your wardrobe with types: ${foundTypes.length > 0 ? foundTypes.join(', ') : 'None detected'}. Please ensure each item has a type assigned (Top, Bottom, or Footwear).`;
     const error: InsufficientItemsError = new Error('INSUFFICIENT_ITEMS');
     error.customMessage = missingItemsMessage;
     throw error;
