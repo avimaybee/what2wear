@@ -97,13 +97,20 @@ export default function HomePage() {
         return;
       }
 
+      console.log('🔄 Fetching recommendation for coords:', coords);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch("/api/recommendation", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(coords),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch recommendation: ${response.statusText}`);
@@ -111,7 +118,7 @@ export default function HomePage() {
 
       const data = await response.json();
       
-      console.log('Recommendation API response:', data);
+      console.log('✓ Recommendation API response received:', data);
       
       // Handle empty/insufficient wardrobe gracefully - this is expected for new users
       if (!data.success && data.needsWardrobe) {
@@ -153,13 +160,22 @@ export default function HomePage() {
       setRecommendationData(data.data);
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching recommendation:", err);
-      setError(err instanceof Error ? err.message : "Failed to load recommendation");
-      setLoading(false);
-      // Only show error toast for actual errors, not empty wardrobe
-      if (err instanceof Error && !err.message.toLowerCase().includes("wardrobe")) {
-        toast.error("Failed to generate outfit. Please try again.");
+      const errorMsg = err instanceof Error ? err.message : "Failed to load recommendation";
+      console.error("❌ Error fetching recommendation:", errorMsg);
+      console.error("Full error:", err);
+      
+      // Handle timeout separately
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError("Recommendation request timed out. Please try again.");
+        toast.error("Request took too long. Please try again.");
+      } else {
+        setError(errorMsg);
+        // Only show error toast for actual errors, not empty wardrobe
+        if (!errorMsg.toLowerCase().includes("wardrobe")) {
+          toast.error("Failed to generate outfit. Please try again.");
+        }
       }
+      setLoading(false);
     }
   }, []);
 
