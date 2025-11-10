@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData } from '@/lib/types';
+import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, ClothingType } from '@/lib/types';
 import { filterByLastWorn, getRecommendation } from '@/lib/helpers/recommendationEngine';
 
 interface InsufficientItemsError extends Error {
@@ -8,6 +8,99 @@ interface InsufficientItemsError extends Error {
 }
 import { validateBody, recommendationRequestSchema } from '@/lib/validation';
 import { logger } from '@/lib/logger';
+
+const TYPE_ALIASES: Record<string, ClothingType> = {
+  top: 'Top',
+  tops: 'Top',
+  shirt: 'Top',
+  shirts: 'Top',
+  tee: 'Top',
+  't-shirt': 'Top',
+  tshirt: 'Top',
+  blouse: 'Top',
+  sweater: 'Top',
+  jumper: 'Top',
+  polo: 'Top',
+  tank: 'Top',
+  crewneck: 'Top',
+  outerwear: 'Outerwear',
+  jacket: 'Outerwear',
+  jackets: 'Outerwear',
+  coat: 'Outerwear',
+  coats: 'Outerwear',
+  hoodie: 'Outerwear',
+  hoodies: 'Outerwear',
+  cardigan: 'Outerwear',
+  cardigans: 'Outerwear',
+  blazer: 'Outerwear',
+  windbreaker: 'Outerwear',
+  bottom: 'Bottom',
+  bottoms: 'Bottom',
+  pants: 'Bottom',
+  trousers: 'Bottom',
+  jeans: 'Bottom',
+  joggers: 'Bottom',
+  shorts: 'Bottom',
+  skirt: 'Bottom',
+  leggings: 'Bottom',
+  sweats: 'Bottom',
+  footwear: 'Footwear',
+  shoes: 'Footwear',
+  shoe: 'Footwear',
+  sneakers: 'Footwear',
+  boots: 'Footwear',
+  sandals: 'Footwear',
+  loafers: 'Footwear',
+  heels: 'Footwear',
+  trainers: 'Footwear',
+  accessory: 'Accessory',
+  accessories: 'Accessory',
+  belt: 'Accessory',
+  scarf: 'Accessory',
+  bag: 'Accessory',
+  bags: 'Accessory',
+  jewelry: 'Accessory',
+  watch: 'Accessory',
+  headwear: 'Headwear',
+  hat: 'Headwear',
+  hats: 'Headwear',
+  cap: 'Headwear',
+  caps: 'Headwear',
+  beanie: 'Headwear',
+  beanies: 'Headwear',
+  headband: 'Headwear'
+};
+
+const normalizeTypeValue = (value?: string | null): ClothingType | null => {
+  if (!value) return null;
+  const normalizedKey = value.trim().toLowerCase();
+  return TYPE_ALIASES[normalizedKey] || null;
+};
+
+const deriveClothingType = (item: Partial<IClothingItem>): ClothingType | null => {
+  const typeFromField = normalizeTypeValue(item.type as string | null);
+  if (typeFromField) return typeFromField;
+
+  const typeFromCategory = normalizeTypeValue(item.category as string | null);
+  if (typeFromCategory) return typeFromCategory;
+
+  return null;
+};
+
+const describeDetectedTypes = (items: Array<{ normalizedType: ClothingType | null; rawType?: string | null; rawCategory?: string | null }>): string[] => {
+  return Array.from(new Set(items.map(item => {
+    if (item.normalizedType) {
+      return item.normalizedType;
+    }
+    if (item.rawType && item.rawType.trim()) {
+      return `Unmapped type: ${item.rawType.trim()}`;
+    }
+    if (item.rawCategory && item.rawCategory.trim()) {
+      return `Category only: ${item.rawCategory.trim()}`;
+    }
+    return 'Unlabeled item';
+  })));
+};
 
 /**
  * POST /api/recommendation
@@ -105,39 +198,63 @@ async function generateRecommendation(
     throw new Error('EMPTY_WARDROBE');
   }
 
-  // Check if user has minimum items for a basic outfit
-  // Normalize type comparison to handle both database format (Title Case) and potential variations
-  const hasTop = wardrobeItems.some(item => {
-    const normalizedType = item.type?.trim();
-    return normalizedType === 'Top' || normalizedType === 'Outerwear';
-  });
-  const hasBottom = wardrobeItems.some(item => item.type?.trim() === 'Bottom');
-  const hasFootwear = wardrobeItems.some(item => item.type?.trim() === 'Footwear');
+  const normalizedWardrobeItems = wardrobeItems.map((item: any) => {
+    const normalizedType = deriveClothingType(item);
+    return {
+      ...item,
+      normalizedType,
+      rawType: (item.type ?? null) as string | null,
+      rawCategory: (item.category ?? null) as string | null,
+    };
+  }) as Array<any & { normalizedType: ClothingType | null; rawType: string | null; rawCategory: string | null; }>;
 
-  const missingCategories = [];
+  const itemsNeedingBackfill = normalizedWardrobeItems.filter(item => (!item.rawType || !item.rawType.trim()) && item.normalizedType);
+
+  if (itemsNeedingBackfill.length > 0) {
+    try {
+      await Promise.all(itemsNeedingBackfill.map(item =>
+        supabase
+          .from('clothing_items')
+          .update({ type: item.normalizedType })
+          .eq('id', item.id)
+          .eq('user_id', userId)
+      ));
+    } catch (updateError) {
+      logger.error('Failed to backfill missing clothing item types', updateError);
+    }
+  }
+
+  const hasTop = normalizedWardrobeItems.some(item => item.normalizedType === 'Top' || item.normalizedType === 'Outerwear');
+  const hasBottom = normalizedWardrobeItems.some(item => item.normalizedType === 'Bottom');
+  const hasFootwear = normalizedWardrobeItems.some(item => item.normalizedType === 'Footwear');
+
+  const missingCategories: string[] = [];
   if (!hasTop) missingCategories.push('Top or Outerwear');
   if (!hasBottom) missingCategories.push('Bottom');
   if (!hasFootwear) missingCategories.push('Footwear');
 
   if (missingCategories.length > 0) {
-    const foundTypes = [...new Set(wardrobeItems.map(item => item.type?.trim() || 'Unknown'))].filter(t => t !== 'Unknown');
-    const wardrobeCount = wardrobeItems.length;
-    
-    // Log detailed debug info in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Wardrobe validation failed:');
-      console.log('Total items:', wardrobeCount);
-      console.log('Found types:', foundTypes);
-      console.log('Missing categories:', missingCategories);
-      console.log('Sample item:', wardrobeItems[0]);
+    const detectedTypes = describeDetectedTypes(normalizedWardrobeItems);
+    const wardrobeCount = normalizedWardrobeItems.length;
+    const missingItemsMessageParts = [
+      `To get a recommendation, add at least one item in each missing category: ${missingCategories.join(', ')}.`,
+      `We found ${wardrobeCount} total items in your wardrobe.`,
+    ];
+
+    if (detectedTypes.length > 0) {
+      missingItemsMessageParts.push(`Detected wardrobe entries: ${detectedTypes.join(', ')}.`);
     }
-    
-    const missingItemsMessage = `You need at least one item from each category: ${missingCategories.join(', ')}. You have ${wardrobeCount} items in your wardrobe with types: ${foundTypes.length > 0 ? foundTypes.join(', ') : 'None detected'}. Please ensure each item has a type assigned (Top, Bottom, or Footwear).`;
+
+    if (itemsNeedingBackfill.length > 0) {
+      missingItemsMessageParts.push('We tried to auto-fix missing item types. If the issue persists, edit those items in your wardrobe.');
+    } else {
+      missingItemsMessageParts.push('Make sure each clothing item has an accurate type (Top, Bottom, Footwear, etc.).');
+    }
+
     const error: InsufficientItemsError = new Error('INSUFFICIENT_ITEMS');
-    error.customMessage = missingItemsMessage;
+    error.customMessage = missingItemsMessageParts.join(' ');
     throw error;
   }
-
   // Fetch weather data
   const weatherUrl = new URL('/api/weather', request.url);
   weatherUrl.searchParams.set('lat', lat.toString());
@@ -166,7 +283,10 @@ async function generateRecommendation(
   const userPreferences = profile?.preferences || {};
 
   // Apply filtering logic
-  let availableItems = wardrobeItems as IClothingItem[];
+  let availableItems = normalizedWardrobeItems.map(item => ({
+    ...item,
+    type: (item.normalizedType ?? normalizeTypeValue(item.rawType) ?? 'Top') as ClothingType,
+  })) as IClothingItem[];
   
   // Filter by last worn date
   availableItems = filterByLastWorn(availableItems);
