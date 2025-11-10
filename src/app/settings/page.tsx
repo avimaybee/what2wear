@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toaster";
-import { Save, User, MapPin, Thermometer, Shuffle, Settings as SettingsIcon, Lock, Info, Palette, ChevronRight, Tag, Droplets, Scissors, ThumbsUp, ThumbsDown } from "lucide-react";
+import { User, Thermometer, Shuffle, Settings as SettingsIcon, Lock, Info, Palette, Tag, Droplets, Scissors } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -219,6 +220,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5 text-primary" />Style Preferences</CardTitle>
+            {/* eslint-disable-next-line react/no-unescaped-entities */}
             <CardDescription>Tell us which styles you love and which you'd rather avoid.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -242,7 +244,7 @@ export default function SettingsPage() {
         {/* Material Preferences */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><img src="/icons/fabric.svg" alt="Fabric Icon" className="h-5 w-5" />Material Preferences</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Image src="/icons/fabric.svg" alt="Fabric Icon" width={20} height={20} className="h-5 w-5" />Material Preferences</CardTitle>
             <CardDescription>Choose materials you like or dislike for comfort and style.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -281,7 +283,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="variety-days" className="text-sm font-medium">Don&apos;t recommend items worn in the last:</Label>
+              <Label htmlFor="variety-days" className="text-sm font-medium">Don&#39;t recommend items worn in the last:</Label>
               <div className="flex items-center gap-3">
                 <Input id="variety-days" type="number" min="1" max="30" value={varietyDays} onChange={(e) => setVarietyDays(Math.max(1, Math.min(30, Number(e.target.value))))} className="w-24 text-center" />
                 <span className="text-sm font-medium">days</span>

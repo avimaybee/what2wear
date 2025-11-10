@@ -199,7 +199,7 @@ function scoreColorHarmony(items: IClothingItem[]): number {
         return 90; // High contrast, likely complementary
       }
       return 40; // Too similar
-    } catch (e) {
+    } catch (_e) {
       return 20; // Invalid color string
     }
   }
@@ -530,7 +530,7 @@ export function getRecommendation(
 
   combinations.sort((a, b) => b.score - a.score);
 
-  let bestOutfitItems = combinations[0].outfit;
+  const bestOutfitItems = combinations[0].outfit;
   const bestScore = combinations[0].score;
   reasoning.push(`Found ${combinations.length} potential outfits. Best score: ${bestScore.toFixed(0)}/100.`);
 
