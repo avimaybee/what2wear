@@ -41,8 +41,8 @@ interface HistoryClientProps {
   userId: string;
 }
 
-export function HistoryClient({ userId }: HistoryClientProps) {
-  const [outfits, setOutfits] = useState<OutfitHistoryItem[]>([]);
+export function HistoryClient({ userId: _userId }: HistoryClientProps) {
+  const [_outfits, setOutfits] = useState<OutfitHistoryItem[]>([]);
   const [filteredOutfits, setFilteredOutfits] = useState<OutfitHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);

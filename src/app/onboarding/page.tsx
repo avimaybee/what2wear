@@ -45,7 +45,7 @@ export default function OnboardingPage() {
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [temperatureSensitivity, setTemperatureSensitivity] = useState(0);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [_userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [locationGranted, setLocationGranted] = useState(false);
   const [saving, setSaving] = useState(false);
   const router = useRouter();

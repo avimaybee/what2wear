@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CloudRain, Thermometer, Wind, AlertTriangle, CloudSnow, Sun, Cloud } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X, CloudRain, Thermometer, Wind, AlertTriangle, CloudSnow, Sun } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";

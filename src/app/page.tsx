@@ -109,23 +109,24 @@ export default function HomePage() {
 
   // Initialize: Get location and fetch recommendation
   useEffect(() => {
-    // Try to get saved location first
-    const savedLocation = localStorage.getItem("userLocation");
-    if (savedLocation) {
-      try {
-        const coords = JSON.parse(savedLocation);
-        setLocation(coords);
-        return;
-      } catch {
-        // Invalid saved location, request new one
+    const init = () => {
+      const savedLocation = localStorage.getItem("userLocation");
+      if (savedLocation) {
+        try {
+          const coords = JSON.parse(savedLocation);
+          setLocation(coords);
+          fetchRecommendation(coords); // Fetch on load with saved location
+          return;
+        } catch {
+          // Invalid saved location, request new one
+        }
       }
-    }
-    
-    // Request location on mount
-    requestLocation();
-  }, []);
+      requestLocation();
+    };
+    init();
+  }, []); // Run only once on mount
 
-  // Fetch recommendation when location changes
+  // This effect is now primarily for when the user MANUALLY changes location
   useEffect(() => {
     if (location) {
       fetchRecommendation(location);
@@ -210,7 +211,7 @@ export default function HomePage() {
             <EmptyState
               icon={Shirt}
               title="Let's Build Your Digital Wardrobe!"
-              description="To get AI-powered outfit recommendations, you need at least one top, one bottom, and one pair of shoes. Start by adding some clothing items to your wardrobe."
+              description={error}
               actions={[
                 {
                   label: "Add Clothing Items",

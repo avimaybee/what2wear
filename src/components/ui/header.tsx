@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shirt, Settings, Home, LogOut, User as UserIcon, TrendingUp, History, Menu, X } from 'lucide-react';
+import { Shirt, Settings, Home, LogOut, User as UserIcon, TrendingUp, History, Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { TextRollAccessible } from '@/components/ui/text-roll';
 import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/ui/back-button';
 import { cn } from '@/lib/utils';

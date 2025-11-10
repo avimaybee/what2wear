@@ -174,7 +174,7 @@ Return ONLY the JSON object.`;
       // Remove markdown code blocks if present
       const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       analysis = JSON.parse(cleanContent);
-    } catch (parseError) {
+    } catch (_parseError) {
       console.error("Failed to parse AI response:", content);
       throw new Error("Invalid AI response format");
     }

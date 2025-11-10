@@ -6,9 +6,8 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/toaster";
-import { Save, User, MapPin, Thermometer, Shuffle, Settings as SettingsIcon, HelpCircle, Lock, Info, Palette, ChevronRight } from "lucide-react";
+import { Save, User, MapPin, Thermometer, Shuffle, Settings as SettingsIcon, Lock, Info, Palette, ChevronRight } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -23,7 +22,7 @@ export default function SettingsPage() {
   const [name, setName] = useState("John Doe");
   const [region, setRegion] = useState("New York, USA");
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
 
   // Load current settings on mount
   useEffect(() => {

@@ -396,9 +396,9 @@
   /* Regular (default) - Primary Liquid Glass variant */
   /* Provides optimal legibility with blur and luminosity adjustment */
   .glass-regular {
-    background: oklch(from var(--card) l c h / 0.85);
-    backdrop-filter: blur(48px) saturate(180%) brightness(1.02);
-    -webkit-backdrop-filter: blur(48px) saturate(180%) brightness(1.02);
+    background: oklch(from var(--card) l c h / 0.95);
+    backdrop-filter: blur(60px) saturate(180%) brightness(1.02);
+    -webkit-backdrop-filter: blur(60px) saturate(180%) brightness(1.02);
     border: 1px solid oklch(from var(--border) l c h / 0.35);
     box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.08) inset,
                 0 4px 8px -4px oklch(from var(--foreground) l c h / 0.14),
@@ -465,9 +465,9 @@
     }
     
     .glass-regular {
-      background: oklch(from var(--card) l c h / 0.75);
-      backdrop-filter: blur(30px) saturate(180%) brightness(0.98);
-      -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(0.98);
+      background: oklch(from var(--card) l c h / 0.90);
+      backdrop-filter: blur(50px) saturate(180%) brightness(0.98);
+      -webkit-backdrop-filter: blur(50px) saturate(180%) brightness(0.98);
     }
     
     .glass-thick {
@@ -537,9 +537,9 @@
 }
 
 @utility glass-regular {
-  background: oklch(from var(--card) l c h / 0.78);
-  backdrop-filter: blur(30px) saturate(180%) brightness(1.02);
-  -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(1.02);
+  background: oklch(from var(--card) l c h / 0.95);
+  backdrop-filter: blur(60px) saturate(180%) brightness(1.02);
+  -webkit-backdrop-filter: blur(60px) saturate(180%) brightness(1.02);
   border: 1px solid oklch(from var(--border) l c h / 0.28);
   box-shadow: 0 0 0 0.5px oklch(from var(--foreground) l c h / 0.06) inset,
               0 4px 8px -4px oklch(from var(--foreground) l c h / 0.12),

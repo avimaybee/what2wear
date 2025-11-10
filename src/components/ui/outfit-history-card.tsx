@@ -35,11 +35,11 @@ interface OutfitHistoryCardProps {
 }
 
 export function OutfitHistoryCard({
-  id,
+  id: _id,
   date,
   items,
   feedback,
-  renderedImage,
+  renderedImage: _renderedImage,
   onReuse,
   onDelete,
   index = 0
@@ -107,7 +107,7 @@ export function OutfitHistoryCard({
           
           {/* Outfit Items Grid */}
           <div className="grid grid-cols-4 gap-2 mb-3">
-            {items.slice(0, 4).map((item, idx) => (
+            {items.slice(0, 4).map((item, _idx) => (
               <motion.div
                 key={item.id}
                 className="relative aspect-square rounded-lg overflow-hidden bg-muted group-hover:scale-105 transition-transform"

@@ -172,7 +172,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const reasoning = aiResult.analysisLog.join('\n');
 
     // Store recommendation in database
-    const { data: savedRecommendation, error: saveError } = await supabase
+    const { data: _savedRecommendation, error: saveError } = await supabase
       .from('outfit_recommendations')
       .insert({
         user_id: user.id,

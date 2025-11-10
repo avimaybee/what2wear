@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData } from '@/lib/types';
 import { filterByLastWorn, getRecommendation } from '@/lib/helpers/recommendationEngine';
+
+interface InsufficientItemsError extends Error {
+  customMessage?: string;
+}
 import { validateBody, recommendationRequestSchema } from '@/lib/validation';
 import { logger } from '@/lib/logger';
 
@@ -50,11 +54,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       }
       
       if (error.message === 'INSUFFICIENT_ITEMS') {
+        const insufficientItemsError = error as InsufficientItemsError;
         return NextResponse.json(
           { 
             success: false, 
             error: 'INSUFFICIENT_ITEMS',
-            message: 'You need at least one top, one bottom, and one pair of shoes to create an outfit.',
+            message: insufficientItemsError.customMessage || 'You need at least one top, one bottom, and one pair of shoes to create an outfit.',
             needsWardrobe: true
           },
           { status: 200 }
@@ -101,12 +106,17 @@ async function generateRecommendation(
   }
 
   // Check if user has minimum items for a basic outfit
-  // At minimum, need: 1 top, 1 bottom, 1 footwear
+  const requiredTypes = ['Top', 'Bottom', 'Footwear'];
   const itemTypes = new Set(wardrobeItems.map((item: { type: string }) => item.type));
-  const hasMinimumItems = itemTypes.has('Top') && itemTypes.has('Bottom') && itemTypes.has('Footwear');
-  
-  if (!hasMinimumItems) {
-    throw new Error('INSUFFICIENT_ITEMS');
+  const missingTypes = requiredTypes.filter(type => !itemTypes.has(type));
+
+  if (missingTypes.length > 0) {
+    // Dynamically create the error message
+    const missingItemsMessage = `You need to add at least one of each: ${missingTypes.join(', ')}.`;
+    const error: InsufficientItemsError = new Error('INSUFFICIENT_ITEMS');
+    // Attach the dynamic message to the error object
+    error.customMessage = missingItemsMessage;
+    throw error;
   }
 
   // Fetch weather data
@@ -183,7 +193,7 @@ async function generateRecommendation(
  * Get latest recommendation for the user
  * UPDATED: Recommendation #4 - Added validation middleware
  */
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> {
+export async function GET(_request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> {
   const supabase = await createClient();
     
     // Get authenticated user
