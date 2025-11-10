@@ -152,7 +152,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     // Validate query parameters
     const { lat, lon, provider } = validateQuery(request, weatherRequestSchema) as { lat: number; lon: number; provider: string };
 
+    console.log('📍 Weather API called with coords:', { lat, lon }, 'provider:', provider);
     const weatherPayload = await fetchWeatherData(lat, lon, provider);
+    console.log('✓ Weather data fetched successfully');
 
     return NextResponse.json({
       success: true,
@@ -160,6 +162,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       message: `Weather data from ${provider}`,
     });
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Weather API error:', errorMsg);
     logger.error('Weather API error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch weather data' },
@@ -186,12 +190,18 @@ async function fetchWeatherData(
     try {
       const apiUrl = `${config.weather.openWeather.baseUrl}${config.weather.openWeather.endpoints.onecall}?lat=${lat}&lon=${lon}&appid=${config.weather.openWeather.apiKey}&units=metric`;
       
-      const response = await fetch(apiUrl);
+      console.log('🌤️  Fetching OpenWeather data...');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
+      const response = await fetch(apiUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         logger.error('OpenWeatherMap API error:', await response.text());
       } else {
         const data = await response.json();
+        console.log('✓ OpenWeather data received');
         
         weatherData = {
           temperature: data.current.temp,

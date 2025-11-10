@@ -138,13 +138,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const validatedData = await validateBody(request, recommendationRequestSchema) as { lat: number; lon: number; occasion?: string };
     const { lat, lon, occasion = "" } = validatedData;
 
+    console.log('🎯 Generating recommendation for:', { lat, lon, occasion });
     const recommendation = await generateRecommendation(user.id, lat, lon, occasion, request);
+    console.log('✓ Recommendation generated successfully');
 
     return NextResponse.json({
       success: true,
       data: recommendation,
     });
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Error generating recommendation:', errorMsg);
     logger.error('Error generating recommendation:', error);
     
     // Handle special cases for empty/insufficient wardrobe

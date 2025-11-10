@@ -186,15 +186,33 @@ export default function HomePage() {
       if (savedLocation) {
         try {
           const coords = JSON.parse(savedLocation);
+          console.log('📍 Using saved location:', coords);
           setLocation(coords);
           return; // Don't fetch yet, wait for useEffect below
         } catch {
           // Invalid saved location, request new one
         }
       }
+      console.log('📍 No saved location, requesting...');
       requestLocation();
+      
+      // Safety timeout: If no location after 15 seconds, use default
+      const safetyTimer = setTimeout(() => {
+        setLocation(prevLocation => {
+          if (!prevLocation) {
+            console.warn('⚠️  Geolocation took too long, using default location');
+            const defaultLocation = { lat: 40.7128, lon: -74.0060 };
+            localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
+            return defaultLocation;
+          }
+          return prevLocation;
+        });
+      }, 15000);
+      
+      return () => clearTimeout(safetyTimer);
     };
-    init();
+    
+    const cleanup = init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
 
