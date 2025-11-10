@@ -9,7 +9,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// Log API key status on startup
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.warn('⚠️  GEMINI_API_KEY is not set! AI analysis will fail.');
+} else {
+  console.log('✓ GEMINI_API_KEY is loaded:', apiKey.slice(0, 10) + '...');
+}
+
+const genAI = new GoogleGenerativeAI(apiKey || "");
 
 interface AnalysisResult {
   name: string;
@@ -152,6 +160,11 @@ Be specific and detailed. The description field is CRITICAL for AI outfit genera
 
 Return ONLY the JSON object.`;
 
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not configured. Please set it in your environment variables.');
+    }
+
+    console.log('🤖 Starting Gemini AI analysis...');
     const result = await model.generateContent([
       prompt,
       {
@@ -163,6 +176,7 @@ Return ONLY the JSON object.`;
     ]);
 
     const content = result.response.text();
+    console.log('✓ Gemini response received:', content.substring(0, 100) + '...');
     
     if (!content) {
       throw new Error("No response from AI");
@@ -179,16 +193,24 @@ Return ONLY the JSON object.`;
       throw new Error("Invalid AI response format");
     }
 
+    console.log('✓ AI analysis successful:', { 
+      name: analysis.name, 
+      color: analysis.color, 
+      type: analysis.type 
+    });
+
     return NextResponse.json({
       success: true,
       data: analysis,
     });
   } catch (error) {
-    console.error("Error analyzing clothing:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to analyze clothing";
+    console.error("❌ Error analyzing clothing:", errorMessage);
+    console.error("Full error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to analyze clothing",
+        error: errorMessage,
       },
       { status: 500 }
     );

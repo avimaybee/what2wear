@@ -169,13 +169,13 @@ export function HourlyForecast({ location }: HourlyForecastProps) {
                 <motion.button
                   key={idx}
                   onClick={() => setSelectedHour(idx)}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: selectedHour === idx ? 1.02 : 1 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ 
-                    duration: 0.2,
-                    delay: idx * 0.05,
+                    duration: 0.15,
+                    delay: idx * 0.03,
                   }}
                   className={cn(
                     "flex flex-col items-center gap-2 p-3 rounded-lg border min-w-[90px] snap-center transition-all duration-200 shrink-0",
@@ -196,10 +196,9 @@ export function HourlyForecast({ location }: HourlyForecastProps) {
                   </span>
                   <motion.div
                     animate={selectedHour === idx ? { 
-                      scale: [1, 1.2, 1],
-                      rotate: [0, 5, -5, 0]
+                      scale: [1, 1.1, 1],
                     } : {}}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 0.3 }}
                   >
                     {getWeatherIcon(hour.condition, selectedHour === idx)}
                   </motion.div>
@@ -214,8 +213,8 @@ export function HourlyForecast({ location }: HourlyForecastProps) {
             </div>
             
             {/* Edge fade gradients to indicate scrollable area */}
-            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background via-background/50 to-transparent pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background via-background/50 to-transparent pointer-events-none" />
+            <div className="absolute left-0 top-0 bottom-2 w-16 bg-gradient-to-r from-background via-background/60 to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-2 w-16 bg-gradient-to-l from-background via-background/60 to-transparent pointer-events-none" />
           </div>
           
           {/* Keyboard hint */}

@@ -222,11 +222,17 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5 text-primary" />Style Preferences</CardTitle>
             {/* eslint-disable-next-line react/no-unescaped-entities */}
-            <CardDescription>Tell us which styles you love and which you'd rather avoid.</CardDescription>
+            <CardDescription>Select style tags from your wardrobe that you prefer or want to avoid in recommendations.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <PreferenceSelector title="Preferred Styles" options={wardrobeMeta.styles} selected={preferredStyles} onSelect={(val) => handleSelect('styles', 'preferred', val)} />
-            <PreferenceSelector title="Disliked Styles" options={wardrobeMeta.styles} selected={dislikedStyles} onSelect={(val) => handleSelect('styles', 'disliked', val)} variant="destructive" />
+            {wardrobeMeta.styles.length > 0 ? (
+              <>
+                <PreferenceSelector title="Preferred Styles" options={wardrobeMeta.styles} selected={preferredStyles} onSelect={(val) => handleSelect('styles', 'preferred', val)} />
+                <PreferenceSelector title="Disliked Styles" options={wardrobeMeta.styles} selected={dislikedStyles} onSelect={(val) => handleSelect('styles', 'disliked', val)} variant="destructive" />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Add clothing items with style tags to your wardrobe to set preferences.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -245,12 +251,18 @@ export default function SettingsPage() {
         {/* Material Preferences */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Image src="/icons/fabric.svg" alt="Fabric Icon" width={20} height={20} className="h-5 w-5" />Material Preferences</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Droplets className="h-5 w-5 text-primary" />Material Preferences</CardTitle>
             <CardDescription>Choose materials you like or dislike for comfort and style.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <PreferenceSelector title="Preferred Materials" options={wardrobeMeta.materials} selected={preferredMaterials} onSelect={(val) => handleSelect('materials', 'preferred', val)} />
-            <PreferenceSelector title="Disliked Materials" options={wardrobeMeta.materials} selected={dislikedMaterials} onSelect={(val) => handleSelect('materials', 'disliked', val)} variant="destructive" />
+            {wardrobeMeta.materials.length > 0 ? (
+              <>
+                <PreferenceSelector title="Preferred Materials" options={wardrobeMeta.materials} selected={preferredMaterials} onSelect={(val) => handleSelect('materials', 'preferred', val)} />
+                <PreferenceSelector title="Disliked Materials" options={wardrobeMeta.materials} selected={dislikedMaterials} onSelect={(val) => handleSelect('materials', 'disliked', val)} variant="destructive" />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Add clothing items with material information to set preferences.</p>
+            )}
           </CardContent>
         </Card>
 

@@ -46,15 +46,31 @@ export default function HomePage() {
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           };
+          console.log('Geolocation success:', coords);
+          console.log('Accuracy:', position.coords.accuracy, 'meters');
           setLocation(coords);
           localStorage.setItem("userLocation", JSON.stringify(coords));
+          toast(`Location detected: ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`, { icon: "📍" });
         },
         (error) => {
           console.error("Geolocation error:", error);
+          console.error("Error code:", error.code);
+          console.error("Error message:", error.message);
+          
+          let errorMsg = "Location access denied";
+          if (error.code === 1) errorMsg = "Location permission denied";
+          if (error.code === 2) errorMsg = "Location unavailable";
+          if (error.code === 3) errorMsg = "Location timeout";
+          
           // Fallback to default location (New York)
           const defaultLocation = { lat: 40.7128, lon: -74.0060 };
           setLocation(defaultLocation);
-          toast("Using default location (New York)", { icon: "📍" });
+          toast(`${errorMsg}. Using New York instead.`, { icon: "⚠️" });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     } else {
@@ -155,8 +171,7 @@ export default function HomePage() {
         try {
           const coords = JSON.parse(savedLocation);
           setLocation(coords);
-          fetchRecommendation(coords); // Fetch on load with saved location
-          return;
+          return; // Don't fetch yet, wait for useEffect below
         } catch {
           // Invalid saved location, request new one
         }
@@ -164,14 +179,16 @@ export default function HomePage() {
       requestLocation();
     };
     init();
-  }, [fetchRecommendation]); // Run only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
-  // This effect is now primarily for when the user MANUALLY changes location
+  // Fetch recommendation only when location changes
   useEffect(() => {
-    if (location) {
+    if (location && !loading) {
       fetchRecommendation(location);
     }
-  }, [location, fetchRecommendation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]); // Only depend on location, not fetchRecommendation to avoid loops
 
   // Loading state
   if (loading || !location) {

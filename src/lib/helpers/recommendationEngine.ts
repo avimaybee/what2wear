@@ -249,16 +249,26 @@ function scoreLastWorn(items: IClothingItem[]): number {
 
 /**
  * Penalizes outfits with clashing patterns.
+ * Returns a penalty that reduces the score, not a hard -1000.
  * @param items - The items in the outfit.
- * @returns A large negative number if patterns clash, otherwise 0.
+ * @returns A negative score if patterns clash, otherwise 0.
  */
 function scorePatternCohesion(items: IClothingItem[]): number {
   const patternedItems = items.filter(item => 
     item.pattern && item.pattern.toLowerCase() !== 'solid'
-  ).length;
+  );
 
-  // Allow one patterned item, penalize heavily for more.
-  return patternedItems > 1 ? -1000 : 0;
+  // No patterned items is fine
+  if (patternedItems.length === 0) return 0;
+  
+  // One patterned item is fine
+  if (patternedItems.length === 1) return 0;
+  
+  // Two patterned items: give a moderate penalty
+  if (patternedItems.length === 2) return -30;
+  
+  // Three or more: heavy penalty but not outfit-killing
+  return -50;
 }
 
 const MATERIAL_TEXTURE_MAP: Record<string, number> = {
@@ -361,16 +371,26 @@ function scoreColorPreference(items: IClothingItem[], preferredColors?: string[]
 
 /**
  * Scores an outfit based on material preferences, penalizing disliked materials.
+ * Returns negative score for disliked materials (penalty), positive for preferred.
+ * @param items - The items in the outfit.
+ * @param preferred - User's preferred materials.
+ * @param disliked - User's disliked materials.
+ * @returns A score from -50 to 100.
  */
 function scoreMaterialPreference(items: IClothingItem[], preferred?: string[], disliked?: string[]): number {
-  if (!preferred && !disliked) return 50; // Neutral score
+  const itemMaterials = items.map(item => item.material?.toLowerCase() || '').filter(Boolean);
+  
+  if (!itemMaterials.length) return 50; // Neutral if no materials specified
 
-  // Heavy penalty for any disliked material
+  // Check for disliked materials first - penalty instead of hard rejection
   if (disliked && disliked.length > 0) {
-    for (const item of items) {
-      if (item.material && disliked.includes(item.material.toLowerCase())) {
-        return -1000; // Disqualify outfit
-      }
+    const dislikedMatches = itemMaterials.filter(mat => 
+      disliked.some(d => mat.includes(d.toLowerCase()))
+    ).length;
+    
+    if (dislikedMatches > 0) {
+      // Apply penalty based on how many disliked materials
+      return -25 * dislikedMatches; // -25 per disliked material
     }
   }
 
@@ -378,29 +398,28 @@ function scoreMaterialPreference(items: IClothingItem[], preferred?: string[], d
   if (preferred && preferred.length > 0) {
     let matchCount = 0;
     for (const item of items) {
-      if (item.material && preferred.includes(item.material.toLowerCase())) {
+      if (item.material && preferred.some(p => 
+        item.material!.toLowerCase().includes(p.toLowerCase())
+      )) {
         matchCount++;
       }
     }
     return (matchCount / items.length) * 100;
   }
 
-  return 50; // No disliked materials, but no preferred ones either
+  return 50; // Neutral - no preferences set
 }
 
 
 /**
  * Calculates a total score for a given outfit combination.
- * Weights are adjusted to incorporate new, more nuanced metrics.
+ * All components now contribute positively or with moderate penalties.
+ * No hard vetoes that result in -1000 scores.
  */
 function scoreOutfit(items: IClothingItem[], context: RecommendationContext): number {
-  // Penalties first
+  // Get all component scores
   const materialPrefScore = scoreMaterialPreference(items, context.user_preferences?.preferred_materials, context.user_preferences?.disliked_materials);
-  if (materialPrefScore < 0) return materialPrefScore;
-
   const patternPenalty = scorePatternCohesion(items);
-  if (patternPenalty < 0) return patternPenalty;
-
   const colorScore = scoreColorHarmony(items);
   const rawStyleScore = scoreStyleMatch(items);
   const materialHarmonyScore = scoreMaterialHarmony(items);
@@ -411,8 +430,8 @@ function scoreOutfit(items: IClothingItem[], context: RecommendationContext): nu
 
   const normalizedStyleScore = Math.min(100, (rawStyleScore / 10) * 100);
 
-  // Rebalance weights
-  const totalScore = 
+  // Calculate base score from all positive components
+  const baseScore = 
       (colorScore * 0.20) + 
       (normalizedStyleScore * 0.15) + 
       (materialHarmonyScore * 0.10) +
@@ -420,9 +439,13 @@ function scoreOutfit(items: IClothingItem[], context: RecommendationContext): nu
       (lastWornScore * 0.10) +
       (stylePrefScore * 0.15) +
       (colorPrefScore * 0.10) +
-      (materialPrefScore * 0.10);
+      (Math.max(0, materialPrefScore) * 0.10); // Only positive contribution
       
-  return totalScore;
+  // Apply penalties (these reduce but don't eliminate the score)
+  const penalties = Math.min(0, materialPrefScore) + patternPenalty;
+  
+  // Final score: base score + penalties, ensuring minimum of 0
+  return Math.max(0, baseScore + penalties);
 }
 
 
@@ -442,7 +465,7 @@ export function getRecommendation(
   const minDaysSinceWorn = constraints?.min_days_since_worn || 
                           config.app.recommendations.minDaysSinceWorn;
   availableItems = filterByLastWorn(availableItems, minDaysSinceWorn);
-  reasoning.push(`Filtered to items not worn in the last ${minDaysSinceWorn} days`);
+  // Skip verbose filtering debug text
 
   // Task 2.4: Apply dress code constraint
   let dressCode = constraints?.dress_code;
@@ -451,9 +474,8 @@ export function getRecommendation(
   }
   
   if (dressCode) {
-    const beforeCount = availableItems.length;
     availableItems = filterByDressCode(availableItems, dressCode);
-    reasoning.push(`Applied ${dressCode} dress code (${beforeCount} → ${availableItems.length} items)`);
+    reasoning.push(`Selected ${dressCode} attire for your day`);
   }
 
   // Calculate insulation needs based on weather
@@ -465,7 +487,7 @@ export function getRecommendation(
   let requiredInsulation = adjustInsulationForActivity(baseInsulation, activityLevel);
   
   if (activityLevel) {
-    reasoning.push(`Adjusted insulation for ${activityLevel} activity level`);
+    reasoning.push(`Optimized for ${activityLevel.toLowerCase()} activity`);
   }
 
   // Adjust for user's temperature sensitivity
@@ -473,7 +495,7 @@ export function getRecommendation(
   if (tempSensitivity !== undefined && tempSensitivity !== null) {
     requiredInsulation = adjustInsulationForSensitivity(requiredInsulation, tempSensitivity);
     const sensitivityDesc = tempSensitivity > 0 ? 'runs hot' : 'runs cold';
-    reasoning.push(`Adjusted for user preference that ${sensitivityDesc} (sensitivity: ${tempSensitivity})`);
+    reasoning.push(`Adjusted for your temperature preference`);
   }
 
   // Filter items by insulation (with some tolerance)
@@ -481,7 +503,7 @@ export function getRecommendation(
   const insulationFilteredItems = availableItems.filter(item => 
     Math.abs(item.insulation_value - requiredInsulation) <= insulationTolerance
   );
-  reasoning.push(`Filtered by insulation value (target: ${requiredInsulation}±${insulationTolerance})`);
+  // Skip verbose insulation filter debug
 
   // Task 3.3: Consider weather alerts
   const alerts = constraints?.weather_alerts || [];
@@ -492,7 +514,7 @@ export function getRecommendation(
     );
     
     if (alertSuitableItems.length > 0) {
-      reasoning.push(`Prioritized items suitable for weather alerts (${alerts.map(a => a.type).join(', ')})`);
+      reasoning.push(`Added protection for ${alerts.map(a => a.type).join(', ').toLowerCase()}`);
     }
   }
 
@@ -532,7 +554,7 @@ export function getRecommendation(
 
   const bestOutfitItems = combinations[0].outfit;
   const bestScore = combinations[0].score;
-  reasoning.push(`Found ${combinations.length} potential outfits. Best score: ${bestScore.toFixed(0)}/100.`);
+  // Skip verbose scoring debug - user doesn't need to see internal scores
 
   const baseOutfitInsulation = bestOutfitItems.reduce((sum, item) => sum + item.insulation_value, 0);
   const insulationDeficit = requiredInsulation - baseOutfitInsulation;

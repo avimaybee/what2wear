@@ -283,6 +283,12 @@ export default function WardrobePage() {
           const analysisResult = await analysisResponse.json();
           if (analysisResult.success) {
             analyzedData = analysisResult.data;
+            console.log('✓ AI analysis successful:', { 
+              name: analyzedData?.name, 
+              color: analyzedData?.color,
+              type: analyzedData?.type,
+              material: analyzedData?.material
+            });
             if (analyzedData?.error === 'No clothing item detected') {
               toast.error('AI could not detect a clothing item. Please try another image.');
               // Clean up the uploaded image from storage
@@ -294,15 +300,17 @@ export default function WardrobePage() {
             }
             toast.success('AI analysis complete! 🎯', { duration: 1500 });
           } else {
-            console.error('AI analysis returned error:', analysisResult.error);
+            console.error('❌ AI analysis returned error:', analysisResult.error);
             toast.error('AI analysis failed: ' + analysisResult.error);
           }
         } else {
-          console.error('AI analysis HTTP error:', analysisResponse.status);
-          toast.error('AI analysis failed');
+          console.error('❌ AI analysis HTTP error:', analysisResponse.status);
+          const errorText = await analysisResponse.text();
+          console.error('Error details:', errorText);
+          toast.error('AI analysis failed (HTTP ' + analysisResponse.status + ')');
         }
       } catch (analysisError) {
-        console.error('AI analysis failed, using defaults:', analysisError);
+        console.error('❌ AI analysis exception:', analysisError);
         toast.error('AI analysis failed, using defaults');
         // Continue with defaults if AI fails
       }

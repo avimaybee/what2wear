@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,9 +56,38 @@ export const DashboardClient = ({
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [occasionPrompt, setOccasionPrompt] = useState("");
+  const [locationName, setLocationName] = useState<string | null>(null);
 
   // Safely destructure with fallbacks
   const { recommendation = null, weather = null } = recommendationData || {};
+
+  // Fetch location name using reverse geocoding
+  useEffect(() => {
+    const fetchLocationName = async () => {
+      try {
+        const response = await fetch(
+          `https://api.openweathermap.org/geo/1.0/reverse?lat=${location.lat}&lon=${location.lon}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || ''}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) {
+            const city = data[0].name;
+            const state = data[0].state;
+            const country = data[0].country;
+            setLocationName(state ? `${city}, ${state}` : `${city}, ${country}`);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch location name:', error);
+        // Silently fail - location name is nice to have but not critical
+      }
+    };
+
+    if (location) {
+      fetchLocationName();
+    }
+  }, [location]);
 
   const handleWearOutfit = async () => {
     setIsLogging(true);
@@ -123,8 +152,14 @@ export const DashboardClient = ({
       }
 
       const recommendationId = recommendation?.id;
+      
+      // Debug log to help troubleshoot
+      console.log('Recommendation object:', recommendation);
+      console.log('Recommendation ID:', recommendationId);
+      
       if (!recommendationId) {
-        toast.error("No recommendation available");
+        toast.error("Unable to submit feedback - recommendation not saved");
+        console.error("No recommendation ID found in:", recommendation);
         return;
       }
 
@@ -358,11 +393,20 @@ export const DashboardClient = ({
                                 unoptimized={!item.image_url || item.image_url.startsWith('data:')}
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent">
-                                <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1">
+                                <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
                                   <p className="text-white font-semibold text-base">
                                     {item.name || 'Clothing Item'}
                                   </p>
-                                  <p className="text-white/80 text-sm">{item.type || 'Unknown Type'}</p>
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-white/80 text-sm">{item.type || 'Unknown Type'}</p>
+                                    {item.color && (
+                                      <div
+                                        className="w-5 h-5 rounded-full border-2 border-white shadow-sm"
+                                        style={{ backgroundColor: item.color.toLowerCase() }}
+                                        title={item.color}
+                                      />
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </motion.div>
@@ -398,11 +442,20 @@ export const DashboardClient = ({
                           unoptimized={!item.image_url || item.image_url.startsWith('data:')}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all">
-                          <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+                          <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2">
                             <p className="text-white font-semibold text-sm line-clamp-1">
                               {item.name || 'Clothing Item'}
                             </p>
-                            <p className="text-white/80 text-xs">{item.type || 'Unknown Type'}</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-white/80 text-xs">{item.type || 'Unknown Type'}</p>
+                              {item.color && (
+                                <div
+                                  className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                                  style={{ backgroundColor: item.color.toLowerCase() }}
+                                  title={item.color}
+                                />
+                              )}
+                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -666,14 +719,18 @@ export const DashboardClient = ({
             <Card className="overflow-hidden glass-effect">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Weather Now</CardTitle>
+                  <div className="flex-1">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      {locationName || 'Weather Now'}
+                    </CardTitle>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={onLocationChange}
                     className="h-8"
                   >
-                    <MapPin className="h-3.5 w-3.5 mr-1.5" />
                     Change
                   </Button>
                 </div>
