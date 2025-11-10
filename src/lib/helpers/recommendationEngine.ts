@@ -95,6 +95,23 @@ export function adjustInsulationForActivity(
 }
 
 /**
+ * Adjusts insulation requirement based on user's temperature sensitivity.
+ */
+export function adjustInsulationForSensitivity(
+  baseInsulation: number,
+  sensitivity?: number // -2 (runs cold) to +2 (runs hot)
+): number {
+  if (sensitivity === undefined || sensitivity === null) {
+    return baseInsulation;
+  }
+  // sensitivity > 0 means user runs hot, so they need LESS insulation.
+  // sensitivity < 0 means user runs cold, so they need MORE insulation.
+  // We'll adjust by 1 insulation point per sensitivity point.
+  const adjustment = sensitivity * -1;
+  return Math.max(0, baseInsulation + adjustment);
+}
+
+/**
  * Task 3.3: Check if item is suitable for weather alerts
  */
 export function isItemSuitableForAlerts(
@@ -355,10 +372,18 @@ export function getRecommendation(
   // Task 2.4: Adjust for activity level
   const activityLevel = constraints?.activity_level || 
                        context.health_activity?.planned_activity_level;
-  const requiredInsulation = adjustInsulationForActivity(baseInsulation, activityLevel);
+  let requiredInsulation = adjustInsulationForActivity(baseInsulation, activityLevel);
   
   if (activityLevel) {
     reasoning.push(`Adjusted insulation for ${activityLevel} activity level`);
+  }
+
+  // Adjust for user's temperature sensitivity
+  const tempSensitivity = context.user_preferences?.temperature_sensitivity;
+  if (tempSensitivity !== undefined && tempSensitivity !== null) {
+    requiredInsulation = adjustInsulationForSensitivity(requiredInsulation, tempSensitivity);
+    const sensitivityDesc = tempSensitivity > 0 ? 'runs hot' : 'runs cold';
+    reasoning.push(`Adjusted for user preference that ${sensitivityDesc} (sensitivity: ${tempSensitivity})`);
   }
 
   // Filter items by insulation (with some tolerance)
