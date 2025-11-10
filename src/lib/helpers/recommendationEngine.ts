@@ -26,6 +26,11 @@ export function filterByLastWorn(
   const minMilliseconds = minDaysSinceWorn * 24 * 60 * 60 * 1000;
 
   return items.filter(item => {
+    // Always include favorite items
+    if (item.favorite) {
+      return true;
+    }
+    
     if (!item.last_worn_date) {
       // Never worn items are always eligible
       return true;
@@ -290,21 +295,99 @@ function scoreMaterialHarmony(items: IClothingItem[]): number {
  * @param items - The items in the outfit.
  * @returns A score from 0 to 100.
  */
-function scoreFitBalance(items: IClothingItem[]): number {
+function scoreFitBalance(items: IClothingItem[], preference?: 'Slim' | 'Regular' | 'Oversized'): number {
   const top = items.find(i => i.type === 'Top');
   const bottom = items.find(i => i.type === 'Bottom');
 
-  if (!top?.fit || !bottom?.fit) return 50; // Neutral score if fit is unknown
+  let balanceScore = 50; // Start with a neutral score
 
-  const topFit = top.fit.toLowerCase();
-  const bottomFit = bottom.fit.toLowerCase();
+  if (top?.fit && bottom?.fit) {
+    const topFit = top.fit.toLowerCase();
+    const bottomFit = bottom.fit.toLowerCase();
 
-  if (topFit === 'oversized' && bottomFit === 'slim') return 100;
-  if (topFit === 'slim' && (bottomFit === 'relaxed' || bottomFit === 'oversized')) return 100;
-  if (topFit === 'regular' && bottomFit === 'regular') return 80;
-  if (topFit === 'oversized' && bottomFit === 'oversized') return 10; // Penalize baggy-on-baggy
+    if (topFit === 'oversized' && bottomFit === 'slim') balanceScore = 100;
+    else if (topFit === 'slim' && (bottomFit === 'relaxed' || bottomFit === 'oversized')) balanceScore = 100;
+    else if (topFit === 'regular' && bottomFit === 'regular') balanceScore = 80;
+    else if (topFit === 'oversized' && bottomFit === 'oversized') balanceScore = 10;
+    else balanceScore = 60;
+  }
 
-  return 60; // Default for other combos
+  // Adjust score based on preference
+  if (preference) {
+    let preferenceBonus = 0;
+    const pref = preference.toLowerCase();
+    for (const item of items) {
+      if (item.fit && item.fit.toLowerCase() === pref) {
+        preferenceBonus += 20; // Add 20 points for each matching item
+      }
+    }
+    // Average the balance score and the preference bonus
+    return (balanceScore + Math.min(100, preferenceBonus)) / 2;
+  }
+
+  return balanceScore;
+}
+
+/**
+ * Scores an outfit based on user's preferred styles.
+ */
+function scoreStylePreference(items: IClothingItem[], preferredStyles?: string[]): number {
+  if (!preferredStyles || preferredStyles.length === 0) return 50; // Neutral score
+
+  let matchCount = 0;
+  for (const item of items) {
+    if (item.style_tags?.some(tag => preferredStyles.includes(tag))) {
+      matchCount++;
+    }
+  }
+
+  // Score based on the proportion of items that match a preferred style
+  return (matchCount / items.length) * 100;
+}
+
+/**
+ * Scores an outfit based on user's preferred colors.
+ */
+function scoreColorPreference(items: IClothingItem[], preferredColors?: string[]): number {
+  if (!preferredColors || preferredColors.length === 0) return 50; // Neutral score
+
+  let matchCount = 0;
+  for (const item of items) {
+    if (item.color && preferredColors.includes(item.color.toLowerCase())) {
+      matchCount++;
+    }
+  }
+
+  return (matchCount / items.length) * 100;
+}
+
+/**
+ * Scores an outfit based on material preferences, penalizing disliked materials.
+ */
+function scoreMaterialPreference(items: IClothingItem[], preferred?: string[], disliked?: string[]): number {
+  if (!preferred && !disliked) return 50; // Neutral score
+
+  // Heavy penalty for any disliked material
+  if (disliked && disliked.length > 0) {
+    for (const item of items) {
+      if (item.material && disliked.includes(item.material.toLowerCase())) {
+        return -1000; // Disqualify outfit
+      }
+    }
+  }
+
+  // Bonus for preferred materials
+  if (preferred && preferred.length > 0) {
+    let matchCount = 0;
+    for (const item of items) {
+      if (item.material && preferred.includes(item.material.toLowerCase())) {
+        matchCount++;
+      }
+    }
+    return (matchCount / items.length) * 100;
+  }
+
+  return 50; // No disliked materials, but no preferred ones either
 }
 
 
@@ -312,25 +395,34 @@ function scoreFitBalance(items: IClothingItem[]): number {
  * Calculates a total score for a given outfit combination.
  * Weights are adjusted to incorporate new, more nuanced metrics.
  */
-function scoreOutfit(items: IClothingItem[]): number {
+function scoreOutfit(items: IClothingItem[], context: RecommendationContext): number {
+  // Penalties first
+  const materialPrefScore = scoreMaterialPreference(items, context.user_preferences?.preferred_materials, context.user_preferences?.disliked_materials);
+  if (materialPrefScore < 0) return materialPrefScore;
+
   const patternPenalty = scorePatternCohesion(items);
   if (patternPenalty < 0) return patternPenalty;
 
   const colorScore = scoreColorHarmony(items);
   const rawStyleScore = scoreStyleMatch(items);
-  const materialScore = scoreMaterialHarmony(items);
-  const fitScore = scoreFitBalance(items);
+  const materialHarmonyScore = scoreMaterialHarmony(items);
+  const fitScore = scoreFitBalance(items, context.user_preferences?.fit_preference);
   const lastWornScore = scoreLastWorn(items);
+  const stylePrefScore = scoreStylePreference(items, context.user_preferences?.styles);
+  const colorPrefScore = scoreColorPreference(items, context.user_preferences?.colors);
 
-  // Normalize style score. Assume a max of 10 shared tags is a "perfect" 100.
   const normalizedStyleScore = Math.min(100, (rawStyleScore / 10) * 100);
 
+  // Rebalance weights
   const totalScore = 
-      (colorScore * 0.35) + 
-      (normalizedStyleScore * 0.25) + 
-      (materialScore * 0.15) +
+      (colorScore * 0.20) + 
+      (normalizedStyleScore * 0.15) + 
+      (materialHarmonyScore * 0.10) +
       (fitScore * 0.10) +
-      (lastWornScore * 0.15);
+      (lastWornScore * 0.10) +
+      (stylePrefScore * 0.15) +
+      (colorPrefScore * 0.10) +
+      (materialPrefScore * 0.10);
       
   return totalScore;
 }
@@ -428,7 +520,7 @@ export function getRecommendation(
         const baseOutfit = [top, bottom, footwear];
         combinations.push({
           outfit: baseOutfit,
-          score: scoreOutfit(baseOutfit),
+          score: scoreOutfit(baseOutfit, context),
         });
       }
     }
@@ -456,7 +548,7 @@ export function getRecommendation(
       // Only consider outerwear that helps meet the insulation deficit
       if (outerwear.insulation_value >= insulationDeficit - insulationTolerance) {
         const outfitWithOuterwear = [...bestOutfitItems, outerwear];
-        const score = scoreOutfit(outfitWithOuterwear);
+        const score = scoreOutfit(outfitWithOuterwear, context);
         if (score > bestOutfitWithOuterwearScore) {
           bestOutfitWithOuterwearScore = score;
           bestOuterwear = outerwear;

@@ -6,6 +6,9 @@ export interface UserPreferences {
   styles?: string[];
   colors?: string[];
   temperature_sensitivity?: number; // -2 (very cold) to +2 (very warm)
+  preferred_materials?: string[];
+  disliked_materials?: string[];
+  fit_preference?: 'Slim' | 'Regular' | 'Oversized';
 }
 
 export interface Profile {
@@ -73,6 +76,7 @@ export interface IClothingItem {
   style?: string | null;
   occasion?: string[] | null;
   description?: string | null;
+  favorite?: boolean;
 }
 
 /**
