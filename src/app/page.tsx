@@ -216,9 +216,12 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
 
-  // Fetch recommendation only when location changes
+  // Fetch recommendation when location becomes available
   useEffect(() => {
-    if (location && !loading) {
+    // When we get a location, trigger a recommendation fetch.
+    // Previous check used `!loading` which prevented the first fetch because
+    // `loading` is initially true. Call fetch when we have a location.
+    if (location) {
       fetchRecommendation(location);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
