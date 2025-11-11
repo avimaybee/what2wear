@@ -65,10 +65,16 @@ export const DashboardClient = ({
   useEffect(() => {
     const fetchLocationName = async () => {
       try {
+        const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || '';
+        if (!apiKey) {
+          console.warn('NEXT_PUBLIC_OPENWEATHER_API_KEY is not set — skipping reverse geocoding');
+          return;
+        }
+
         const response = await fetch(
-          `https://api.openweathermap.org/geo/1.0/reverse?lat=${location.lat}&lon=${location.lon}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || ''}`
+          `https://api.openweathermap.org/geo/1.0/reverse?lat=${location.lat}&lon=${location.lon}&limit=1&appid=${apiKey}`
         );
-        
+
         if (response.ok) {
           const data = await response.json();
           if (data && data.length > 0) {
@@ -77,6 +83,8 @@ export const DashboardClient = ({
             const country = data[0].country;
             setLocationName(state ? `${city}, ${state}` : `${city}, ${country}`);
           }
+        } else {
+          console.warn('Reverse geocoding failed with status', response.status);
         }
       } catch (error) {
         console.error('Failed to fetch location name:', error);
@@ -390,7 +398,13 @@ export const DashboardClient = ({
                                   const target = e.target as HTMLImageElement;
                                   target.src = PLACEHOLDER_IMAGE;
                                 }}
-                                unoptimized={!item.image_url || item.image_url.startsWith('data:')}
+                                // Avoid Next/Image optimizer for Supabase signed URLs (they may expire)
+                                unoptimized={
+                                  !item.image_url ||
+                                  item.image_url.startsWith('data:') ||
+                                  item.image_url.includes('supabase.co') ||
+                                  item.image_url.includes('?token=')
+                                }
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent">
                                 <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
@@ -439,7 +453,13 @@ export const DashboardClient = ({
                             const target = e.target as HTMLImageElement;
                             target.src = PLACEHOLDER_IMAGE;
                           }}
-                          unoptimized={!item.image_url || item.image_url.startsWith('data:')}
+                                // Avoid Next/Image optimizer for Supabase signed URLs (they may expire)
+                                unoptimized={
+                                  !item.image_url ||
+                                  item.image_url.startsWith('data:') ||
+                                  item.image_url.includes('supabase.co') ||
+                                  item.image_url.includes('?token=')
+                                }
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all">
                           <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2">

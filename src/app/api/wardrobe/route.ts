@@ -47,9 +47,13 @@ export async function GET(_request: NextRequest): Promise<NextResponse<ApiRespon
 
           if (pathSegments.length > 1 && pathSegments[1]) {
             const path = pathSegments[1];
+            // Create a longer-lived signed URL so Next's image optimizer can fetch
+            // multiple sizes without the token expiring immediately.
+            // 60s was too short and led to 400s when optimizer refetched images.
+            const SIGNED_URL_TTL = 60 * 60; // 1 hour
             const { data: signedUrlData, error: signedUrlError } = await supabase.storage
               .from('clothing_images')
-              .createSignedUrl(path, 60); // 60-second validity
+              .createSignedUrl(path, SIGNED_URL_TTL);
 
             if (signedUrlError) {
               throw signedUrlError;
