@@ -395,16 +395,12 @@ export const DashboardClient = ({
                                 className="object-cover transition-opacity group-hover:opacity-90"
                                 priority={index === 0}
                                 onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = PLACEHOLDER_IMAGE;
+                                  // Use currentTarget which correctly references the underlying <img> element
+                                  const target = (e as React.SyntheticEvent<HTMLImageElement, Event>).currentTarget as HTMLImageElement;
+                                  if (target && target.src !== PLACEHOLDER_IMAGE) target.src = PLACEHOLDER_IMAGE;
                                 }}
-                                // Avoid Next/Image optimizer for Supabase signed URLs (they may expire)
-                                unoptimized={
-                                  !item.image_url ||
-                                  item.image_url.startsWith('data:') ||
-                                  item.image_url.includes('supabase.co') ||
-                                  item.image_url.includes('?token=')
-                                }
+                                // Always avoid the Next/Image optimizer for wardrobe images (matches wardrobe page)
+                                unoptimized
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent">
                                 <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
@@ -450,16 +446,11 @@ export const DashboardClient = ({
                           className="object-cover transition-opacity group-hover:opacity-90"
                           priority={index === 0}
                           onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = PLACEHOLDER_IMAGE;
+                            const target = (e as React.SyntheticEvent<HTMLImageElement, Event>).currentTarget as HTMLImageElement;
+                            if (target && target.src !== PLACEHOLDER_IMAGE) target.src = PLACEHOLDER_IMAGE;
                           }}
-                                // Avoid Next/Image optimizer for Supabase signed URLs (they may expire)
-                                unoptimized={
-                                  !item.image_url ||
-                                  item.image_url.startsWith('data:') ||
-                                  item.image_url.includes('supabase.co') ||
-                                  item.image_url.includes('?token=')
-                                }
+                          // Always avoid the Next/Image optimizer for wardrobe images (matches wardrobe page)
+                          unoptimized
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all">
                           <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2">
