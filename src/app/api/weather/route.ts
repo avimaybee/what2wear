@@ -198,10 +198,23 @@ async function fetchWeatherData(
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        logger.error('OpenWeatherMap API error:', await response.text());
+        const text = await response.text();
+        logger.error('OpenWeatherMap API error:', { status: response.status, body: text });
+        console.warn('OpenWeatherMap API returned non-OK response', { status: response.status });
       } else {
         const data = await response.json();
         console.log('✓ OpenWeather data received');
+        // Log raw provider values for debugging unit/value mismatches
+        try {
+          console.log('🔍 OpenWeather raw values:', {
+            provider_temp: data.current?.temp,
+            provider_feels_like: data.current?.feels_like,
+            provider_units: 'metric (requested via &units=metric)',
+            provider_timestamp: data.current?.dt,
+          });
+        } catch (e) {
+          console.warn('Failed to log OpenWeather raw values', e);
+        }
         
         weatherData = {
           temperature: data.current.temp,
@@ -252,6 +265,7 @@ async function fetchWeatherData(
   // Fallback to mock data if no real data available
   if (!weatherData) {
     const temperature = 20 + Math.random() * 10; // 20-30°C
+    console.warn('⚠️ No real weather data available — using mock fallback', { generated_temp: temperature });
     const humidity = 40 + Math.random() * 40; // 40-80%
     const windSpeed = 5 + Math.random() * 15; // 5-20 km/h
     
