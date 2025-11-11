@@ -356,6 +356,15 @@ export default function HomePage() {
   // Success - show dashboard with real data
   return (
     <div className="min-h-screen bg-background">
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-4 right-4 z-50 bg-white/90 border p-3 rounded-md shadow-md text-xs text-foreground max-w-sm">
+          <div className="font-semibold mb-1">Debug</div>
+          <div><strong>loading:</strong> {String(loading)}</div>
+          <div><strong>location:</strong> {location ? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : 'null'}</div>
+          <div><strong>error:</strong> {error ? error : 'none'}</div>
+          <div><strong>recommendation:</strong> {recommendationData ? ((recommendationData as any).recommendation ? `ok (${(recommendationData as any).recommendation.outfit?.length || 0})` : 'no recommendation key') : 'null'}</div>
+        </div>
+      )}
       <Suspense fallback={
         <div className="container mx-auto p-4 space-y-4">
           <Skeleton className="h-24 w-full" />
