@@ -212,8 +212,7 @@ export default function HomePage() {
       return () => clearTimeout(safetyTimer);
     };
     
-    const cleanup = init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    init();
   }, []); // Run only once on mount
 
   // Fetch recommendation when location becomes available
@@ -356,15 +355,22 @@ export default function HomePage() {
   // Success - show dashboard with real data
   return (
     <div className="min-h-screen bg-background">
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-4 right-4 z-50 bg-white/90 border p-3 rounded-md shadow-md text-xs text-foreground max-w-sm">
-          <div className="font-semibold mb-1">Debug</div>
-          <div><strong>loading:</strong> {String(loading)}</div>
-          <div><strong>location:</strong> {location ? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : 'null'}</div>
-          <div><strong>error:</strong> {error ? error : 'none'}</div>
-          <div><strong>recommendation:</strong> {recommendationData ? ((recommendationData as any).recommendation ? `ok (${(recommendationData as any).recommendation.outfit?.length || 0})` : 'no recommendation key') : 'null'}</div>
-        </div>
-      )}
+      {/* Type guard for debug banner to avoid using `any` */}
+  {process.env.NODE_ENV === 'development' && (function renderDebugHelper() {
+        function hasRecommendationKey(obj: unknown): obj is { recommendation: { outfit?: unknown[] } } {
+          return !!obj && typeof obj === 'object' && Object.prototype.hasOwnProperty.call(obj as object, 'recommendation');
+        }
+
+        return (
+          <div className="fixed top-4 right-4 z-50 bg-white/90 border p-3 rounded-md shadow-md text-xs text-foreground max-w-sm">
+            <div className="font-semibold mb-1">Debug</div>
+            <div><strong>loading:</strong> {String(loading)}</div>
+            <div><strong>location:</strong> {location ? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : 'null'}</div>
+            <div><strong>error:</strong> {error ? error : 'none'}</div>
+            <div><strong>recommendation:</strong> {recommendationData ? (hasRecommendationKey(recommendationData) ? `ok (${recommendationData.recommendation.outfit?.length ?? 0})` : 'no recommendation key') : 'null'}</div>
+          </div>
+        );
+  })()}
       <Suspense fallback={
         <div className="container mx-auto p-4 space-y-4">
           <Skeleton className="h-24 w-full" />
