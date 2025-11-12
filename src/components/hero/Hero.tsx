@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Shirt, ArrowRight, Camera, Sun, Zap } from "lucide-react";
+import { Sparkles, Shirt, ArrowRight, Camera, Sun, Zap, Star } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -14,18 +14,20 @@ interface HeroProps {
 }
 
 /**
- * Hero component - Creates a brand moment for what2wear
- * Displays differently based on authentication and wardrobe state
+ * Hero component - Creates a premium brand moment for setmyfit
  * 
- * Features:
- * - Animated headline and description
- * - Dynamic CTA buttons (Get Outfit vs Add Wardrobe)
- * - Weather/scene chip animation
- * - Mobile-first responsive design
- * - Accessibility: keyboard navigation, aria-labels, semantic HTML
+ * Improvements:
+ * - Dynamic gradient text with animation
+ * - Enhanced background with moving gradients
+ * - Floating animated elements for visual interest
+ * - Improved button states and hover effects
+ * - Better mobile responsiveness
+ * - More engaging feature showcase
+ * - Smooth scroll detection and animations
  */
 export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => {
   const [showScrollHint, setShowScrollHint] = useState(true);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     // Hide the scroll hint once the user scrolls down a little.
@@ -46,6 +48,16 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   const shouldReduceMotion = useReducedMotion();
 
   // Animation variants for staggered entry
@@ -54,46 +66,61 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.1,
+        staggerChildren: 0.12,
+        delayChildren: 0.2,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
+        duration: 0.8,
         ease: "easeOut" as const,
       },
     },
   };
 
   const sparkleVariants = {
-    hidden: { scale: 0, rotate: -180 },
+    hidden: { scale: 0, rotate: -180, opacity: 0 },
     visible: {
       scale: 1,
       rotate: 0,
+      opacity: 1,
       transition: {
         type: "spring" as const,
-        stiffness: 200,
-        damping: 15,
-        delay: 0.3,
+        stiffness: 180,
+        damping: 12,
+        delay: 0.4,
       },
     },
   };
 
   // Subtle pulse animation for accent elements
   const pulseVariants = {
-    initial: { scale: 1, opacity: 0.8 },
+    initial: { scale: 1, opacity: 0.7 },
     animate: {
-      scale: [1, 1.05, 1],
-      opacity: [0.8, 1, 0.8],
+      scale: [1, 1.08, 1],
+      opacity: [0.7, 1, 0.7],
       transition: {
-        duration: 3,
+        duration: 3.5,
+        repeat: Infinity,
+        ease: "easeInOut" as const,
+      },
+    },
+  };
+
+  // Floating animation for decorative elements
+  const floatVariants = {
+    initial: { y: 0, rotateZ: 0 },
+    animate: {
+      y: [0, -25, 0],
+      rotateZ: [0, 5, 0],
+      transition: {
+        duration: 6,
         repeat: Infinity,
         ease: "easeInOut" as const,
       },
@@ -118,176 +145,231 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
       initial={shouldReduceMotion ? "visible" : "hidden"}
       animate="visible"
       className={cn(
-        "relative min-h-[500px] md:min-h-[600px] flex items-center justify-center overflow-hidden",
-        "bg-gradient-to-br from-background via-background to-accent/5",
+        "relative min-h-screen flex items-center justify-center overflow-hidden",
+        "bg-gradient-to-br from-background via-background to-primary/5",
         className
       )}
       role="region"
       aria-label="Hero introduction section"
     >
-      {/* Background decorative elements */}
+      {/* Animated gradient background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Soft gradient vignette */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-40" />
-
-        {/* Layered modern, subtle radial gradients for depth (blurred, soft blend) */}
-        <div
-          aria-hidden="true"
+        {/* Base gradient layers */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-accent/5 opacity-60" />
+        
+        {/* Dynamic radial gradients */}
+        <motion.div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background:
-              'radial-gradient(ellipse at 10% 20%, rgba(99,102,241,0.12) 0%, rgba(99,102,241,0.06) 12%, transparent 35%), radial-gradient(ellipse at 85% 80%, rgba(236,72,153,0.08) 0%, rgba(236,72,153,0.04) 18%, transparent 45%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(15,23,42,0.02))',
-            mixBlendMode: 'soft-light',
-            opacity: 0.95,
-            filter: 'blur(36px)'
+            background: `
+              radial-gradient(ellipse at ${mousePosition.x}px ${mousePosition.y}px, 
+                rgba(99,102,241,0.15) 0%, 
+                rgba(99,102,241,0.08) 15%, 
+                transparent 40%),
+              radial-gradient(ellipse at 85% 80%, 
+                rgba(236,72,153,0.1) 0%, 
+                rgba(236,72,153,0.05) 18%, 
+                transparent 45%)
+            `,
+            opacity: shouldReduceMotion ? 0 : 1,
           }}
-        />
-        
-        {/* Animated accent blob (top right, subtle) */}
-        <motion.div
-          className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"
           animate={{
-            y: [0, 20, 0],
-            x: [0, 10, 0],
+            opacity: [0.5, 0.8, 0.5],
           }}
           transition={{
             duration: 8,
             repeat: Infinity,
             ease: "easeInOut",
           }}
+        />
+
+        {/* Animated accent blob (top right) */}
+        <motion.div
+          className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+          variants={floatVariants}
+          initial="initial"
+          animate="animate"
           aria-hidden="true"
         />
         
-        {/* Animated accent blob (bottom left, subtle) */}
+        {/* Animated accent blob (bottom left) */}
         <motion.div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/5 rounded-full blur-3xl"
-          animate={{
-            y: [0, -20, 0],
-            x: [0, -10, 0],
-          }}
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/8 rounded-full blur-3xl"
+          variants={floatVariants}
+          initial="initial"
+          animate={shouldReduceMotion ? "initial" : "animate"}
           transition={{
-            duration: 10,
+            duration: 7,
             repeat: Infinity,
             ease: "easeInOut",
+            delay: 1,
           }}
           aria-hidden="true"
         />
+
+        {/* Floating star elements */}
+        <motion.div
+          className="absolute top-20 right-32 text-primary/30"
+          animate={{ y: [0, -20, 0], opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden="true"
+        >
+          <Star className="w-8 h-8" />
+        </motion.div>
+        
+        <motion.div
+          className="absolute top-1/3 left-20 text-accent/20"
+          animate={{ y: [0, 25, 0], opacity: [0.2, 0.5, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          aria-hidden="true"
+        >
+          <Sparkles className="w-6 h-6" />
+        </motion.div>
       </div>
 
       {/* Content container */}
-      <div className="relative z-10 container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="grid md:grid-cols-2 gap-8 items-start">
+      <div className="relative z-10 container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left column: headline, description and CTAs */}
-          <div className="space-y-8">
-          {/* Main headline */}
-          <motion.div variants={itemVariants} className="space-y-4">
-            <motion.div
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary border border-primary/20"
-              variants={itemVariants}
-              role="img"
-              aria-label="AI-powered feature indicator"
-            >
-              <motion.div variants={sparkleVariants}>
-                <Sparkles className="h-4 w-4" />
+          <motion.div className="space-y-10">
+            {/* Badge */}
+            <motion.div variants={itemVariants} className="space-y-0">
+              <motion.div
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-primary/15 to-primary/10 text-primary border border-primary/30 backdrop-blur-sm"
+                variants={itemVariants}
+                role="img"
+                aria-label="AI-powered feature indicator"
+              >
+                <motion.div variants={sparkleVariants}>
+                  <Sparkles className="h-4 w-4" />
+                </motion.div>
+                <span className="text-sm font-semibold">AI-Powered Style Assistant</span>
               </motion.div>
-              <span className="text-sm font-medium">AI-Powered Style Assistant</span>
             </motion.div>
 
-            <motion.h1
-              variants={itemVariants}
-              className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-center md:text-left max-w-[60ch] mx-auto md:mx-0"
-            >
-              <span className="block">What to Wear</span>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">
-                Just Got Smarter
-              </span>
-            </motion.h1>
-
-            <motion.p
-              variants={itemVariants}
-              className="text-lg sm:text-xl text-muted-foreground max-w-[60ch] leading-relaxed text-center md:text-left mx-auto md:mx-0"
-            >
-              Get personalized outfit recommendations powered by AI, tailored to your
-              weather, location, and unique wardrobe. Look great every day, effortlessly.
-            </motion.p>
-          </motion.div>
-
-          {/* Weather/Scene indicator chip */}
-          <motion.div
-            variants={itemVariants}
-            className="inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-card border border-border glass-thin"
-            aria-live="polite"
-            aria-label="Weather-based recommendation indicator"
-          >
-            <motion.div
-              variants={pulseVariants}
-              initial="initial"
-              animate="animate"
-              className="w-3 h-3 rounded-full bg-gradient-to-r from-primary to-accent"
-              aria-hidden="true"
-            />
-            <span className="text-sm font-medium text-foreground">
-              Real-time recommendations based on weather and location
-            </span>
-          </motion.div>
-
-          {/* CTA Buttons */}
-          <motion.div
-            variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-4 pt-4"
-          >
-            <Link href={primaryCTA.href} className="flex-1">
-              <Button
-                size="lg"
-                className="w-full group relative overflow-hidden"
-                aria-label={`${primaryCTA.label} - Get started with setmyfit`}
+            {/* Main headline with enhanced typography */}
+            <motion.div variants={itemVariants} className="space-y-4">
+              <motion.h1
+                variants={itemVariants}
+                className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-tight max-w-[90%] md:max-w-[85%]"
               >
-                <motion.span
-                  className="flex items-center justify-center gap-2"
-                  whileHover={{ x: 4 }}
+                <span className="block text-foreground">What to Wear</span>
+                <motion.span 
+                  className="block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent"
+                  animate={{ backgroundPosition: ["0%", "100%", "0%"] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                >
+                  Just Got Smarter
+                </motion.span>
+              </motion.h1>
+
+              <motion.p
+                variants={itemVariants}
+                className="text-lg sm:text-xl text-muted-foreground max-w-[80%] leading-relaxed"
+              >
+                Get personalized outfit recommendations powered by AI, tailored to your weather, location, and unique wardrobe. Look great every day, effortlessly.
+              </motion.p>
+            </motion.div>
+
+            {/* Real-time indicator chip with improved styling */}
+            <motion.div
+              variants={itemVariants}
+              className="inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-card to-card/80 border border-border/50 backdrop-blur-sm shadow-sm"
+              aria-live="polite"
+              aria-label="Weather-based recommendation indicator"
+            >
+              <motion.div
+                variants={pulseVariants}
+                initial="initial"
+                animate="animate"
+                className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-primary to-accent shadow-lg shadow-primary/50"
+                aria-hidden="true"
+              />
+              <span className="text-sm font-semibold text-foreground">
+                Real-time recommendations based on weather and location
+              </span>
+            </motion.div>
+
+            {/* Enhanced CTA Buttons */}
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col sm:flex-row gap-4 pt-6"
+            >
+              <Link href={primaryCTA.href} className="flex-1 sm:flex-initial">
+                <motion.div
+                  whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {primaryCTA.label}
-                  <primaryCTA.icon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </motion.span>
-              </Button>
-            </Link>
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                    aria-label={`${primaryCTA.label} - Get started with setmyfit`}
+                  >
+                    <motion.span
+                      className="flex items-center justify-center gap-2"
+                      whileHover={{ x: 4 }}
+                    >
+                      {primaryCTA.label}
+                      <primaryCTA.icon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                    </motion.span>
+                  </Button>
+                </motion.div>
+              </Link>
 
-            <Link href={secondaryCTA.href} className="flex-1 sm:flex-none">
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto"
-                aria-label={secondaryCTA.label}
-              >
-                {secondaryCTA.label}
-              </Button>
-            </Link>
+              <Link href={secondaryCTA.href} className="flex-1 sm:flex-initial">
+                <motion.div
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto px-8 border-border/50 hover:border-border/80 hover:bg-muted/50 transition-all duration-300"
+                    aria-label={secondaryCTA.label}
+                  >
+                    {secondaryCTA.label}
+                  </Button>
+                </motion.div>
+              </Link>
+            </motion.div>
           </motion.div>
 
-          </div>
-
-          {/* Right column: feature chips (uses remaining horizontal space on desktop) */}
+          {/* Right column: feature showcase with improved styling */}
           <motion.div
             variants={itemVariants}
-            className="hidden md:flex flex-col items-start justify-center gap-6 pl-8 border-l border-border/20"
+            className="hidden md:flex flex-col items-start justify-center gap-5 pl-8 border-l border-gradient-to-b from-border/50 to-border/0"
             aria-hidden="true"
           >
             {[
-              { icon: <Camera className="h-6 w-6 text-primary" />, label: "Smart Photo", description: "AI analyzes your clothes" },
-              { icon: <Sun className="h-6 w-6 text-primary" />, label: "Weather Smart", description: "Context-aware picks" },
-              { icon: <Zap className="h-6 w-6 text-primary" />, label: "Instant", description: "Real-time suggestions" },
+              { 
+                icon: <Camera className="h-6 w-6 text-primary" />, 
+                label: "Smart Photo", 
+                description: "AI analyzes your clothes",
+                delay: 0 
+              },
+              { 
+                icon: <Sun className="h-6 w-6 text-accent" />, 
+                label: "Weather Smart", 
+                description: "Context-aware picks",
+                delay: 0.1 
+              },
+              { 
+                icon: <Zap className="h-6 w-6 text-primary" />, 
+                label: "Instant", 
+                description: "Real-time suggestions",
+                delay: 0.2 
+              },
             ].map((feature, index) => (
               <motion.div
                 key={feature.label}
-                variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}
-                whileHover={{ y: -4, scale: 1.02 }}
-                className="flex items-center gap-4 bg-card p-3 rounded-lg border border-border/10 shadow-sm"
+                variants={itemVariants}
+                whileHover={{ y: -6, scale: 1.02 }}
+                className="flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-gradient-to-br from-card/50 to-card/20 hover:from-card/70 hover:to-card/40 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 w-full"
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-md bg-primary/5">
+                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex-shrink-0">
                   {feature.icon}
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-base font-semibold text-foreground">{feature.label}</p>
                   <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </div>
@@ -297,24 +379,29 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
         </div>
       </div>
 
-      {/* Scroll indicator - hidden on mobile, shown on desktop */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex items-center justify-center"
-        animate={
-          showScrollHint
-            ? { opacity: 1, y: [0, 8, 0] }
-            : { opacity: 0, y: 0 }
-        }
-        transition={
-          showScrollHint
-            ? { y: { duration: 2, repeat: Infinity }, opacity: { duration: 0.45 } }
-            : { opacity: { duration: 0.35 } }
-        }
-        style={{ pointerEvents: showScrollHint ? "auto" : "none" }}
-        aria-hidden={!showScrollHint}
-      >
-        <div className="text-muted-foreground text-sm">Scroll to explore</div>
-      </motion.div>
+      {/* Scroll indicator with improved styling */}
+      <AnimatePresence>
+        {showScrollHint && (
+          <motion.div
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center justify-center gap-2"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="text-muted-foreground text-sm font-medium">Scroll to explore</div>
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-muted-foreground/60"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.section>
   );
 };

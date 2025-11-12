@@ -34,6 +34,8 @@ import { HourlyForecast } from "@/components/client/hourly-forecast";
 import { createClient } from "@/lib/supabase/client";
 import { WeatherAlertBanner, generateWeatherAlerts } from "@/components/ui/weather-alert-banner";
 import { SwapModal } from "@/components/generate/SwapModal";
+import { OutfitHero, OutfitGallery } from "@/components/outfit";
+import { StyleAssistant } from "@/components/assistant";
 import type { IClothingItem } from "@/lib/types";
 
 // Placeholder image as data URI (simple clothing icon)
@@ -59,12 +61,14 @@ export const DashboardClient = ({
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [occasionPrompt, setOccasionPrompt] = useState("");
   const [locationName, setLocationName] = useState<string | null>(null);
-  const [showFullReason, setShowFullReason] = useState(false);
 
   // Swap modal state
   const [swapModalOpen, setSwapModalOpen] = useState(false);
   const [swapItemInFocus, setSwapItemInFocus] = useState<IClothingItem | null>(null);
   const [_swappedOutfit, setSwappedOutfit] = useState<IClothingItem[] | null>(null);
+
+  // Style Assistant state
+  const [showStyleAssistant, setShowStyleAssistant] = useState(false);
 
   // Safely destructure with fallbacks
   const { recommendation = null, weather = null } = recommendationData || {};
@@ -95,7 +99,9 @@ export const DashboardClient = ({
           console.warn('Reverse geocoding failed with status', response.status);
         }
       } catch (error) {
-        console.error('Failed to fetch location name:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to fetch location name:', error);
+        }
         // Silently fail - location name is nice to have but not critical
       }
     };
@@ -143,7 +149,9 @@ export const DashboardClient = ({
         setTimeout(() => setLogSuccess(false), 600);
       }, 800);
     } catch (error) {
-      console.error("Error logging outfit:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error logging outfit:", error);
+      }
       toast.error("Failed to log outfit. Please try again.");
       setIsLogging(false);
     }
@@ -170,12 +178,16 @@ export const DashboardClient = ({
       const recommendationId = recommendation?.id;
       
       // Debug log to help troubleshoot
-      console.log('Recommendation object:', recommendation);
-      console.log('Recommendation ID:', recommendationId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Recommendation object:', recommendation);
+        console.log('Recommendation ID:', recommendationId);
+      }
       
       if (!recommendationId) {
-        toast.error("Unable to submit feedback - recommendation not saved");
-        console.error("No recommendation ID found in:", recommendation);
+        toast.error("Cannot provide feedback: recommendation ID missing");
+        if (process.env.NODE_ENV === 'development') {
+          console.error("No recommendation ID found in:", recommendation);
+        }
         return;
       }
 
@@ -203,7 +215,9 @@ export const DashboardClient = ({
         { icon: type === "up" ? "👍" : "👎" }
       );
     } catch (error) {
-      console.error("Error submitting feedback:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error submitting feedback:", error);
+      }
       toast.error("Failed to submit feedback. Please try again.");
     }
   };
@@ -219,8 +233,10 @@ export const DashboardClient = ({
         duration: 3000,
       });
     } catch (error) {
-      console.error("Error regenerating outfit:", error);
-      toast.error("Failed to generate new outfit. Please try again.");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error regenerating outfit:", error);
+      }
+      toast.error("Failed to regenerate outfit. Please try again.");
     } finally {
       setIsRegenerating(false);
     }
@@ -275,7 +291,9 @@ export const DashboardClient = ({
         throw new Error(data.error || "Failed to generate outfit");
       }
     } catch (error) {
-      console.error("Error generating AI outfit:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error generating AI outfit:", error);
+      }
       toast.error("Failed to generate AI outfit. Please try again.");
     } finally {
       setIsGeneratingAI(false);
@@ -308,8 +326,37 @@ export const DashboardClient = ({
       // Refresh to show updated outfit
       await onRefresh();
     } catch (error) {
-      console.error("Error swapping item:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error swapping item:", error);
+      }
       toast.error("Failed to swap item. Please try again.");
+    }
+  };
+
+  // Style Assistant handlers
+  const handleAssistantSwapRequest = async (itemType: string) => {
+    // Find an item of the specified type in the current outfit
+    const targetItem = recommendation?.outfit?.find(
+      (item: IClothingItem) => item.type.toLowerCase() === itemType.toLowerCase()
+    );
+
+    if (!targetItem) {
+      toast.error(`No ${itemType} found in current outfit`);
+      return;
+    }
+
+    // Open the swap modal for that item
+    handleOpenSwapModal(targetItem);
+  };
+
+  const handleAssistantRegenerateRequest = async (params?: { style?: string; occasion?: string }) => {
+    if (params?.occasion) {
+      // If occasion is provided, use the AI generation endpoint
+      setOccasionPrompt(params.occasion);
+      await handleGenerateWithPrompt();
+    } else {
+      // Otherwise use the standard regenerate
+      await handleRegenerateOutfit();
     }
   };
 
@@ -387,108 +434,54 @@ export const DashboardClient = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
-          {/* Outfit Card */}
+          {/* Outfit Hero - Main Visual and Details */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <Card className="overflow-hidden glass-effect">
-                <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-xl md:text-2xl">Your Perfect Look</CardTitle>
-                    <CardDescription className="text-sm text-muted-foreground">
-                      Curated for today — practical, comfortable, and styled for your plans.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              {/* Outfit Visual Preview */}
-              {recommendation.outfit_visual_urls && recommendation.outfit_visual_urls.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className="px-6 pb-4"
-                >
-                  <div className="relative aspect-[3/4] w-full max-w-sm mx-auto overflow-hidden rounded-lg bg-muted shadow-md hover:shadow-lg transition-shadow">
-                    <Image
-                      src={recommendation.outfit_visual_urls[0]}
-                      alt="Generated outfit visual"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 400px"
-                      className="object-cover"
-                      priority
-                      unoptimized
-                      onError={(e) => {
-                        const target = (e as React.SyntheticEvent<HTMLImageElement, Event>).currentTarget as HTMLImageElement;
-                        if (target && target.src !== PLACEHOLDER_IMAGE) {
-                          target.src = PLACEHOLDER_IMAGE;
-                        }
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-center text-muted-foreground mt-3">
-                    AI-generated outfit preview
-                  </p>
-                </motion.div>
-              )}
-              {/* Detailed explanation block */}
-              <div className="px-6 pb-3">
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.05 }}
-                  className="rounded-lg border border-border bg-background/40 p-4 backdrop-blur-sm"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <p className="text-sm font-semibold">Why this outfit?</p>
-                  </div>
-                  <div className="text-sm text-muted-foreground leading-relaxed">
-                    {recommendation.detailed_reasoning ? (
-                      (() => {
-                        const full = recommendation.detailed_reasoning as string;
-                        const paragraphs = full.split('\n\n');
-                        if (showFullReason) {
-                          return (
-                            <>
-                              {paragraphs.map((para: string, i: number) => (
-                                <p key={i} className={i === 0 ? 'mb-2' : 'mb-1'}>{para}</p>
-                              ))}
-                              <div className="pt-2">
-                                <Button size="sm" variant="ghost" onClick={() => setShowFullReason(false)}>
-                                  Show less
-                                </Button>
-                              </div>
-                            </>
-                          );
-                        }
+            <OutfitHero
+              visualUrl={recommendation.outfit_visual_urls?.[0]}
+              outfitItems={recommendation.outfit || []}
+              detailedReasoning={recommendation.detailed_reasoning || recommendation.reasoning}
+              onItemClick={(item) => {
+                setSwapItemInFocus(item);
+                setSwapModalOpen(true);
+              }}
+            />
+          </motion.div>
 
-                        // collapsed view: show first paragraph or truncated char preview
-                        const preview = paragraphs[0] || full;
-                        const MAX_PREVIEW = 220;
-                        const truncated = preview.length > MAX_PREVIEW ? preview.slice(0, MAX_PREVIEW).trimEnd() + '…' : preview;
-                        return (
-                          <>
-                            <p className="mb-2">{truncated}</p>
-                            {paragraphs.length > 1 && (
-                              <div className="pt-1">
-                                <Button size="sm" variant="link" onClick={() => setShowFullReason(true)}>
-                                  Show more
-                                </Button>
-                              </div>
-                            )}
-                          </>
-                        );
-                      })()
-                    ) : (
-                      <p>{recommendation.reasoning}</p>
-                    )}
-                  </div>
-                </motion.div>
-              </div>
+          {/* Outfit Gallery - If multiple visuals exist */}
+          {recommendation.outfit_visual_urls && recommendation.outfit_visual_urls.length > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <OutfitGallery
+                variants={recommendation.outfit_visual_urls.map((url: string, idx: number) => ({
+                  id: `variant-${idx}`,
+                  imageUrl: url,
+                  style: recommendation.style_preset,
+                  seed: recommendation.seed,
+                }))}
+              />
+            </motion.div>
+          )}
+
+          {/* Outfit Items Grid - Keep the existing detailed carousel/grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="overflow-hidden glass-effect">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Outfit Details</CardTitle>
+                <CardDescription className="text-sm">
+                  View and swap individual items
+                </CardDescription>
+              </CardHeader>
               <CardContent className="space-y-4">
                 {/* Outfit Items - Carousel on Mobile, Grid on Desktop */}
                 <div>
@@ -771,6 +764,49 @@ export const DashboardClient = ({
                 </div>
               </CardContent>
             </Card>
+          </motion.div>
+
+          {/* Style Assistant */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
+          >
+            {!showStyleAssistant ? (
+              <Button
+                onClick={() => setShowStyleAssistant(true)}
+                variant="outline"
+                size="lg"
+                className="w-full h-auto py-4 flex-col gap-2 border-2 border-dashed border-primary/30 hover:border-primary/60 bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/15 transition-all group"
+              >
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    animate={{
+                      rotate: [0, 10, -10, 0],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                  >
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </motion.div>
+                  <span className="font-semibold text-base">Try Style Assistant</span>
+                  <Badge variant="secondary" className="text-xs">Beta</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground text-center max-w-sm">
+                  Say things like swap the top or more casual, and I will help you adjust your outfit
+                </p>
+              </Button>
+            ) : (
+              <StyleAssistant
+                outfitItems={recommendation?.outfit || []}
+                onSwapRequest={handleAssistantSwapRequest}
+                onRegenerateRequest={handleAssistantRegenerateRequest}
+                onClose={() => setShowStyleAssistant(false)}
+              />
+            )}
           </motion.div>
 
           {/* AI Occasion Prompt */}
