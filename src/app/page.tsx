@@ -8,6 +8,7 @@ import { MapPin, AlertCircle, LogIn, Shirt } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Hero } from "@/components/hero/Hero";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,8 @@ export default function HomePage() {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [manualLat, setManualLat] = useState("");
   const [manualLon, setManualLon] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasWardrobe, setHasWardrobe] = useState(false);
 
   // Request user location
   const requestLocation = () => {
@@ -123,6 +126,7 @@ export default function HomePage() {
       // Handle empty/insufficient wardrobe gracefully - this is expected for new users
       if (!data.success && data.needsWardrobe) {
         console.log('Wardrobe error detected:', data.error, data.message);
+        setHasWardrobe(false);
         
         // Check if the error mentions missing types - if so, try to fix them automatically
         if (retryCount === 0 && (data.message?.toLowerCase().includes('type') || data.message?.toLowerCase().includes('category'))) {
@@ -157,6 +161,7 @@ export default function HomePage() {
         throw new Error(data.error || "Failed to generate recommendation");
       }
 
+      setHasWardrobe(true);
       setRecommendationData(data.data);
       setLoading(false);
     } catch (err) {
@@ -181,7 +186,15 @@ export default function HomePage() {
 
   // Initialize: Get location and fetch recommendation
   useEffect(() => {
-    const init = () => {
+    const init = async () => {
+      // Check authentication status first
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setIsAuthenticated(true);
+      }
+      
       const savedLocation = localStorage.getItem("userLocation");
       if (savedLocation) {
         try {
@@ -355,6 +368,12 @@ export default function HomePage() {
   // Success - show dashboard with real data
   return (
     <div className="min-h-screen bg-background">
+      {/* Hero Section - Brand moment */}
+      <Hero 
+        isAuthenticated={isAuthenticated}
+        hasWardrobe={hasWardrobe}
+      />
+      
       {/* Type guard for debug banner to avoid using `any` */}
   {process.env.NODE_ENV === 'development' && (function renderDebugHelper() {
         function hasRecommendationKey(obj: unknown): obj is { recommendation: { outfit?: unknown[] } } {
@@ -368,6 +387,8 @@ export default function HomePage() {
             <div><strong>location:</strong> {location ? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : 'null'}</div>
             <div><strong>error:</strong> {error ? error : 'none'}</div>
             <div><strong>recommendation:</strong> {recommendationData ? (hasRecommendationKey(recommendationData) ? `ok (${recommendationData.recommendation.outfit?.length ?? 0})` : 'no recommendation key') : 'null'}</div>
+            <div><strong>authenticated:</strong> {String(isAuthenticated)}</div>
+            <div><strong>hasWardrobe:</strong> {String(hasWardrobe)}</div>
           </div>
         );
   })()}
