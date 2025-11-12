@@ -582,14 +582,85 @@ export function getRecommendation(
     }
   }
 
+    // --- Compose a more detailed, user-facing explanation ---
+    try {
+      const colorScore = scoreColorHarmony(bestOutfitItems);
+      const rawStyleScore = scoreStyleMatch(bestOutfitItems);
+      const styleScore = Math.min(100, (rawStyleScore / 10) * 100);
+      const materialHarmony = scoreMaterialHarmony(bestOutfitItems);
+      const fitScore = scoreFitBalance(bestOutfitItems, context.user_preferences?.fit_preference);
+      const lastWornScore = scoreLastWorn(bestOutfitItems);
 
-  return {
-    items: bestOutfitItems,
-    confidence_score: bestScore / 100,
-    reasoning: reasoning.join('. '),
-    alerts,
-    context,
-  };
+      // Find shared style tags (if any)
+      const allStyleTags = bestOutfitItems.map(i => new Set(i.style_tags || []));
+      const sharedStyleTags: string[] = [];
+      if (allStyleTags.length > 0) {
+        const base = allStyleTags[0];
+        for (const tag of Array.from(base)) {
+          if (allStyleTags.every(s => s.has(tag))) sharedStyleTags.push(tag);
+        }
+      }
+
+      const detailedParts: string[] = [];
+
+      // Color & Material explanation
+      if (colorScore >= 80) {
+        detailedParts.push(`Color harmony: The pieces form a cohesive palette (score ${Math.round(colorScore)}/100). This creates a clean, visually balanced look.`);
+      } else if (colorScore >= 40) {
+        detailedParts.push(`Color pairing: The outfit mixes a neutral base with an accent color (score ${Math.round(colorScore)}/100), giving a subtle contrast that feels intentional.`);
+      } else {
+        detailedParts.push(`Color note: There are multiple accent colors (score ${Math.round(colorScore)}/100). This produces a more eclectic, expressive look; you can simplify by choosing a neutral shoe or top.`);
+      }
+
+      if (materialHarmony >= 50) {
+        detailedParts.push(`Material & texture: The fabrics and textures work together (${Math.round(materialHarmony)}/100), adding depth without feeling busy.`);
+      } else {
+        detailedParts.push(`Material note: The outfit mixes contrasting textures (${Math.round(materialHarmony)}/100). This can be stylish when balanced, but pay attention to comfort.`);
+      }
+
+      // Style & fit explanation
+      if (styleScore >= 60) {
+        detailedParts.push(`Style alignment: Items share complementary style cues${sharedStyleTags.length ? ` (${sharedStyleTags.slice(0,3).join(', ')})` : ''} (score ${Math.round(styleScore)}/100), so the outfit reads as a single look.`);
+      } else {
+        detailedParts.push(`Style note: The outfit blends different style elements (score ${Math.round(styleScore)}/100). This can create a personalized hybrid look.`);
+      }
+
+      if (fitScore >= 70) {
+        detailedParts.push(`Fit balance: The silhouettes complement each other (fit score ${Math.round(fitScore)}/100), creating a flattering proportion.`);
+      } else {
+        detailedParts.push(`Fit note: Silhouettes are less balanced (fit score ${Math.round(fitScore)}/100). Consider swapping to a slimmer or looser piece for improved balance.`);
+      }
+
+      // Practical/weather reasoning
+      detailedParts.push(`Temperature & protection: Selected to match a feels-like temperature of ${context.weather.feels_like}°C with an estimated insulation level of ${baseOutfitInsulation} (target ${requiredInsulation}).`);
+
+      if (alerts && alerts.length > 0) {
+        detailedParts.push(`Safety & alerts: The recommendation considered active alerts (${alerts.map(a => a.type).join(', ')}), adding protection where appropriate.`);
+      }
+
+      detailedParts.push(`Recommendation confidence: ${(bestScore / 100 * 100).toFixed(0)}% based on color, style, fit and your preferences.`);
+
+      // Append short summary reasoning too for compact places
+      const detailedReasoning = detailedParts.join('\n\n');
+
+      return {
+        items: bestOutfitItems,
+        confidence_score: bestScore / 100,
+        reasoning: reasoning.join('. '),
+        detailed_reasoning: detailedReasoning,
+        alerts,
+        context,
+      };
+    } catch (e) {
+      // Fallback to the original simpler response if anything goes wrong
+      return {
+        items: bestOutfitItems,
+        confidence_score: bestScore / 100,
+        reasoning: reasoning.join('. '),
+        alerts,
+        context,
+      };
+    }
 }
 
 /**

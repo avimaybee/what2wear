@@ -389,6 +389,7 @@ async function generateRecommendation(
       weather_data: weather,
       confidence_score: recommendation.confidence_score,
       reasoning: recommendation.reasoning,
+      detailed_reasoning: recommendation.detailed_reasoning || null,
       created_at: new Date().toISOString(),
     })
     .select()
@@ -433,6 +434,7 @@ async function generateRecommendation(
       outfit: outfitWithSignedUrls,
       confidence_score: recommendation.confidence_score,
       reasoning: recommendation.reasoning,
+      detailed_reasoning: recommendation.detailed_reasoning || null,
       dress_code: 'Casual', // Default, could be enhanced from context
       weather_alerts: recommendation.alerts || [],
       id: savedRecommendation?.id,
@@ -491,6 +493,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse<ApiRespon
         items: items || [],
         confidence_score: recommendation.confidence_score,
         reasoning: recommendation.reasoning,
+        detailed_reasoning: recommendation.detailed_reasoning || null,
         alerts: [],
         context: {
           weather: recommendation.weather_data,

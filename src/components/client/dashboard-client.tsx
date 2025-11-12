@@ -57,6 +57,7 @@ export const DashboardClient = ({
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [occasionPrompt, setOccasionPrompt] = useState("");
   const [locationName, setLocationName] = useState<string | null>(null);
+  const [showFullReason, setShowFullReason] = useState(false);
 
   // Safely destructure with fallbacks
   const { recommendation = null, weather = null } = recommendationData || {};
@@ -355,12 +356,71 @@ export const DashboardClient = ({
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <Card className="overflow-hidden glass-effect">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xl md:text-2xl">Your Perfect Look</CardTitle>
-                <CardDescription className="text-sm leading-relaxed">
-                  {recommendation.reasoning}
-                </CardDescription>
+                <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-xl md:text-2xl">Your Perfect Look</CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      Curated for today — practical, comfortable, and styled for your plans.
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
+              {/* Detailed explanation block */}
+              <div className="px-6 pb-3">
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.05 }}
+                  className="rounded-lg border border-border bg-background/40 p-4 backdrop-blur-sm"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-semibold">Why this outfit?</p>
+                  </div>
+                  <div className="text-sm text-muted-foreground leading-relaxed">
+                    {recommendation.detailed_reasoning ? (
+                      (() => {
+                        const full = recommendation.detailed_reasoning as string;
+                        const paragraphs = full.split('\n\n');
+                        if (showFullReason) {
+                          return (
+                            <>
+                              {paragraphs.map((para: string, i: number) => (
+                                <p key={i} className={i === 0 ? 'mb-2' : 'mb-1'}>{para}</p>
+                              ))}
+                              <div className="pt-2">
+                                <Button size="sm" variant="ghost" onClick={() => setShowFullReason(false)}>
+                                  Show less
+                                </Button>
+                              </div>
+                            </>
+                          );
+                        }
+
+                        // collapsed view: show first paragraph or truncated char preview
+                        const preview = paragraphs[0] || full;
+                        const MAX_PREVIEW = 220;
+                        const truncated = preview.length > MAX_PREVIEW ? preview.slice(0, MAX_PREVIEW).trimEnd() + '…' : preview;
+                        return (
+                          <>
+                            <p className="mb-2">{truncated}</p>
+                            {paragraphs.length > 1 && (
+                              <div className="pt-1">
+                                <Button size="sm" variant="link" onClick={() => setShowFullReason(true)}>
+                                  Show more
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()
+                    ) : (
+                      <p>{recommendation.reasoning}</p>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
               <CardContent className="space-y-4">
                 {/* Outfit Items - Carousel on Mobile, Grid on Desktop */}
                 <div>
