@@ -33,6 +33,8 @@ import { formatTemp, cn } from "@/lib/utils";
 import { HourlyForecast } from "@/components/client/hourly-forecast";
 import { createClient } from "@/lib/supabase/client";
 import { WeatherAlertBanner, generateWeatherAlerts } from "@/components/ui/weather-alert-banner";
+import { SwapModal } from "@/components/generate/SwapModal";
+import type { IClothingItem } from "@/lib/types";
 
 // Placeholder image as data URI (simple clothing icon)
 const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%23f3f4f6' width='400' height='400'/%3E%3Cpath fill='%239ca3af' d='M150 100h100v200h-100z'/%3E%3Ccircle fill='%239ca3af' cx='200' cy='100' r='40'/%3E%3Ctext x='200' y='350' font-family='system-ui' font-size='20' fill='%236b7280' text-anchor='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -58,6 +60,11 @@ export const DashboardClient = ({
   const [occasionPrompt, setOccasionPrompt] = useState("");
   const [locationName, setLocationName] = useState<string | null>(null);
   const [showFullReason, setShowFullReason] = useState(false);
+
+  // Swap modal state
+  const [swapModalOpen, setSwapModalOpen] = useState(false);
+  const [swapItemInFocus, setSwapItemInFocus] = useState<IClothingItem | null>(null);
+  const [swappedOutfit, setSwappedOutfit] = useState<IClothingItem[] | null>(null);
 
   // Safely destructure with fallbacks
   const { recommendation = null, weather = null } = recommendationData || {};
@@ -275,6 +282,37 @@ export const DashboardClient = ({
     }
   };
 
+  const handleOpenSwapModal = (item: IClothingItem) => {
+    setSwapItemInFocus(item);
+    setSwapModalOpen(true);
+  };
+
+  const handleSwapItem = async (selectedItem: IClothingItem) => {
+    if (!swapItemInFocus || !recommendation?.outfit) {
+      toast.error("Unable to swap item. Please try again.");
+      return;
+    }
+
+    try {
+      // Create new outfit with swapped item
+      const newOutfit = recommendation.outfit.map((item: IClothingItem) =>
+        item.id === swapItemInFocus.id ? selectedItem : item
+      );
+
+      setSwappedOutfit(newOutfit);
+
+      toast.success("Item swapped! Full-resolution outfit is being generated...", {
+        duration: 3000,
+      });
+
+      // Refresh to show updated outfit
+      await onRefresh();
+    } catch (error) {
+      console.error("Error swapping item:", error);
+      toast.error("Failed to swap item. Please try again.");
+    }
+  };
+
   const getAQIStatus = (aqi: number) => {
     if (aqi <= 50) return { label: "Good", variant: "success" as const };
     if (aqi <= 100) return { label: "Moderate", variant: "warning" as const };
@@ -477,6 +515,14 @@ export const DashboardClient = ({
                                       />
                                     )}
                                   </div>
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => handleOpenSwapModal(item)}
+                                    className="w-full mt-2"
+                                  >
+                                    Swap Item
+                                  </Button>
                                 </div>
                               </div>
                             </motion.div>
@@ -527,6 +573,14 @@ export const DashboardClient = ({
                                 />
                               )}
                             </div>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleOpenSwapModal(item)}
+                              className="w-full text-xs h-8"
+                            >
+                              Swap
+                            </Button>
                           </div>
                         </div>
                       </motion.div>
@@ -862,6 +916,19 @@ export const DashboardClient = ({
           </motion.div>
         </div>
       </div>
+
+      {/* Swap Modal */}
+      <SwapModal
+        isOpen={swapModalOpen}
+        onClose={() => {
+          setSwapModalOpen(false);
+          setSwapItemInFocus(null);
+        }}
+        currentItem={swapItemInFocus}
+        onItemSelected={handleSwapItem}
+        recommendationId={recommendation?.id || ''}
+        outfitItems={recommendation?.outfit || []}
+      />
     </div>
   );
 };

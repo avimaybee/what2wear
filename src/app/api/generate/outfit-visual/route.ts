@@ -325,15 +325,22 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
 
     const req: GenerateOutfitRequest = body;
 
-    // 3. Verify all items belong to user
+    // 3. Verify all items belong to user (security check for swap flow)
+    // This ensures users can only generate outfits with their own wardrobe items
+    // Especially important for the swap flow where items are swapped with user's wardrobe
+    const itemIds = req.items.map((item) => {
+      const id = typeof item.id === 'string' ? parseInt(item.id, 10) : item.id;
+      if (isNaN(id)) {
+        throw new Error(`Invalid item ID format: ${item.id}`);
+      }
+      return id;
+    });
+
     const { data: userItems, error: itemQueryError } = await supabase
       .from('clothing_items')
       .select('id')
       .eq('user_id', user.id)
-      .in(
-        'id',
-        req.items.map((item) => item.id)
-      );
+      .in('id', itemIds);
 
     if (itemQueryError) {
       logger.error('Error querying user items:', itemQueryError);
@@ -349,13 +356,24 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       );
     }
 
-    if (userItems?.length !== req.items.length) {
+    // Security check: ensure all requested items exist and belong to authenticated user
+    if (!userItems || userItems.length !== itemIds.length) {
+      const foundIds = userItems?.map((i) => i.id) || [];
+      const missingIds = itemIds.filter((id) => !foundIds.includes(id));
+      
+      logger.warn('Item ownership verification failed', {
+        userId: user.id,
+        requestedCount: itemIds.length,
+        foundCount: userItems?.length || 0,
+        missingIds,
+      });
+
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'FORBIDDEN',
-            message: 'One or more items do not belong to the authenticated user',
+            message: 'One or more items do not belong to the authenticated user or do not exist',
           },
         },
         { status: 403 }
