@@ -124,8 +124,9 @@ export async function GET(
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    logger.error('Unexpected error in GET /api/generate/outfit-visual/[jobId]:', error);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.error('Unexpected error in GET /api/generate/outfit-visual/[jobId]:', msg);
     return NextResponse.json(
       {
         success: false,

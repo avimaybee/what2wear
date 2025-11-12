@@ -143,9 +143,13 @@ export async function generateImageWithNanoBanana(
     }
 
     // Find inlineData part (image)
-    const imagePart = data.candidates[0].content.parts.find(
-      (part: any) => part.inlineData
-    );
+    const parts: unknown[] = data.candidates[0].content.parts;
+    const imagePart = parts.find((part) => {
+      if (part && typeof part === 'object' && part !== null) {
+        return 'inlineData' in part;
+      }
+      return false;
+    }) as { inlineData?: { data?: string } } | undefined;
 
     if (!imagePart || !imagePart.inlineData || !imagePart.inlineData.data) {
       throw new Error('No image data in Gemini API response');
@@ -164,9 +168,10 @@ export async function generateImageWithNanoBanana(
       urls: [], // URLs will be populated after upload to storage
       base64Data: [base64Data],
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     logger.error('Nano Banana API error:', {
-      error: error.message,
+      error: msg,
       seed: params.seed,
     });
     throw error;
@@ -195,8 +200,9 @@ export async function generateOutfitVariations(
       if (result.base64Data) {
         base64Data.push(...result.base64Data);
       }
-    } catch (error) {
-      logger.error(`Failed to generate variation ${i}:`, error);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to generate variation ${i}:`, msg);
       // Continue with other variations even if one fails
       throw error; // Rethrow to stop generation on first failure (can be changed)
     }

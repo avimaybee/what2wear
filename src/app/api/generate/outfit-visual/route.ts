@@ -12,7 +12,7 @@ import { uploadOutfitImages } from '@/lib/helpers/storageClient';
  * 1. Preview generation (fast, low-resolution) returned immediately
  * 2. Full-resolution generation (async) queued for background processing
  *
- * See: docs/API_GENERATE_OUTFIT.md for full contract documentation
+ 
  */
 
 // ============================================================================
@@ -57,42 +57,54 @@ interface GenerateOutfitResponse {
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
+}
+
+function getErrorMessage(e: unknown) {
+  return e instanceof Error ? e.message : String(e);
 }
 
 // ============================================================================
 // Validation
 // ============================================================================
 
-function validateRequest(body: any): { valid: boolean; errors: string[] } {
+function validateRequest(body: unknown): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!body.recommendationId || typeof body.recommendationId !== 'string') {
+  const b = body as { [k: string]: unknown };
+
+  if (!b.recommendationId || typeof b.recommendationId !== 'string') {
     errors.push('Field "recommendationId" is required and must be a string');
   }
 
-  if (!Array.isArray(body.items) || body.items.length < 3 || body.items.length > 5) {
+  if (!Array.isArray(b.items) || (b.items as unknown[]).length < 3 || (b.items as unknown[]).length > 5) {
     errors.push('Field "items" must be an array of 3-5 items');
   }
 
-  if (!body.items?.every((item: any) => item.id && item.imageUrl && item.type)) {
+  if (!Array.isArray(b.items) || !(b.items as unknown[]).every((it) => {
+    if (typeof it === 'object' && it !== null) {
+      const obj = it as { [k: string]: unknown };
+      return Boolean(obj.id) && typeof obj.imageUrl === 'string' && typeof obj.type === 'string';
+    }
+    return false;
+  })) {
     errors.push('Each item must have "id", "imageUrl", and "type"');
   }
 
-  if (!['male', 'female', 'neutral'].includes(body.silhouette)) {
+  if (!['male', 'female', 'neutral'].includes(String(b.silhouette))) {
     errors.push('Field "silhouette" must be one of: "male", "female", "neutral"');
   }
 
-  if (body.previewCount && (body.previewCount < 1 || body.previewCount > 5)) {
+  if (typeof b.previewCount === 'number' && ((b.previewCount as number) < 1 || (b.previewCount as number) > 5)) {
     errors.push('Field "previewCount" must be between 1 and 5');
   }
 
-  if (body.previewQuality && !['low', 'medium', 'high'].includes(body.previewQuality)) {
+  if (typeof b.previewQuality === 'string' && !['low', 'medium', 'high'].includes(b.previewQuality as string)) {
     errors.push('Field "previewQuality" must be one of: "low", "medium", "high"');
   }
 
-  if (body.seed && !Number.isInteger(body.seed)) {
+  if (typeof b.seed === 'number' && !Number.isInteger(b.seed)) {
     errors.push('Field "seed" must be an integer');
   }
 
@@ -144,10 +156,10 @@ async function fetchImageAsBase64(imageUrl: string): Promise<string> {
     }
     const buffer = await response.arrayBuffer();
     return Buffer.from(buffer).toString('base64');
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error fetching image:', {
       url: imageUrl,
-      error: error.message,
+      error: getErrorMessage(error),
     });
     throw error;
   }
@@ -214,9 +226,9 @@ async function callNanoBananaAPI(
     });
 
     return { urls };
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Nano Banana API error:', {
-      error: error.message,
+      error: getErrorMessage(error),
       seed: params.seed,
     });
     throw error;
@@ -252,9 +264,9 @@ async function enqueueFullResolutionJob(
 
     const result = await queueJob(jobData);
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error enqueueing full-res job:', {
-      error: error.message,
+      error: getErrorMessage(error),
       jobId,
     });
     // Don't throw - if queueing fails, job still shows as queued to user
@@ -292,10 +304,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
     }
 
     // 2. Parse and validate request
-    let body: any;
+    let body: unknown;
     try {
       body = await request.json();
-    } catch (e) {
+    } catch (_e) {
       return NextResponse.json(
         {
           success: false,
@@ -323,7 +335,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       );
     }
 
-    const req: GenerateOutfitRequest = body;
+  const req = body as GenerateOutfitRequest;
 
     // 3. Verify all items belong to user (security check for swap flow)
     // This ensures users can only generate outfits with their own wardrobe items
@@ -420,8 +432,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
         }
       );
       previewUrls = nanoBananaResult.urls;
-    } catch (error: any) {
-      logger.error('Nano Banana API error:', error);
+    } catch (error: unknown) {
+      logger.error('Nano Banana API error:', { error: getErrorMessage(error) });
       return NextResponse.json(
         {
           success: false,
@@ -430,7 +442,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
             message: 'Image generation failed. Please try again.',
             details: {
               provider: 'nano_banana',
-              error: error.message,
+              error: getErrorMessage(error),
             },
           },
         },
@@ -506,15 +518,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    logger.error('Unexpected error in POST /api/generate/outfit-visual:', error);
+  } catch (error: unknown) {
+    logger.error('Unexpected error in POST /api/generate/outfit-visual:', getErrorMessage(error));
     return NextResponse.json(
       {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
           message: 'An unexpected error occurred',
-          details: error.message,
+          details: getErrorMessage(error),
         },
       },
       { status: 500 }

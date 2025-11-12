@@ -76,9 +76,10 @@ export async function uploadOutfitImage(
       signedUrl: signedData?.signedUrl || '',
       expiresIn,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     logger.error('Error uploading outfit image:', {
-      error: error.message,
+      error: msg,
       userId,
       jobId,
     });
@@ -107,8 +108,9 @@ export async function uploadOutfitImages(
         isPreview
       );
       urls.push(result.signedUrl);
-    } catch (error) {
-      logger.error(`Failed to upload image ${i}:`, error);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to upload image ${i}:`, msg);
       throw error;
     }
   }
@@ -159,9 +161,10 @@ export async function deleteOutfitImages(
     }
 
     logger.info('Outfit images deleted', { userId, jobId });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     logger.error('Error deleting outfit images:', {
-      error: error.message,
+      error: msg,
       userId,
       jobId,
     });

@@ -99,9 +99,9 @@ export function OutfitGenerator({
       setPollingJobId(data.jobId); // Start polling for full-res
 
       onGenerationComplete?.(data.previewUrls);
-    } catch (err: any) {
-      logger.error('Generation error:', err);
-      const errorMsg = err.message || 'Failed to generate outfit';
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err || 'Failed to generate outfit');
+      logger.error('Generation error:', errorMsg);
       setError(errorMsg);
       setJobStatus('failed');
       onError?.(errorMsg);
@@ -151,8 +151,9 @@ export function OutfitGenerator({
         } else if (data.status === 'processing') {
           setJobStatus('processing');
         }
-      } catch (err: any) {
-        logger.error('Polling error:', err);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error('Polling error:', msg);
         // Don't update error state on polling errors, just keep trying
       }
     }, 5000); // Poll every 5 seconds

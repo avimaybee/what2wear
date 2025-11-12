@@ -22,7 +22,7 @@ export function useOutfitGenerator(options: UseOutfitGeneratorOptions) {
   const [jobId, setJobId] = useState<string | null>(null);
 
   const generateOutfit = useCallback(
-    async (items: any[], stylePreset = 'photorealistic') => {
+    async (items: unknown[], stylePreset = 'photorealistic') => {
       try {
         setIsLoading(true);
         setError(null);
@@ -68,9 +68,9 @@ export function useOutfitGenerator(options: UseOutfitGeneratorOptions) {
         setJobId(data.jobId);
         setIsPolling(true);
         options.onPreviewReady?.(data.previewUrls);
-      } catch (err: any) {
-        logger.error('Generation error:', err);
-        const errorMsg = err.message || 'Failed to generate outfit';
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err || 'Failed to generate outfit');
+        logger.error('Generation error:', errorMsg);
         setError(errorMsg);
         options.onError?.(errorMsg);
       } finally {
@@ -112,8 +112,9 @@ export function useOutfitGenerator(options: UseOutfitGeneratorOptions) {
         }
 
         return { done: false };
-      } catch (err: any) {
-        logger.error('Polling error:', err);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error('Polling error:', msg);
         throw err;
       }
     },

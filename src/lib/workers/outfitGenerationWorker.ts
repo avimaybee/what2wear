@@ -51,9 +51,10 @@ export async function enqueueFullResolutionJob(
       status: 'queued',
       estimatedDurationSec: 180, // 3 minutes estimate
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     logger.error('Error enqueueing job:', {
-      error: error.message,
+      error: msg,
       jobId: job.jobId,
     });
     throw error;
@@ -66,7 +67,8 @@ export async function enqueueFullResolutionJob(
  */
 export async function processGenerationJob(
   jobData: FullResGenerationJob
-): Promise<any> {
+): Promise<{ success: boolean; jobId: string; finalUrls: string[] }>
+{
   logger.info('Processing full-res generation job', {
     jobId: jobData.jobId,
     userId: jobData.userId,
@@ -91,7 +93,7 @@ export async function processGenerationJob(
 
     const result = await generateOutfitVariations({
       prompt: jobData.prompt,
-      itemImages: jobData.items.map((item: any) => ({
+      itemImages: jobData.items.map((item) => ({
         data: '', // Will be fetched in nanoBananaClient
         mimeType: 'image/jpeg',
       })),
@@ -144,9 +146,10 @@ export async function processGenerationJob(
       jobId: jobData.jobId,
       finalUrls,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     logger.error('Error processing full-res generation job:', {
-      error: error.message,
+      error: msg,
       jobId: jobData.jobId,
     });
 
@@ -157,12 +160,13 @@ export async function processGenerationJob(
         .from('outfit_visuals')
         .update({
           job_status: 'failed',
-          job_error_message: error.message,
+          job_error_message: msg,
         })
         .eq('job_id', jobData.jobId)
         .eq('user_id', jobData.userId);
-    } catch (dbError) {
-      logger.error('Failed to update job error status:', dbError);
+    } catch (dbError: unknown) {
+      const dbMsg = dbError instanceof Error ? dbError.message : String(dbError);
+      logger.error('Failed to update job error status:', dbMsg);
     }
 
     throw error;
