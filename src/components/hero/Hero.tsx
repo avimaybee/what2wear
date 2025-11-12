@@ -198,7 +198,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
               <Button
                 size="lg"
                 className="w-full group relative overflow-hidden"
-                aria-label={`${primaryCTA.label} - Get started with what2wear`}
+                aria-label={`${primaryCTA.label} - Get started with setmyfit`}
               >
                 <motion.span
                   className="flex items-center justify-center gap-2"

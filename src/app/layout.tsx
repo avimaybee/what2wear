@@ -8,7 +8,7 @@ import { AccentColorLoader } from "@/components/client/accent-color-loader";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "what2wear - AI-Powered Outfit Recommendations",
+  title: "setmyfit - AI-Powered Outfit Recommendations",
   description: "Get personalized outfit recommendations based on weather and your wardrobe",
 };
 
