@@ -399,9 +399,38 @@ async function generateRecommendation(
   }
 
   // Transform recommendation data to match frontend expectations
+  // Ensure clothing item image URLs are safe to use by the client (signed URLs for storage)
+  const SIGNED_URL_TTL = 60 * 60; // 1 hour
+
+  const outfitWithSignedUrls = await Promise.all(
+    recommendation.items.map(async (item) => {
+      if (item.image_url) {
+        try {
+          const url = new URL(item.image_url);
+          const pathSegments = url.pathname.split('/clothing_images/');
+
+          if (pathSegments.length > 1 && pathSegments[1]) {
+            const path = pathSegments[1];
+            const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+              .from('clothing_images')
+              .createSignedUrl(path, SIGNED_URL_TTL);
+
+            if (!signedUrlError && signedUrlData?.signedUrl) {
+              return { ...item, image_url: signedUrlData.signedUrl };
+            }
+          }
+        } catch (e) {
+          logger.error(`Error creating signed URL for recommendation item ${item.id}:`, e);
+          // fallthrough to return original item
+        }
+      }
+      return item;
+    })
+  );
+
   const transformedData = {
     recommendation: {
-      outfit: recommendation.items,
+      outfit: outfitWithSignedUrls,
       confidence_score: recommendation.confidence_score,
       reasoning: recommendation.reasoning,
       dress_code: 'Casual', // Default, could be enhanced from context
