@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { generateOutfitVariations } from '@/lib/helpers/nanoBananaClient';
-import { uploadOutfitImages, deleteOutfitImages } from '@/lib/helpers/storageClient';
+import { uploadOutfitImages } from '@/lib/helpers/storageClient';
 
 /**
  * Background worker for full-resolution outfit generation

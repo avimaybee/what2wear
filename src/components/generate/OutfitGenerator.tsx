@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,7 @@ export function OutfitGenerator({
 }: OutfitGeneratorProps) {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [finalUrls, setFinalUrls] = useState<string[] | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [_jobId, setJobId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pollingJobId, setPollingJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -201,10 +202,12 @@ export function OutfitGenerator({
               transition={{ delay: idx * 0.1 }}
               className="relative overflow-hidden rounded-lg bg-muted aspect-square"
             >
-              <img
+              <Image
                 src={url}
                 alt={`Outfit preview ${idx + 1}`}
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
+                sizes="(min-width: 1024px) 33vw, 100vw"
               />
               {finalUrls && finalUrls[idx] && (
                 <div className="absolute inset-0 bg-black/20" />

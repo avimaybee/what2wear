@@ -429,6 +429,77 @@ async function generateRecommendation(
     })
   );
 
+  // Generate outfit visual preview immediately
+  let outfitVisualUrls: string[] = [];
+  try {
+    if (savedRecommendation?.id && outfitWithSignedUrls.length >= 3) {
+      // Build the request payload with proper field names
+      const requestPayload = {
+        recommendationId: String(savedRecommendation.id),
+        items: outfitWithSignedUrls.filter(item => item.image_url).map((item) => ({
+          id: String(item.id),
+          imageUrl: item.image_url || '',
+          type: item.type,
+          colors: item.color ? [item.color] : [],
+          material: item.material || null,
+          styleTags: item.style_tags || [],
+        })),
+        silhouette: 'female' as const, // Default; could be inferred from user preferences
+        stylePreset: 'photorealistic',
+        previewCount: 1,
+        previewQuality: 'medium' as const,
+      };
+
+      // Validate we have enough items
+      if (requestPayload.items.length < 3) {
+        logger.warn('Not enough outfit items with images for visual generation', {
+          itemsWithImages: requestPayload.items.length,
+          totalItems: outfitWithSignedUrls.length,
+        });
+      } else {
+        const baseUrl = request.url.split('/api/')[0];
+        
+        logger.info('Generating outfit visual with payload:', {
+          recommendationId: requestPayload.recommendationId,
+          itemCount: requestPayload.items.length,
+          itemIds: requestPayload.items.map(i => i.id),
+        });
+
+        const generateVisualsResponse = await fetch(`${baseUrl}/api/generate/outfit-visual`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${request.headers.get('authorization') || ''}`,
+          },
+          body: JSON.stringify(requestPayload),
+        });
+
+        if (generateVisualsResponse.ok) {
+          const visualData = await generateVisualsResponse.json();
+          if (visualData.success && visualData.previewUrls) {
+            outfitVisualUrls = visualData.previewUrls;
+            logger.info('Outfit visual generated successfully', {
+              recommendationId: savedRecommendation.id,
+              urlCount: outfitVisualUrls.length,
+            });
+          }
+        } else {
+          const errorText = await generateVisualsResponse.text();
+          logger.warn('Failed to generate outfit visual preview', {
+            recommendationId: savedRecommendation.id,
+            status: generateVisualsResponse.status,
+            error: errorText,
+          });
+        }
+      }
+    }
+  } catch (visualError) {
+    logger.warn('Error generating outfit visual:', {
+      error: visualError instanceof Error ? visualError.message : String(visualError),
+    });
+    // Don't fail the recommendation if visual generation fails
+  }
+
   const transformedData = {
     recommendation: {
       outfit: outfitWithSignedUrls,
@@ -438,6 +509,7 @@ async function generateRecommendation(
       dress_code: 'Casual', // Default, could be enhanced from context
       weather_alerts: recommendation.alerts || [],
       id: savedRecommendation?.id,
+      outfit_visual_urls: outfitVisualUrls,
     },
     weather: weather,
     alerts: recommendation.alerts || [],

@@ -44,7 +44,7 @@ export async function uploadOutfitImage(
     });
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: _uploadData, error: uploadError } = await supabase.storage
       .from('outfit-visuals')
       .upload(path, buffer, {
         contentType: 'image/jpeg',

@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Shirt, ArrowRight } from "lucide-react";
+import { Sparkles, Shirt, ArrowRight, Camera, Sun, Zap } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,29 @@ interface HeroProps {
  * - Accessibility: keyboard navigation, aria-labels, semantic HTML
  */
 export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => {
+  const [showScrollHint, setShowScrollHint] = useState(true);
+
+  useEffect(() => {
+    // Hide the scroll hint once the user scrolls down a little.
+    // Use requestAnimationFrame to avoid layout thrashing on fast scroll events.
+    let ticking = false;
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(() => {
+          const y = window.scrollY || window.pageYOffset || 0;
+          setShowScrollHint(y <= 60);
+          ticking = false;
+        });
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const shouldReduceMotion = useReducedMotion();
+
   // Animation variants for staggered entry
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -91,7 +115,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
   return (
     <motion.section
       variants={containerVariants}
-      initial="hidden"
+      initial={shouldReduceMotion ? "visible" : "hidden"}
       animate="visible"
       className={cn(
         "relative min-h-[500px] md:min-h-[600px] flex items-center justify-center overflow-hidden",
@@ -105,6 +129,19 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Soft gradient vignette */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-40" />
+
+        {/* Layered modern, subtle radial gradients for depth (blurred, soft blend) */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse at 10% 20%, rgba(99,102,241,0.12) 0%, rgba(99,102,241,0.06) 12%, transparent 35%), radial-gradient(ellipse at 85% 80%, rgba(236,72,153,0.08) 0%, rgba(236,72,153,0.04) 18%, transparent 45%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(15,23,42,0.02))',
+            mixBlendMode: 'soft-light',
+            opacity: 0.95,
+            filter: 'blur(36px)'
+          }}
+        />
         
         {/* Animated accent blob (top right, subtle) */}
         <motion.div
@@ -139,7 +176,9 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
 
       {/* Content container */}
       <div className="relative z-10 container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="grid md:grid-cols-2 gap-8 items-start">
+          {/* Left column: headline, description and CTAs */}
+          <div className="space-y-8">
           {/* Main headline */}
           <motion.div variants={itemVariants} className="space-y-4">
             <motion.div
@@ -154,16 +193,19 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
               <span className="text-sm font-medium">AI-Powered Style Assistant</span>
             </motion.div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight">
+            <motion.h1
+              variants={itemVariants}
+              className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-center md:text-left max-w-[60ch] mx-auto md:mx-0"
+            >
               <span className="block">What to Wear</span>
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">
                 Just Got Smarter
               </span>
-            </h1>
+            </motion.h1>
 
             <motion.p
               variants={itemVariants}
-              className="text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed"
+              className="text-lg sm:text-xl text-muted-foreground max-w-[60ch] leading-relaxed text-center md:text-left mx-auto md:mx-0"
             >
               Get personalized outfit recommendations powered by AI, tailored to your
               weather, location, and unique wardrobe. Look great every day, effortlessly.
@@ -223,30 +265,31 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
             </Link>
           </motion.div>
 
-          {/* Trust badges / Feature highlights */}
+          </div>
+
+          {/* Right column: feature chips (uses remaining horizontal space on desktop) */}
           <motion.div
             variants={itemVariants}
-            className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 pt-8 border-t border-border/50"
+            className="hidden md:flex flex-col items-start justify-center gap-6 pl-8 border-l border-border/20"
+            aria-hidden="true"
           >
             {[
-              { icon: "📸", label: "Smart Photo", description: "AI analyzes your clothes" },
-              { icon: "🌤️", label: "Weather Smart", description: "Context-aware picks" },
-              { icon: "⚡", label: "Instant", description: "Real-time suggestions" },
+              { icon: <Camera className="h-6 w-6 text-primary" />, label: "Smart Photo", description: "AI analyzes your clothes" },
+              { icon: <Sun className="h-6 w-6 text-primary" />, label: "Weather Smart", description: "Context-aware picks" },
+              { icon: <Zap className="h-6 w-6 text-primary" />, label: "Instant", description: "Real-time suggestions" },
             ].map((feature, index) => (
               <motion.div
                 key={feature.label}
-                variants={itemVariants}
-                custom={index}
-                className="text-center space-y-2"
+                variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}
+                whileHover={{ y: -4, scale: 1.02 }}
+                className="flex items-center gap-4 bg-card p-3 rounded-lg border border-border/10 shadow-sm"
               >
-                <div className="text-3xl">{feature.icon}</div>
+                <div className="flex items-center justify-center w-10 h-10 rounded-md bg-primary/5">
+                  {feature.icon}
+                </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {feature.label}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {feature.description}
-                  </p>
+                  <p className="text-base font-semibold text-foreground">{feature.label}</p>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -257,9 +300,18 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
       {/* Scroll indicator - hidden on mobile, shown on desktop */}
       <motion.div
         className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex items-center justify-center"
-        animate={{ y: [0, 8, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        aria-hidden="true"
+        animate={
+          showScrollHint
+            ? { opacity: 1, y: [0, 8, 0] }
+            : { opacity: 0, y: 0 }
+        }
+        transition={
+          showScrollHint
+            ? { y: { duration: 2, repeat: Infinity }, opacity: { duration: 0.45 } }
+            : { opacity: { duration: 0.35 } }
+        }
+        style={{ pointerEvents: showScrollHint ? "auto" : "none" }}
+        aria-hidden={!showScrollHint}
       >
         <div className="text-muted-foreground text-sm">Scroll to explore</div>
       </motion.div>

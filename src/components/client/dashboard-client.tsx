@@ -64,7 +64,7 @@ export const DashboardClient = ({
   // Swap modal state
   const [swapModalOpen, setSwapModalOpen] = useState(false);
   const [swapItemInFocus, setSwapItemInFocus] = useState<IClothingItem | null>(null);
-  const [swappedOutfit, setSwappedOutfit] = useState<IClothingItem[] | null>(null);
+  const [_swappedOutfit, setSwappedOutfit] = useState<IClothingItem[] | null>(null);
 
   // Safely destructure with fallbacks
   const { recommendation = null, weather = null } = recommendationData || {};
@@ -404,6 +404,36 @@ export const DashboardClient = ({
                   </div>
                 </div>
               </CardHeader>
+              {/* Outfit Visual Preview */}
+              {recommendation.outfit_visual_urls && recommendation.outfit_visual_urls.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="px-6 pb-4"
+                >
+                  <div className="relative aspect-[3/4] w-full max-w-sm mx-auto overflow-hidden rounded-lg bg-muted shadow-md hover:shadow-lg transition-shadow">
+                    <Image
+                      src={recommendation.outfit_visual_urls[0]}
+                      alt="Generated outfit visual"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 400px"
+                      className="object-cover"
+                      priority
+                      unoptimized
+                      onError={(e) => {
+                        const target = (e as React.SyntheticEvent<HTMLImageElement, Event>).currentTarget as HTMLImageElement;
+                        if (target && target.src !== PLACEHOLDER_IMAGE) {
+                          target.src = PLACEHOLDER_IMAGE;
+                        }
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-center text-muted-foreground mt-3">
+                    AI-generated outfit preview
+                  </p>
+                </motion.div>
+              )}
               {/* Detailed explanation block */}
               <div className="px-6 pb-3">
                 <motion.div

@@ -322,6 +322,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
 
     const { valid, errors } = validateRequest(body);
     if (!valid) {
+      logger.error('Outfit visual request validation failed', {
+        errors,
+        bodyKeys: Object.keys(body as Record<string, unknown>),
+      });
       return NextResponse.json(
         {
           success: false,
@@ -453,7 +457,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
     const previewDurationMs = Date.now() - startTime;
 
     // 10. Store outfit_visuals record
-    const { data: outfitVisual, error: insertError } = await supabase
+    const { data: _outfitVisual, error: insertError } = await supabase
       .from('outfit_visuals')
       .insert([
         {
