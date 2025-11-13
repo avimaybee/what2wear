@@ -1,7 +1,7 @@
 "use client";
 
-import { Toaster as HotToaster, toast as hotToast, ToastBar, Toast } from "react-hot-toast";
-import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from "lucide-react";
+import { Toaster as HotToaster, toast as hotToast, ToastBar } from "react-hot-toast";
+import { X, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function Toaster() {

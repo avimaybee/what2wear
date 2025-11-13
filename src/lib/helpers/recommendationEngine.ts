@@ -520,7 +520,7 @@ export function getRecommendation(
   const tempSensitivity = context.user_preferences?.temperature_sensitivity;
   if (tempSensitivity !== undefined && tempSensitivity !== null) {
     requiredInsulation = adjustInsulationForSensitivity(requiredInsulation, tempSensitivity);
-    const sensitivityDesc = tempSensitivity > 0 ? 'runs hot' : 'runs cold';
+  const _sensitivityDesc = tempSensitivity > 0 ? 'runs hot' : 'runs cold';
     reasoning.push(`Adjusted for your temperature preference`);
   }
 
@@ -625,7 +625,7 @@ export function getRecommendation(
       const styleScore = Math.min(100, (rawStyleScore / 10) * 100);
       const materialHarmony = scoreMaterialHarmony(bestOutfitItems);
       const fitScore = scoreFitBalance(bestOutfitItems, context.user_preferences?.fit_preference);
-      const lastWornScore = scoreLastWorn(bestOutfitItems);
+  const _lastWornScore = scoreLastWorn(bestOutfitItems);
 
       // Find shared style tags (if any)
       const allStyleTags = bestOutfitItems.map(i => new Set(i.style_tags || []));
@@ -687,7 +687,7 @@ export function getRecommendation(
         alerts,
         context,
       };
-    } catch (e) {
+    } catch (_e) {
       // Fallback to the original simpler response if anything goes wrong
       return {
         items: bestOutfitItems,

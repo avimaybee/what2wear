@@ -108,7 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.jpg`;
         const storagePath = `wardrobe/${user.id}/${fileName}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('clothing-images')
           .upload(storagePath, Buffer.from(arrayBuffer), {
             contentType: 'image/jpeg',

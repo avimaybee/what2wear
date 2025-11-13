@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
-import type { ApiResponse, DressCode, IClothingItem } from '@/lib/types';
+import type { ApiResponse, IClothingItem } from '@/lib/types';
 
 export async function POST(
   request: NextRequest

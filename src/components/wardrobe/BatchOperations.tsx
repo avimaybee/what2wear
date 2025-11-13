@@ -307,7 +307,7 @@ export default function BatchOperations({
               </select>
             </div>
             <p className="text-xs text-gray-600">
-              The dress code will be set to "{selectedDressCode}" for all {selectedItems.length} selected items.
+              The dress code will be set to &quot;{selectedDressCode}&quot; for all {selectedItems.length} selected items.
             </p>
           </div>
           <DialogFooter>

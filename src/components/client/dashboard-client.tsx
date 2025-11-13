@@ -2,32 +2,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { MetricCard } from "@/components/ui/metric-card";
 import { toast } from "@/components/ui/toaster";
 import {
-  ThumbsUp,
-  ThumbsDown,
   Wind,
   Sun,
   Droplets,
-  AlertTriangle,
   Sparkles,
   RefreshCw,
-  Wand2,
-  MapPin,
 } from "lucide-react";
-import { formatTemp, cn } from "@/lib/utils";
+import { formatTemp } from "@/lib/utils";
 import { HourlyForecast } from "@/components/client/hourly-forecast";
 import { createClient } from "@/lib/supabase/client";
 import { WeatherAlertBanner, generateWeatherAlerts } from "@/components/ui/weather-alert-banner";
 import { SwapModal } from "@/components/generate/SwapModal";
 import { OutfitHero, OutfitGallery } from "@/components/outfit";
-import { StyleAssistant } from "@/components/assistant";
-import { NaturalLanguageHandler, type ParsedAction } from "@/components/assistant/NaturalLanguageHandler";
+import { NaturalLanguageHandler } from "@/components/assistant/NaturalLanguageHandler";
 import LocationSelector from "@/components/LocationSelector";
 import TemplateDisplay from "@/components/TemplateDisplay";
 import type { IClothingItem } from "@/lib/types";
@@ -47,12 +40,11 @@ export const DashboardClient = ({
 }: DashboardClientProps) => {
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const [isLogging, setIsLogging] = useState(false);
-  const [logSuccess, setLogSuccess] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [occasionPrompt, setOccasionPrompt] = useState("");
   const [locationName, setLocationName] = useState<string | null>(null);
-  const [showLocationSelector, setShowLocationSelector] = useState(false);
+  const [_showLocationSelector, setShowLocationSelector] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(location);
 
   // Swap modal state
@@ -93,7 +85,7 @@ export const DashboardClient = ({
             setLocationName(state ? `${city}, ${state}` : `${city}, ${country}`);
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // Silently fail - location name is nice to have but not critical
       }
     };
@@ -130,17 +122,12 @@ export const DashboardClient = ({
         throw new Error("Failed to log outfit");
       }
 
-      setLogSuccess(true);
-      
+      // Show success toast after a brief delay to let UI update
       setTimeout(() => {
         setIsLogging(false);
-        toast.success("Outfit logged successfully! 🎉", {
-          duration: 3000,
-        });
-        
-        setTimeout(() => setLogSuccess(false), 600);
+        toast.success("Outfit logged successfully! 🎉", { duration: 3000 });
       }, 800);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to log outfit. Please try again.");
       setIsLogging(false);
     }
@@ -204,7 +191,7 @@ export const DashboardClient = ({
           : "Got it! We'll adjust future recommendations.",
         { icon: type === "up" ? "👍" : "👎" }
       );
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to submit feedback. Please try again.");
     }
   };
@@ -219,7 +206,7 @@ export const DashboardClient = ({
       toast.success("New outfit generated! 🎨", {
         duration: 3000,
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to regenerate outfit. Please try again.");
     } finally {
       setIsRegenerating(false);
@@ -274,7 +261,7 @@ export const DashboardClient = ({
       } else {
         throw new Error(data.error || "Failed to generate outfit");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to generate AI outfit. Please try again.");
     } finally {
       setIsGeneratingAI(false);
@@ -306,7 +293,7 @@ export const DashboardClient = ({
 
       // Refresh to show updated outfit
       await onRefresh();
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to swap item. Please try again.");
     }
   };
@@ -464,7 +451,7 @@ export const DashboardClient = ({
                       await handleGenerateWithPrompt();
                       break;
                   }
-                } catch (error) {
+                } catch (_error) {
                   toast.error('Failed to process request');
                 }
               }}
@@ -521,7 +508,7 @@ export const DashboardClient = ({
                   } else {
                     throw new Error(data.error || "Failed to generate outfit");
                   }
-                } catch (error) {
+                } catch (_error) {
                   toast.error("Failed to generate AI outfit. Please try again.");
                 } finally {
                   setIsGeneratingAI(false);

@@ -385,7 +385,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                 description: "Real-time suggestions",
                 delay: 0.2 
               },
-            ].map((feature, index) => (
+            ].map((feature) => (
               <motion.div
                 key={feature.label}
                 variants={itemVariants}

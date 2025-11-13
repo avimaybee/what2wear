@@ -61,8 +61,6 @@ export async function analyzeClothingImage(
   detectedStyleTags: string[];
 }> {
   try {
-    const model = getTextModel();
-
     const requestBody = {
       contents: [
         {

@@ -70,7 +70,7 @@ export function formatReasoningForUser(detailedReasoning: string): string {
   // Weather/temperature rewrites - make more natural
   formatted = formatted.replace(
     /Temperature & protection: Selected to match a feels-like temperature of ([\d.]+)°C with an estimated insulation level of ([\d.]+) \(target ([\d.]+)\)\./g,
-    (_, temp, currentIns, targetIns) => {
+    (_, temp) => {
       const tempNum = parseFloat(temp);
       let tempDesc = "moderate";
       if (tempNum < 5) tempDesc = "cold";

@@ -134,7 +134,7 @@ export default function HomePage() {
               // Retry once after fixing
               return fetchRecommendation(coords, retryCount + 1);
             }
-          } catch (fixError) {
+          } catch (_fixError) {
             // Silent fail - will show empty state instead
           }
         }

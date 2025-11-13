@@ -29,7 +29,7 @@ export function OnboardingWizard({
   open,
   onComplete,
   onSkip,
-  userId,
+  userId: _userId,
 }: OnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [uploadedItems, setUploadedItems] = useState<UploadedItem[]>([]);
@@ -124,10 +124,6 @@ export function OnboardingWizard({
       
       // Show success message
       if (result.success && result.itemsCreated) {
-        const itemCountMessage = result.itemsCreated === 1 
-          ? '1 item added' 
-          : `${result.itemsCreated} items added`;
-        
         // Show brief success state before completing
         setTimeout(() => {
           setIsProcessing(false);

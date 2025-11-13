@@ -148,7 +148,7 @@ export async function processGenerationJob(
 
     const result = await generateOutfitVariations({
       prompt: jobData.prompt,
-      itemImages: jobData.items.map((item) => ({
+      itemImages: jobData.items.map((_item) => ({
         data: '', // Will be fetched in nanoBananaClient
         mimeType: 'image/jpeg',
       })),

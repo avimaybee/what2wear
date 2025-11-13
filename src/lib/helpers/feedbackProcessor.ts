@@ -131,8 +131,6 @@ function analyzeFeedback(input: FeedbackInput): FeedbackAnalysis {
     for (let j = i + 1; j < input.outfitItems.length; j++) {
       const item1 = input.outfitItems[i];
       const item2 = input.outfitItems[j];
-      const combo = `${item1.type}-${item2.type}`;
-
       preferredCombinations.push({
         item1Type: item1.type,
         item2Type: item2.type,

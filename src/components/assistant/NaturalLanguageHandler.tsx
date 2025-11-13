@@ -10,12 +10,10 @@ import { toast } from '@/components/ui/toaster';
 import {
   Sparkles,
   Send,
-  X,
   RefreshCw,
   Shirt,
   Palette,
   Wand2,
-  CheckCircle2,
   AlertCircle,
   Loader2,
   MessageCircle,
@@ -187,9 +185,9 @@ function getActionIcon(actionType: ParsedAction['type']) {
 
 export function NaturalLanguageHandler({
   mode,
-  outfitItems = [],
+  outfitItems: _outfitItems = [],
   onProcessInput,
-  onClose,
+  onClose: _onClose,
   className,
   maxLength = 200,
   placeholder,
@@ -255,7 +253,7 @@ export function NaturalLanguageHandler({
       setInput('');
       setParsedAction(null);
       setShowSuggestions(true);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to process request. Please try again.');
     } finally {
       setIsProcessing(false);

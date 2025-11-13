@@ -220,7 +220,6 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5 text-primary" />Style Preferences</CardTitle>
-            {/* eslint-disable-next-line react/no-unescaped-entities */}
             <CardDescription>Select style tags from your wardrobe that you prefer or want to avoid in recommendations.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

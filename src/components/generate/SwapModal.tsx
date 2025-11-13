@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import {
@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+// badge intentionally not used here
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/toaster';
 import {
@@ -21,7 +21,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { IClothingItem } from '@/lib/types';
-import { createClient } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 
 interface SwapModalProps {
@@ -66,24 +65,7 @@ export const SwapModal = ({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
 
-  // Fetch wardrobe items on modal open
-  useEffect(() => {
-    if (isOpen && currentItem) {
-      fetchWardrobeItems();
-    }
-  }, [isOpen, currentItem]);
-
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setSelectedItem(null);
-      setPreviewUrls([]);
-      setPreviewError(null);
-      setConfirming(false);
-    }
-  }, [isOpen]);
-
-  const fetchWardrobeItems = async () => {
+  const fetchWardrobeItems = useCallback(async () => {
     if (!currentItem) return;
 
     try {
@@ -114,7 +96,24 @@ export const SwapModal = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentItem]);
+
+  // Fetch wardrobe items on modal open
+  useEffect(() => {
+    if (isOpen && currentItem) {
+      fetchWardrobeItems();
+    }
+  }, [isOpen, currentItem, fetchWardrobeItems]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedItem(null);
+      setPreviewUrls([]);
+      setPreviewError(null);
+      setConfirming(false);
+    }
+  }, [isOpen]);
 
   const handleItemSelect = async (item: IClothingItem) => {
     setSelectedItem(item);
