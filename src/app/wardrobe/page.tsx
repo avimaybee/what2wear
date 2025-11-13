@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 import { uploadClothingImage, deleteClothingImage } from "@/lib/supabase/storage";
 import type { ClothingType, IClothingItem, DressCode } from "@/types";
 import { EmptyState } from "@/components/ui/empty-state";
+import BatchOperations from "@/components/wardrobe/BatchOperations";
 import Image from "next/image";
 
 const clothingTypes: ClothingType[] = ["Outerwear", "Top", "Bottom", "Footwear", "Accessory", "Headwear"];
@@ -44,6 +45,9 @@ export default function WardrobePage() {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [_modalSource, setModalSource] = useState<"add-button" | "delete" | "edit" | null>(null);
   const [deleting, setDeleting] = useState(false);
+  
+  // Batch operations state
+  const [selectedItems, setSelectedItems] = useState<IClothingItem[]>([]);
   
   // Edit state
   const [editItem, setEditItem] = useState<IClothingItem | null>(null);
@@ -283,12 +287,6 @@ export default function WardrobePage() {
           const analysisResult = await analysisResponse.json();
           if (analysisResult.success) {
             analyzedData = analysisResult.data;
-            console.log('✓ AI analysis successful:', { 
-              name: analyzedData?.name, 
-              color: analyzedData?.color,
-              type: analyzedData?.type,
-              material: analyzedData?.material
-            });
             if (analyzedData?.error === 'No clothing item detected') {
               toast.error('AI could not detect a clothing item. Please try another image.');
               // Clean up the uploaded image from storage
@@ -332,10 +330,6 @@ export default function WardrobePage() {
         occasion: analyzedData?.occasion || null,
         description: analyzedData?.description || null,
       };
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Creating wardrobe item:', newItem);
-      }
 
       const response = await fetch('/api/wardrobe', {
         method: 'POST',
@@ -431,6 +425,22 @@ export default function WardrobePage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Batch operations handlers
+  const toggleItemSelection = (item: IClothingItem) => {
+    setSelectedItems(prev => {
+      const isSelected = prev.some(i => i.id === item.id);
+      if (isSelected) {
+        return prev.filter(i => i.id !== item.id);
+      } else {
+        return [...prev, item];
+      }
+    });
+  };
+
+  const handleBatchSelectionChange = (items: IClothingItem[]) => {
+    setSelectedItems(items);
   };
 
   // Loading state
@@ -944,22 +954,37 @@ export default function WardrobePage() {
                     )}
                   </AnimatePresence>
 
-                  {/* Delete Button on Hover */}
+                  {/* Delete Button + Checkbox on Hover */}
                   <AnimatePresence>
                     {hoveredItem === item.id && (
                       <motion.div
-                        className="absolute top-2 left-2"
+                        className="absolute top-2 left-2 flex gap-2"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.2 }}
                       >
+                        {/* Checkbox for batch selection */}
+                        <label className="flex items-center h-8 w-8 bg-white rounded-md shadow-lg cursor-pointer hover:bg-gray-100">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.some(i => i.id === item.id)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              toggleItemSelection(item);
+                            }}
+                            className="ml-1 w-4 h-4 cursor-pointer"
+                            aria-label={`Select ${item.name} for batch operations`}
+                          />
+                        </label>
+                        
+                        {/* Delete Button */}
                         <Button
                           size="icon"
                           variant="destructive"
                           className="h-8 w-8 shadow-lg"
                           onClick={(e) => {
-                            e.stopPropagation(); // Prevent card click when deleting
+                            e.stopPropagation();
                             handleOpenDeleteModal(item);
                           }}
                           aria-label={`Delete ${item.name}`}
@@ -1384,6 +1409,14 @@ export default function WardrobePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Batch Operations Component */}
+      <BatchOperations
+        selectedItems={selectedItems}
+        onSelectionChange={handleBatchSelectionChange}
+        onItemsUpdated={fetchWardrobe}
+        wardrobeItems={wardrobeItems}
+      />
     </div>
   );
 }

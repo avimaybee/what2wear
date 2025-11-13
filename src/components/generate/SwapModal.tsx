@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { IClothingItem } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface SwapModalProps {
   isOpen: boolean;
@@ -108,7 +109,7 @@ export const SwapModal = ({
 
       setWardrobeItems(filteredItems);
     } catch (error) {
-      console.error('Error fetching wardrobe items:', error);
+      logger.error('Error fetching wardrobe items:', error);
       toast.error('Failed to load wardrobe items');
     } finally {
       setLoading(false);
@@ -168,7 +169,7 @@ export const SwapModal = ({
         throw new Error(data.message || 'No preview generated');
       }
     } catch (error) {
-      console.error('Error generating preview:', error);
+      logger.error('Error generating preview:', error);
       setPreviewError(
         error instanceof Error 
           ? error.message 
@@ -197,7 +198,7 @@ export const SwapModal = ({
         onClose();
       }, 500);
     } catch (error) {
-      console.error('Error confirming swap:', error);
+      logger.error('Error confirming swap:', error);
       toast.error('Failed to confirm swap. Please try again.');
     } finally {
       setConfirming(false);

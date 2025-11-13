@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Shirt, ArrowRight, Camera, Sun, Zap, Star } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { motionDurations, motionEasing, motionStagger } from "@/lib/motion";
 
 interface HeroProps {
   isAuthenticated: boolean;
   hasWardrobe: boolean;
   className?: string;
+  onGetOutfitClick?: () => void;
 }
 
 /**
@@ -25,7 +27,7 @@ interface HeroProps {
  * - More engaging feature showcase
  * - Smooth scroll detection and animations
  */
-export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => {
+export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick }: HeroProps) => {
   const [showScrollHint, setShowScrollHint] = useState(true);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -66,8 +68,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.12,
-        delayChildren: 0.2,
+        ...motionStagger.medium,
       },
     },
   };
@@ -78,8 +79,8 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.8,
-        ease: "easeOut" as const,
+        duration: motionDurations.slow / 1000,
+        ease: motionEasing.medium,
       },
     },
   };
@@ -130,8 +131,9 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
   // Determine primary CTA based on user state
   const primaryCTA = {
     label: isAuthenticated && hasWardrobe ? "Get Outfit" : "Add Wardrobe",
-    href: isAuthenticated && hasWardrobe ? "/" : "/wardrobe",
+    href: isAuthenticated && hasWardrobe ? "#dashboard" : "/wardrobe",
     icon: isAuthenticated && hasWardrobe ? ArrowRight : Shirt,
+    onClick: isAuthenticated && hasWardrobe ? onGetOutfitClick : undefined,
   };
 
   const secondaryCTA = {
@@ -146,7 +148,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
       animate="visible"
       className={cn(
         "relative min-h-screen flex items-center justify-center overflow-hidden",
-        "bg-gradient-to-br from-background via-background to-primary/5",
+        "bg-gradient-to-b from-background via-background to-background",
         className
       )}
       role="region"
@@ -154,8 +156,9 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
     >
       {/* Animated gradient background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Base gradient layers */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-accent/5 opacity-60" />
+        {/* Base gradient layers - extends beyond section for seamless blend */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
         
         {/* Dynamic radial gradients */}
         <motion.div
@@ -253,13 +256,13 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
                 variants={itemVariants}
                 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-tight max-w-[90%] md:max-w-[85%]"
               >
-                <span className="block text-foreground">What to Wear</span>
+                <span className="block text-foreground">setmyfit</span>
                 <motion.span 
                   className="block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent"
                   animate={{ backgroundPosition: ["0%", "100%", "0%"] }}
                   transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
                 >
-                  Just Got Smarter
+                  AI-Powered Style
                 </motion.span>
               </motion.h1>
 
@@ -295,13 +298,15 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-4 pt-6"
             >
-              <Link href={primaryCTA.href} className="flex-1 sm:flex-initial">
+              {primaryCTA.onClick ? (
                 <motion.div
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
+                  className="flex-1 sm:flex-initial"
                 >
                   <Button
                     size="lg"
+                    onClick={primaryCTA.onClick}
                     className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 group"
                     aria-label={`${primaryCTA.label} - Get started with setmyfit`}
                   >
@@ -314,7 +319,28 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
                     </motion.span>
                   </Button>
                 </motion.div>
-              </Link>
+              ) : (
+                <Link href={primaryCTA.href} className="flex-1 sm:flex-initial">
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button
+                      size="lg"
+                      className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                      aria-label={`${primaryCTA.label} - Get started with setmyfit`}
+                    >
+                      <motion.span
+                        className="flex items-center justify-center gap-2"
+                        whileHover={{ x: 4 }}
+                      >
+                        {primaryCTA.label}
+                        <primaryCTA.icon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                      </motion.span>
+                    </Button>
+                  </motion.div>
+                </Link>
+              )}
 
               <Link href={secondaryCTA.href} className="flex-1 sm:flex-initial">
                 <motion.div
@@ -348,7 +374,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
                 delay: 0 
               },
               { 
-                icon: <Sun className="h-6 w-6 text-accent" />, 
+                icon: <Sun className="h-6 w-6 text-amber-500 dark:text-amber-400" />, 
                 label: "Weather Smart", 
                 description: "Context-aware picks",
                 delay: 0.1 
@@ -364,9 +390,9 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className }: HeroProps) => 
                 key={feature.label}
                 variants={itemVariants}
                 whileHover={{ y: -6, scale: 1.02 }}
-                className="flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-gradient-to-br from-card/50 to-card/20 hover:from-card/70 hover:to-card/40 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 w-full"
+                className="flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/40 hover:from-card hover:to-card/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 w-full"
               >
-                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex-shrink-0">
+                <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex-shrink-0 border border-primary/10">
                   {feature.icon}
                 </div>
                 <div className="flex-1 min-w-0">

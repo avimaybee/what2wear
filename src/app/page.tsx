@@ -52,21 +52,11 @@ export default function HomePage() {
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           };
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Geolocation success:', coords);
-            console.log('Accuracy:', position.coords.accuracy, 'meters');
-          }
           setLocation(coords);
           localStorage.setItem("userLocation", JSON.stringify(coords));
           toast(`Location detected: ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`, { icon: "📍" });
         },
         (error) => {
-          if (process.env.NODE_ENV === 'development') {
-            console.error("Geolocation error:", error);
-            console.error("Error code:", error.code);
-            console.error("Error message:", error.message);
-          }
-          
           let errorMsg = "Location access denied";
           if (error.code === 1) errorMsg = "Location permission denied";
           if (error.code === 2) errorMsg = "Location unavailable";
@@ -107,9 +97,6 @@ export default function HomePage() {
         return;
       }
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Fetching recommendation for coords:', coords);
-      }
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
@@ -130,47 +117,25 @@ export default function HomePage() {
 
       const data = await response.json();
       
-      if (process.env.NODE_ENV === 'development') {
-        console.log('✓ Recommendation API response received:', data);
-      }
-      
       // Handle empty/insufficient wardrobe gracefully - this is expected for new users
       if (!data.success && data.needsWardrobe) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Wardrobe error detected:', data.error, data.message);
-        }
         setHasWardrobe(false);
         
         // Check if the error mentions missing types - if so, try to fix them automatically
         if (retryCount === 0 && (data.message?.toLowerCase().includes('type') || data.message?.toLowerCase().includes('category'))) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Attempting to fix missing item types...');
-          }
           try {
             const fixResponse = await fetch("/api/wardrobe/fix-types", {
               method: "POST",
             });
             const fixData = await fixResponse.json();
-            if (process.env.NODE_ENV === 'development') {
-              console.log('Fix response:', fixData);
-            }
             
             if (fixData.success && fixData.fixed > 0) {
-              if (process.env.NODE_ENV === 'development') {
-                console.log(`Fixed ${fixData.fixed} items, retrying recommendation...`);
-              }
               toast(`Fixed ${fixData.fixed} wardrobe items, trying again...`, { icon: "🔧" });
               // Retry once after fixing
               return fetchRecommendation(coords, retryCount + 1);
-            } else {
-              if (process.env.NODE_ENV === 'development') {
-                console.log('No items were fixed or fix failed');
-              }
             }
           } catch (fixError) {
-            if (process.env.NODE_ENV === 'development') {
-              console.error('Failed to auto-fix item types:', fixError);
-            }
+            // Silent fail - will show empty state instead
           }
         }
         
@@ -189,10 +154,6 @@ export default function HomePage() {
       setLoading(false);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to load recommendation";
-      if (process.env.NODE_ENV === 'development') {
-        console.error("❌ Error fetching recommendation:", errorMsg);
-        console.error("Full error:", err);
-      }
       
       // Handle timeout separately
       if (err instanceof Error && err.name === 'AbortError') {
@@ -225,17 +186,11 @@ export default function HomePage() {
       if (savedLocation) {
         try {
           const coords = JSON.parse(savedLocation);
-          if (process.env.NODE_ENV === 'development') {
-            console.log('📍 Using saved location:', coords);
-          }
           setLocation(coords);
           return; // Don't fetch yet, wait for useEffect below
         } catch {
           // Invalid saved location, request new one
         }
-      }
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📍 No saved location, requesting...');
       }
       requestLocation();
       
@@ -243,7 +198,6 @@ export default function HomePage() {
       const safetyTimer = setTimeout(() => {
         setLocation(prevLocation => {
           if (!prevLocation) {
-            console.warn('⚠️  Geolocation took too long, using default location');
             const defaultLocation = { lat: 40.7128, lon: -74.0060 };
             localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
             return defaultLocation;
@@ -420,6 +374,12 @@ export default function HomePage() {
       <Hero 
         isAuthenticated={isAuthenticated}
         hasWardrobe={hasWardrobe}
+        onGetOutfitClick={() => {
+          const dashboardElement = document.getElementById('dashboard');
+          if (dashboardElement) {
+            dashboardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }}
       />
       
       {/* Type guard for debug banner to avoid using `any` */}
@@ -447,12 +407,14 @@ export default function HomePage() {
           <Skeleton className="h-48 w-full" />
         </div>
       }>
-        <DashboardClient 
-          recommendationData={recommendationData}
-          location={location}
-          onLocationChange={() => setShowLocationDialog(true)}
-          onRefresh={() => location && fetchRecommendation(location)}
-        />
+        <div id="dashboard">
+          <DashboardClient 
+            recommendationData={recommendationData}
+            location={location}
+            onLocationChange={() => setShowLocationDialog(true)}
+            onRefresh={() => location && fetchRecommendation(location)}
+          />
+        </div>
       </Suspense>
 
       {/* Location Change Dialog */}

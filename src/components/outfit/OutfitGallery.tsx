@@ -141,11 +141,17 @@ export function OutfitGallery({
 
   return (
     <Card className={cn("overflow-hidden glass-effect", className)}>
+      {/* Screen reader announcement for variant changes */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        Viewing outfit variant {currentIndex + 1} of {totalVariants}
+        {currentVariant?.style && `, Style: ${currentVariant.style}`}
+      </div>
+      
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg md:text-xl flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
               Outfit Variants
             </CardTitle>
             <CardDescription className="text-sm mt-1">
@@ -206,18 +212,18 @@ export function OutfitGallery({
                   size="icon"
                   onClick={goToPrevious}
                   className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background/90 rounded-full shadow-md"
-                  aria-label="Previous variant"
+                  aria-label="Previous outfit variant"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={goToNext}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background/90 rounded-full shadow-md"
-                  aria-label="Next variant"
+                  aria-label="Next outfit variant"
                 >
-                  <ChevronRight className="h-5 w-5" />
+                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </>
             )}
@@ -264,10 +270,13 @@ export function OutfitGallery({
                       ? "border-primary shadow-md scale-110"
                       : "border-border/50 opacity-60 hover:opacity-100"
                   )}
+                  aria-label={`View outfit variant ${index + 1} of ${totalVariants}`}
+                  aria-current={index === currentIndex ? 'true' : 'false'}
+                  type="button"
                 >
                   <Image
                     src={imageErrors.has(index) ? PLACEHOLDER_IMAGE : variant.imageUrl}
-                    alt={`Variant ${index + 1} thumbnail`}
+                    alt={`Outfit variant ${index + 1} thumbnail`}
                     fill
                     sizes="48px"
                     className="object-cover"

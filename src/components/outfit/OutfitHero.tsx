@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, RefreshCw, Shirt } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatReasoningForUser } from "@/lib/helpers/reasoningFormatter";
 import type { IClothingItem } from "@/lib/types";
 
 const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%23f3f4f6' width='400' height='400'/%3E%3Cpath fill='%239ca3af' d='M150 100h100v200h-100z'/%3E%3Ccircle fill='%239ca3af' cx='200' cy='100' r='40'/%3E%3Ctext x='200' y='350' font-family='system-ui' font-size='20' fill='%236b7280' text-anchor='middle'%3EOutfit%3C/text%3E%3C/svg%3E";
@@ -18,6 +19,14 @@ interface OutfitHeroProps {
   detailedReasoning?: string;
   className?: string;
   onItemClick?: (item: IClothingItem) => void;
+  onLikeClick?: () => void;
+  onDislikeClick?: () => void;
+  onLogOutfit?: () => void;
+  onRegenerate?: () => void;
+  isLiked?: boolean;
+  isDisliked?: boolean;
+  isLoggingOutfit?: boolean;
+  isRegenerating?: boolean;
 }
 
 /**
@@ -38,6 +47,14 @@ export function OutfitHero({
   detailedReasoning,
   className,
   onItemClick,
+  onLikeClick,
+  onDislikeClick,
+  onLogOutfit,
+  onRegenerate,
+  isLiked = false,
+  isDisliked = false,
+  isLoggingOutfit = false,
+  isRegenerating = false,
 }: OutfitHeroProps) {
   const [showFullReason, setShowFullReason] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -49,9 +66,14 @@ export function OutfitHero({
     .filter((color, index, self) => self.indexOf(color) === index)
     .slice(0, 5);
 
-  // Parse detailed reasoning into paragraphs
-  const reasoningParagraphs = detailedReasoning?.split('\n\n') || [];
-  const previewText = reasoningParagraphs[0] || detailedReasoning || '';
+  // Format reasoning to be more conversational and user-friendly
+  const formattedReasoning = useMemo(() => {
+    return detailedReasoning ? formatReasoningForUser(detailedReasoning) : '';
+  }, [detailedReasoning]);
+
+  // Parse formatted reasoning into paragraphs
+  const reasoningParagraphs = formattedReasoning?.split('\n\n') || [];
+  const previewText = reasoningParagraphs[0] || formattedReasoning || '';
   const hasMoreContent = reasoningParagraphs.length > 1;
 
   return (
@@ -129,11 +151,13 @@ export function OutfitHero({
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onItemClick?.(item)}
                   className="flex-shrink-0 relative group"
+                  aria-label={`Swap ${item.name || item.type || 'outfit item'}`}
+                  type="button"
                 >
                   <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-border/50 group-hover:border-primary/50 transition-colors bg-muted/30">
                     <Image
                       src={item.image_url || PLACEHOLDER_IMAGE}
-                      alt={item.name || item.type || 'Outfit item'}
+                      alt={`${item.name || item.type || 'Outfit item'} - ${item.color || 'clothing item'}`}
                       width={80}
                       height={80}
                       className="object-cover w-full h-full"
@@ -229,14 +253,16 @@ export function OutfitHero({
                   variant="ghost"
                   onClick={() => setShowFullReason(!showFullReason)}
                   className="h-8 text-xs font-medium group"
+                  aria-expanded={showFullReason}
+                  aria-label={showFullReason ? "Show less reasoning" : "Show more reasoning"}
                 >
                   {showFullReason ? (
                     <>
-                      Show less <ChevronUp className="ml-1 h-3 w-3 transition-transform group-hover:-translate-y-0.5" />
+                      Show less <ChevronUp className="ml-1 h-3 w-3 transition-transform group-hover:-translate-y-0.5" aria-hidden="true" />
                     </>
                   ) : (
                     <>
-                      Show more <ChevronDown className="ml-1 h-3 w-3 transition-transform group-hover:translate-y-0.5" />
+                      Show more <ChevronDown className="ml-1 h-3 w-3 transition-transform group-hover:translate-y-0.5" aria-hidden="true" />
                     </>
                   )}
                 </Button>
@@ -245,6 +271,72 @@ export function OutfitHero({
           </motion.div>
         </div>
       )}
+
+      {/* Action Buttons */}
+      <div className="px-4 sm:px-6 pb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.35 }}
+          className="flex flex-col sm:flex-row gap-3"
+        >
+          {/* Primary Actions */}
+          <div className="flex gap-2 flex-1">
+            <Button
+              onClick={onLogOutfit}
+              disabled={isLoggingOutfit || isRegenerating}
+              className="flex-1 gap-2"
+              variant="default"
+              aria-label="Log this outfit to history"
+            >
+              <Shirt className="h-4 w-4" aria-hidden="true" />
+              {isLoggingOutfit ? "Logging..." : "Log Outfit"}
+            </Button>
+            <Button
+              onClick={onRegenerate}
+              disabled={isRegenerating || isLoggingOutfit}
+              className="flex-1 gap-2"
+              variant="outline"
+              aria-label="Generate a new outfit"
+            >
+              <RefreshCw className={cn("h-4 w-4", isRegenerating && "animate-spin")} aria-hidden="true" />
+              {isRegenerating ? "Generating..." : "Regenerate"}
+            </Button>
+          </div>
+
+          {/* Feedback Actions */}
+          <div className="flex gap-2">
+            <Button
+              onClick={onLikeClick}
+              disabled={isLoggingOutfit || isRegenerating}
+              size="icon"
+              variant={isLiked ? "default" : "outline"}
+              className={cn(
+                "transition-colors",
+                isLiked && "bg-green-500 hover:bg-green-600 text-white border-green-500"
+              )}
+              aria-label="I like this outfit"
+              aria-pressed={isLiked}
+            >
+              <ThumbsUp className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            <Button
+              onClick={onDislikeClick}
+              disabled={isLoggingOutfit || isRegenerating}
+              size="icon"
+              variant={isDisliked ? "default" : "outline"}
+              className={cn(
+                "transition-colors",
+                isDisliked && "bg-red-500 hover:bg-red-600 text-white border-red-500"
+              )}
+              aria-label="I don't like this outfit"
+              aria-pressed={isDisliked}
+            >
+              <ThumbsDown className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </div>
+        </motion.div>
+      </div>
     </Card>
   );
 }

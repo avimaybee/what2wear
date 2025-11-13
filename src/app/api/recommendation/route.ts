@@ -138,9 +138,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const validatedData = await validateBody(request, recommendationRequestSchema) as { lat: number; lon: number; occasion?: string };
     const { lat, lon, occasion = "" } = validatedData;
 
-    console.log('🎯 Generating recommendation for:', { lat, lon, occasion });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎯 Generating recommendation for:', { lat, lon, occasion });
+    }
     const recommendation = await generateRecommendation(user.id, lat, lon, occasion, request);
-    console.log('✓ Recommendation generated successfully');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✓ Recommendation generated successfully');
+    }
 
     return NextResponse.json({
       success: true,
@@ -254,7 +258,9 @@ async function generateRecommendation(
   const itemsNeedingBackfill = normalizedWardrobeItems.filter(item => (!item.rawType || !item.rawType.trim()) && item.normalizedType);
 
   if (itemsNeedingBackfill.length > 0) {
-    console.log(`Backfilling ${itemsNeedingBackfill.length} items with missing types`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Backfilling ${itemsNeedingBackfill.length} items with missing types`);
+    }
     try {
       const results = await Promise.all(itemsNeedingBackfill.map(item =>
         supabase
@@ -263,7 +269,9 @@ async function generateRecommendation(
           .eq('id', item.id)
           .eq('user_id', userId)
       ));
-      console.log('Backfill results:', results.map(r => ({ error: r.error, count: r.count })));
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Backfill results:', results.map(r => ({ error: r.error, count: r.count })));
+      }
       
       // CRITICAL: Refetch the items after backfilling to get the updated types
       const { data: updatedWardrobeItems, error: refetchError } = await supabase
@@ -357,7 +365,40 @@ async function generateRecommendation(
     .eq('id', userId)
     .single();
 
-  const userPreferences = profile?.preferences || {};
+  // Convert preference scores to arrays of items with positive scores
+  const userPreferences: Record<string, string[]> = {
+    colors: [],
+    styles: [],
+    materials: [],
+  };
+  
+  if (profile?.preferences) {
+    const prefs = profile.preferences as Record<string, Record<string, number>>;
+    
+    if (prefs.colors) {
+      userPreferences.colors = Object.entries(prefs.colors)
+        .filter(([_, score]) => score > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([color]) => color);
+    }
+    
+    if (prefs.styles) {
+      userPreferences.styles = Object.entries(prefs.styles)
+        .filter(([_, score]) => score > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([style]) => style);
+    }
+    
+    if (prefs.materials) {
+      userPreferences.materials = Object.entries(prefs.materials)
+        .filter(([_, score]) => score > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([material]) => material);
+    }
+  }
 
   // Apply filtering logic
   let availableItems = normalizedWardrobeItems.map(item => ({

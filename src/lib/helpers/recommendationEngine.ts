@@ -414,7 +414,7 @@ function scoreMaterialPreference(items: IClothingItem[], preferred?: string[], d
 /**
  * Calculates a total score for a given outfit combination.
  * All components now contribute positively or with moderate penalties.
- * No hard vetoes that result in -1000 scores.
+ * Integrates learned preference boosts from user feedback for continuous improvement.
  */
 function scoreOutfit(items: IClothingItem[], context: RecommendationContext): number {
   // Get all component scores
@@ -444,8 +444,34 @@ function scoreOutfit(items: IClothingItem[], context: RecommendationContext): nu
   // Apply penalties (these reduce but don't eliminate the score)
   const penalties = Math.min(0, materialPrefScore) + patternPenalty;
   
-  // Final score: base score + penalties, ensuring minimum of 0
-  return Math.max(0, baseScore + penalties);
+  // Apply learned preference boosts from user feedback
+  // Each item gets boosted based on matching learned preferences
+  let preferenceBoostTotal = 0;
+  if (context.user_preferences) {
+    const prefs = context.user_preferences;
+    for (const item of items) {
+      // Check for color match in learned preferences
+      if (item.color && prefs.colors?.includes(item.color.toLowerCase())) {
+        preferenceBoostTotal += 5; // 5 points per matching color item
+      }
+      
+      // Check for style match in learned preferences
+      if (item.style_tags && prefs.styles) {
+        const styleMatches = item.style_tags.filter(tag => 
+          prefs.styles?.includes(tag.toLowerCase())
+        ).length;
+        preferenceBoostTotal += styleMatches * 4; // 4 points per matching style tag
+      }
+      
+      // Check for material match in learned preferences
+      if (item.material && prefs.preferred_materials?.includes(item.material.toLowerCase())) {
+        preferenceBoostTotal += 5; // 5 points per matching material item
+      }
+    }
+  }
+  
+  // Final score: base score + penalties + learned preference boost, ensuring minimum of 0
+  return Math.max(0, baseScore + penalties + preferenceBoostTotal);
 }
 
 
@@ -550,10 +576,20 @@ export function getRecommendation(
     return getLegacyRecommendation(wardrobe, context, constraints);
   }
 
+  // Sort combinations by score (highest first)
   combinations.sort((a, b) => b.score - a.score);
 
-  const bestOutfitItems = combinations[0].outfit;
-  const bestScore = combinations[0].score;
+  // Add variety: instead of always picking the absolute best, select randomly from top candidates
+  // This ensures each refresh shows a different outfit while maintaining quality
+  const topCandidateCount = Math.min(5, Math.ceil(combinations.length * 0.2)); // Top 20% or 5 max
+  const topCandidates = combinations.slice(0, topCandidateCount);
+  
+  // Select randomly from top candidates, weighted toward higher scores
+  const selectedIndex = Math.floor(Math.random() * topCandidates.length);
+  const selectedOutfit = topCandidates[selectedIndex];
+  
+  const bestOutfitItems = selectedOutfit.outfit;
+  const bestScore = selectedOutfit.score;
   // Skip verbose scoring debug - user doesn't need to see internal scores
 
   const baseOutfitInsulation = bestOutfitItems.reduce((sum, item) => sum + item.insulation_value, 0);
@@ -702,4 +738,159 @@ function getLegacyRecommendation(
         alerts: constraints?.weather_alerts || [],
         context,
     };
+}
+
+// ============================================================================
+// TEMPLATE-BASED RECOMMENDATION (NEW - Task 7)
+// ============================================================================
+
+import { 
+  getTemplate, 
+  detectAvailableTemplates, 
+  isTemplateViable, 
+  getItemsByTemplate 
+} from '@/lib/helpers/outfitTemplates';
+
+/**
+ * Generate outfit recommendation based on a specific template.
+ * Allows flexible outfit combinations instead of fixed Top + Bottom + Shoes.
+ * 
+ * Task 7: Implement flexible outfit templates system
+ */
+export function getRecommendationWithTemplate(
+  wardrobe: IClothingItem[],
+  context: RecommendationContext,
+  templateId?: string,
+  constraints?: RecommendationConstraints
+): OutfitRecommendation {
+  // If no template specified, detect available templates and use the best one
+  const availableTemplates = detectAvailableTemplates(wardrobe);
+  
+  if (availableTemplates.length === 0) {
+    // Fall back to standard recommendation if no templates available
+    return getRecommendation(wardrobe, context, constraints);
+  }
+
+  // Find the template to use
+  let selectedTemplate = availableTemplates[0];
+  if (templateId) {
+    const requested = getTemplate(templateId);
+    if (requested && isTemplateViable(requested, wardrobe)) {
+      selectedTemplate = requested;
+    }
+  }
+
+  // Get items grouped by type
+  const itemsByType = getItemsByTemplate(selectedTemplate, wardrobe);
+  const reasoning: string[] = [];
+
+  reasoning.push(`Using ${selectedTemplate.name} template for outfit generation`);
+
+  // Filter by constraints
+  const filtered = { ...itemsByType };
+  
+  // Apply dress code constraint
+  let dressCode = constraints?.dress_code;
+  if (!dressCode && context.calendar_events) {
+    dressCode = getDressCodeFromEvents(context.calendar_events);
+  }
+  
+  if (dressCode) {
+    for (const type of Object.keys(filtered) as Array<keyof typeof filtered>) {
+      filtered[type] = filtered[type].filter(item => 
+        item.dress_code && item.dress_code.includes(dressCode)
+      );
+    }
+    reasoning.push(`Filtered for ${dressCode} dress code`);
+  }
+
+  // Filter by last worn date
+  const minDaysSinceWorn = constraints?.min_days_since_worn || 
+                          config.app.recommendations.minDaysSinceWorn;
+  for (const type of Object.keys(filtered) as Array<keyof typeof filtered>) {
+    filtered[type] = filterByLastWorn(filtered[type], minDaysSinceWorn);
+  }
+
+  // Apply insulation filtering for required types
+  const requiredInsulation = calculateRequiredInsulation(context.weather.feels_like);
+  const insulationTolerance = 2;
+  
+  for (const type of selectedTemplate.requiredTypes) {
+    if (filtered[type]) {
+      filtered[type] = filtered[type].filter(item =>
+        Math.abs(item.insulation_value - requiredInsulation) <= insulationTolerance
+      );
+    }
+  }
+
+  // Check if we still have items for all required types
+  const hasRequiredItems = selectedTemplate.requiredTypes.every(type => 
+    filtered[type] && filtered[type].length > 0
+  );
+
+  if (!hasRequiredItems) {
+    // Fall back to standard recommendation if can't satisfy template
+    reasoning.push('Insufficient items for template, using standard recommendation');
+    return getRecommendation(wardrobe, context, constraints);
+  }
+
+  // Select one item from each required type
+  const outfit: IClothingItem[] = [];
+  for (const type of selectedTemplate.requiredTypes) {
+    const items = filtered[type];
+    if (items.length > 0) {
+      // Score items and select best
+      const scoredItems = items.map(item => ({
+        item,
+        score: scoreOutfit([item], context),
+      }));
+      scoredItems.sort((a, b) => b.score - a.score);
+      outfit.push(scoredItems[0].item);
+    }
+  }
+
+  // Optionally add items from optional types if they improve the score
+  for (const type of selectedTemplate.optionalTypes) {
+    const items = filtered[type];
+    if (items.length > 0) {
+      const bestItem = items.reduce((best, current) => {
+        const scoreWithCurrent = scoreOutfit([...outfit, current], context);
+        const scoreWithoutCurrent = scoreOutfit(outfit, context);
+        return scoreWithCurrent > scoreWithoutCurrent ? current : best;
+      });
+      
+      // Only add if it improves the score
+      const scoreWithBest = scoreOutfit([...outfit, bestItem], context);
+      const scoreWithout = scoreOutfit(outfit, context);
+      if (scoreWithBest > scoreWithout) {
+        outfit.push(bestItem);
+      }
+    }
+  }
+
+  const finalScore = scoreOutfit(outfit, context);
+
+  reasoning.push(`Selected outfit with ${outfit.length} items`);
+  if (selectedTemplate.optionalTypes.length > 0) {
+    const optionalCount = outfit.length - selectedTemplate.requiredTypes.length;
+    if (optionalCount > 0) {
+      reasoning.push(`Added ${optionalCount} accessory/optional items`);
+    }
+  }
+
+  return {
+    items: outfit,
+    confidence_score: Math.min(1, finalScore / 100),
+    reasoning: reasoning.join('. '),
+    alerts: constraints?.weather_alerts || [],
+    context,
+  };
+}
+
+/**
+ * Get available templates for the user's wardrobe
+ * Task 7: Support for outfit templates
+ */
+export function getAvailableTemplatesForWardrobe(wardrobe: IClothingItem[]) {
+  return detectAvailableTemplates(wardrobe);
 }

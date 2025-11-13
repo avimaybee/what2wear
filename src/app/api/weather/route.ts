@@ -152,9 +152,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     // Validate query parameters
     const { lat, lon, provider } = validateQuery(request, weatherRequestSchema) as { lat: number; lon: number; provider: string };
 
-    console.log('📍 Weather API called with coords:', { lat, lon }, 'provider:', provider);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📍 Weather API called with coords:', { lat, lon }, 'provider:', provider);
+    }
     const weatherPayload = await fetchWeatherData(lat, lon, provider);
-    console.log('✓ Weather data fetched successfully');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✓ Weather data fetched successfully');
+    }
 
     return NextResponse.json({
       success: true,
@@ -190,7 +194,9 @@ async function fetchWeatherData(
     try {
       const apiUrl = `${config.weather.openWeather.baseUrl}${config.weather.openWeather.endpoints.onecall}?lat=${lat}&lon=${lon}&appid=${config.weather.openWeather.apiKey}&units=metric`;
       
-      console.log('🌤️  Fetching OpenWeather data...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🌤️  Fetching OpenWeather data...');
+      }
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
       
@@ -200,20 +206,20 @@ async function fetchWeatherData(
       if (!response.ok) {
         const text = await response.text();
         logger.error('OpenWeatherMap API error:', { status: response.status, body: text });
-        console.warn('OpenWeatherMap API returned non-OK response', { status: response.status });
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('OpenWeatherMap API returned non-OK response', { status: response.status });
+        }
       } else {
         const data = await response.json();
-        console.log('✓ OpenWeather data received');
-        // Log raw provider values for debugging unit/value mismatches
-        try {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✓ OpenWeather data received');
+          // Log raw provider values for debugging unit/value mismatches
           console.log('🔍 OpenWeather raw values:', {
             provider_temp: data.current?.temp,
             provider_feels_like: data.current?.feels_like,
             provider_units: 'metric (requested via &units=metric)',
             provider_timestamp: data.current?.dt,
           });
-        } catch (e) {
-          console.warn('Failed to log OpenWeather raw values', e);
         }
         
         weatherData = {

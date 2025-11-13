@@ -28,6 +28,7 @@ export interface FullResGenerationJob {
 /**
  * Enqueue a full-resolution generation job
  * In production with BullMQ, this would add to Redis queue
+ * For MVP, we'll use a scheduled Supabase function or store for polling
  */
 export async function enqueueFullResolutionJob(
   job: FullResGenerationJob
@@ -39,17 +40,71 @@ export async function enqueueFullResolutionJob(
       seed: job.seed,
     });
 
-    // TODO: In production, integrate with BullMQ:
-    // const queue = getOutfitGenerationQueue();
-    // await queue.add(job.jobId, job, { ... retry config ... });
+    // For MVP: Store job data in a queue table that can be polled/processed
+    const supabase = await createClient();
+    
+    // Check if we have a generation_queue table; if not, we'll process synchronously
+    const { data: queueData, error: queueError } = await supabase
+      .from('generation_queue')
+      .insert([
+        {
+          job_id: job.jobId,
+          user_id: job.userId,
+          job_data: job,
+          status: 'pending',
+          created_at: new Date().toISOString(),
+          attempted_at: null,
+          completed_at: null,
+          error: null,
+        },
+      ])
+      .select();
 
-    // For now, mark as queued and log
-    // Client-side polling will check status
+    if (queueError && queueError.code === 'PGRST202') {
+      // Table doesn't exist - process synchronously instead
+      if (process.env.NODE_ENV === 'development') {
+        logger.info('generation_queue table not found, processing job synchronously');
+      }
+      
+      // Process in the background (fire and forget)
+      processGenerationJob(job).catch((error) => {
+        logger.error('Background job processing failed:', {
+          error: error instanceof Error ? error.message : String(error),
+          jobId: job.jobId,
+        });
+      });
+
+      return {
+        jobId: job.jobId,
+        status: 'processing',
+        estimatedDurationSec: 180,
+      };
+    }
+
+    if (queueError) {
+      throw queueError;
+    }
+
+    if (queueData) {
+      logger.info('Job queued successfully', {
+        jobId: job.jobId,
+        queueId: queueData[0]?.id,
+      });
+    }
+
+    // In MVP without proper queue infrastructure, process immediately
+    // (in production, a background worker would consume this queue)
+    processGenerationJob(job).catch((error) => {
+      logger.error('Background job processing failed:', {
+        error: error instanceof Error ? error.message : String(error),
+        jobId: job.jobId,
+      });
+    });
 
     return {
       jobId: job.jobId,
       status: 'queued',
-      estimatedDurationSec: 180, // 3 minutes estimate
+      estimatedDurationSec: 180,
     };
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);

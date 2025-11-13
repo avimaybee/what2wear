@@ -87,15 +87,61 @@ export function OnboardingWizard({
     ]);
   }, []);
 
-  const handleCompleteWizard = useCallback(() => {
+  const handleCompleteWizard = useCallback(async () => {
     setIsProcessing(true);
-    // TODO: Implement API call to save items
-    // For now, just mark as complete
-    setTimeout(() => {
+    try {
+      // Create FormData for multipart file upload
+      const formData = new FormData();
+      
+      // Add each uploaded file with its metadata
+      uploadedItems.forEach((item, index) => {
+        formData.append('files', item.file);
+        
+        // Add metadata as JSON string
+        if (item.metadata) {
+          formData.append(`metadata_${index}`, JSON.stringify({
+            name: item.metadata.name || `Item ${index + 1}`,
+            type: item.metadata.type,
+            color: item.metadata.color,
+            material: item.metadata.material,
+            style_tags: item.metadata.style_tags || [],
+          }));
+        }
+      });
+
+      // Call the wardrobe upload endpoint
+      const response = await fetch('/api/wardrobe/upload-batch', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(errorData.message || 'Failed to save wardrobe items');
+      }
+
+      const result = await response.json();
+      
+      // Show success message
+      if (result.success && result.itemsCreated) {
+        const itemCountMessage = result.itemsCreated === 1 
+          ? '1 item added' 
+          : `${result.itemsCreated} items added`;
+        
+        // Show brief success state before completing
+        setTimeout(() => {
+          setIsProcessing(false);
+          onComplete();
+        }, 800);
+      } else {
+        throw new Error(result.message || 'Failed to create wardrobe items');
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'An error occurred';
+      setError(errorMsg);
       setIsProcessing(false);
-      onComplete();
-    }, 1000);
-  }, [onComplete]);
+    }
+  }, [uploadedItems, onComplete]);
 
   const handleSkip = useCallback(() => {
     if (onSkip) {

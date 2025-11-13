@@ -109,9 +109,9 @@ export async function generateImageWithNanoBanana(
       preview: params.preview,
     });
 
-    // Call Gemini API
+    // Call Gemini API with 2.5 Flash Image model
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-exp:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent',
       {
         method: 'POST',
         headers: {

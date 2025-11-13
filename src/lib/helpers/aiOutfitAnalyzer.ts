@@ -40,10 +40,128 @@ const extractJsonSegment = <T>(source: string, pattern: RegExp): T | null => {
   try {
     return JSON.parse(match[0]) as T;
   } catch (error) {
-    console.error('Failed to parse Gemini response JSON segment', error, { source });
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to parse Gemini response JSON segment', error, { source });
+    }
     return null;
   }
 };
+
+/**
+ * Analyze a clothing item image to extract metadata
+ * Used during onboarding to auto-populate item properties
+ */
+export async function analyzeClothingImage(
+  base64ImageData: string,
+  mimeType: string = 'image/jpeg'
+): Promise<{
+  detectedType: string;
+  detectedColor: string;
+  detectedMaterial: string;
+  detectedStyleTags: string[];
+}> {
+  try {
+    const model = getTextModel();
+
+    const requestBody = {
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: `Analyze this clothing item image and extract metadata. Respond with only valid JSON (no markdown, no code blocks).
+
+{
+  "detectedType": "top|bottom|outerwear|shoes|accessory",
+  "detectedColor": "#RRGGBB (hex color of main item color)",
+  "detectedMaterial": "cotton|polyester|wool|denim|leather|silk|linen|etc",
+  "detectedStyleTags": ["casual", "formal", "sporty", "vintage", "modern", "bold", "minimalist", "etc"]
+}
+
+Analyze the image and provide accurate JSON with no additional text.`,
+            },
+            {
+              inlineData: {
+                mimeType,
+                data: base64ImageData,
+              },
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.5,
+        topP: 0.9,
+        maxOutputTokens: 500,
+      },
+    };
+
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-exp:generateContent',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': config.ai.gemini.apiKey,
+        },
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Gemini API error: ${response.status} - ${errorData?.error?.message}`);
+    }
+
+    const data = await response.json();
+
+    if (
+      !data.candidates ||
+      !data.candidates[0] ||
+      !data.candidates[0].content ||
+      !data.candidates[0].content.parts
+    ) {
+      throw new Error('Invalid response from Gemini API');
+    }
+
+    const parts: unknown[] = data.candidates[0].content.parts;
+    const textPart = parts.find((part) => {
+      if (part && typeof part === 'object' && part !== null) {
+        return 'text' in part;
+      }
+      return false;
+    });
+
+    if (!textPart || typeof textPart !== 'object' || !('text' in textPart)) {
+      throw new Error('No text response from Gemini');
+    }
+
+    const text = textPart.text as string;
+    const analysisResult = extractJsonSegment<{
+      detectedType: string;
+      detectedColor: string;
+      detectedMaterial: string;
+      detectedStyleTags: string[];
+    }>(text, /\{[\s\S]*\}/);
+
+    if (!analysisResult) {
+      throw new Error('Failed to parse analysis result');
+    }
+
+    return analysisResult;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error analyzing clothing image:', error);
+    }
+    // Return safe defaults on error
+    return {
+      detectedType: 'accessory',
+      detectedColor: '#808080',
+      detectedMaterial: 'unknown',
+      detectedStyleTags: ['casual'],
+    };
+  }
+}
 
 /**
  * Analyze clothing item description to understand its characteristics

@@ -11,10 +11,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Log API key status on startup
 const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  console.warn('⚠️  GEMINI_API_KEY is not set! AI analysis will fail.');
-} else {
-  console.log('✓ GEMINI_API_KEY is loaded:', apiKey.slice(0, 10) + '...');
+if (process.env.NODE_ENV === 'development') {
+  if (!apiKey) {
+    console.warn('⚠️  GEMINI_API_KEY is not set! AI analysis will fail.');
+  } else {
+    console.log('✓ GEMINI_API_KEY is loaded:', apiKey.slice(0, 10) + '...');
+  }
 }
 
 const genAI = new GoogleGenerativeAI(apiKey || "");
@@ -73,7 +75,9 @@ export async function POST(req: NextRequest) {
           .download(storagePath);
         
         if (downloadError || !fileData) {
-          console.error("Supabase download error:", downloadError);
+          if (process.env.NODE_ENV === 'development') {
+            console.error("Supabase download error:", downloadError);
+          }
           throw new Error(`Failed to download image from storage: ${downloadError?.message || 'Unknown error'}`);
         }
         
@@ -112,7 +116,9 @@ export async function POST(req: NextRequest) {
         mimeType = imageResponse.headers.get('content-type') || 'image/jpeg';
       }
     } catch (fetchError) {
-      console.error("Error fetching image:", fetchError);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error fetching image:", fetchError);
+      }
       return NextResponse.json(
         { 
           success: false, 
@@ -144,7 +150,7 @@ Return ONLY valid JSON with no markdown, code blocks, or explanations. Use these
   "season_tags": ["array of applicable seasons: spring, summer, autumn, winter"],
   "dress_code": ["array of suitable dress codes: Casual, Business Casual, Formal, Athletic, Loungewear"],
   "occasion": ["suitable occasions: Work, Casual Outing, Date Night, Formal Event, Sports, Home"],
-  "insulation_value": number from 1-5 (1=very light/summer, 3=medium, 5=very warm/winter),
+  "insulation_value": number from 1-10 (1=very light/summer, 5=medium, 10=very warm/winter),
   "description": "2-3 sentence detailed description explaining: visual characteristics, styling suggestions, what it pairs well with, and any standout features that will help AI match it with other items"
 }
 
@@ -164,7 +170,9 @@ Return ONLY the JSON object.`;
       throw new Error('GEMINI_API_KEY is not configured. Please set it in your environment variables.');
     }
 
-    console.log('🤖 Starting Gemini AI analysis...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🤖 Starting Gemini AI analysis...');
+    }
     const result = await model.generateContent([
       prompt,
       {
@@ -176,7 +184,9 @@ Return ONLY the JSON object.`;
     ]);
 
     const content = result.response.text();
-    console.log('✓ Gemini response received:', content.substring(0, 100) + '...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✓ Gemini response received:', content.substring(0, 100) + '...');
+    }
     
     if (!content) {
       throw new Error("No response from AI");
@@ -189,15 +199,19 @@ Return ONLY the JSON object.`;
       const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       analysis = JSON.parse(cleanContent);
     } catch (_parseError) {
-      console.error("Failed to parse AI response:", content);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to parse AI response:", content);
+      }
       throw new Error("Invalid AI response format");
     }
 
-    console.log('✓ AI analysis successful:', { 
-      name: analysis.name, 
-      color: analysis.color, 
-      type: analysis.type 
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✓ AI analysis successful:', { 
+        name: analysis.name, 
+        color: analysis.color, 
+        type: analysis.type 
+      });
+    }
 
     return NextResponse.json({
       success: true,

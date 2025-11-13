@@ -88,11 +88,8 @@ export default function OnboardingPage() {
         duration: 3000,
       });
       
-      console.log("Requesting geolocation permission...");
-      
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log("Location permission granted:", position);
           const coords = {
             lat: position.coords.latitude,
             lon: position.coords.longitude,
