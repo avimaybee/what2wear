@@ -98,7 +98,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const body = await request.json();
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('Received wardrobe POST request with body:', JSON.stringify(body, null, 2));
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Received wardrobe POST request with body:', JSON.stringify(body, null, 2));
+      }
     }
 
     // Normalize season_tags to lowercase to match database enum
@@ -136,7 +138,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     };
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('Creating database record:', JSON.stringify(newItem, null, 2));
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Creating database record:', JSON.stringify(newItem, null, 2));
+      }
     }
 
     const { data, error } = await supabase

@@ -58,8 +58,13 @@ const STYLE_PRESETS: Record<
 };
 
 /**
- * Call Gemini 2.5 Flash Image API to generate outfit silhouette
+ * Call Gemini 2.5 Flash Image API (Nano Banana) to generate outfit silhouette
  * Returns base64-encoded image data
+ * 
+ * Uses the Gemini 2.5 Flash Image model which supports:
+ * - Text-to-image generation
+ * - Multi-image composition
+ * - Response modalities in both text and images
  */
 export async function generateImageWithNanoBanana(
   params: GenerateImageParams
@@ -72,7 +77,7 @@ export async function generateImageWithNanoBanana(
 
     const preset = STYLE_PRESETS[params.style] || STYLE_PRESETS.photorealistic;
 
-    // Build image parts for inlineData
+    // Build image parts for inlineData - these are the clothing item reference images
     const imageParts = params.itemImages.map((img) => ({
       inlineData: {
         mimeType: img.mimeType,
@@ -80,14 +85,24 @@ export async function generateImageWithNanoBanana(
       },
     }));
 
-    // Build request body
+    // Enhance prompt with style preset and composition instructions
+    const enhancedPrompt = `${params.prompt}
+
+Style: ${preset.prompt || params.style}
+
+Create a photorealistic full-body fashion portrait showing a person wearing these clothing items together. 
+Use the provided reference images to accurately represent the colors, textures, and styles of each garment.
+The composition should be: clean studio lighting, neutral background, full-body standing pose.
+Ensure the outfit looks cohesive and fashionable.`;
+
+    // Build request body for Gemini 2.5 Flash Image
     const requestBody = {
       contents: [
         {
           role: 'user',
           parts: [
             {
-              text: params.prompt,
+              text: enhancedPrompt,
             },
             ...imageParts,
           ],
@@ -97,17 +112,20 @@ export async function generateImageWithNanoBanana(
         temperature: preset.temperature,
         topP: preset.topP,
         topK: 40,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192, // Allow for both text and image response
         seed: params.seed,
+        responseModalities: ['IMAGE'], // Request image output
       },
     };
 
-    logger.info('Calling Gemini API for outfit generation', {
-      seed: params.seed,
-      style: params.style,
-      itemCount: params.itemImages.length,
-      preview: params.preview,
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      logger.info('Calling Gemini 2.5 Flash Image API for outfit generation', {
+        seed: params.seed,
+        style: params.style,
+        itemCount: params.itemImages.length,
+        preview: params.preview,
+      });
+    }
 
     // Call Gemini API with 2.5 Flash Image model
     const response = await fetch(
@@ -123,8 +141,14 @@ export async function generateImageWithNanoBanana(
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      const errorMessage = errorData?.error?.message || 'Unknown error';
+      const errorText = await response.text();
+      let errorMessage = 'Unknown error';
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData?.error?.message || errorText;
+      } catch {
+        errorMessage = errorText;
+      }
       throw new Error(
         `Gemini API error: ${response.status} - ${errorMessage}`
       );
@@ -133,6 +157,7 @@ export async function generateImageWithNanoBanana(
     const data = await response.json();
 
     // Extract image data from response
+    // Gemini 2.5 Flash Image returns images in the response parts
     if (
       !data.candidates ||
       !data.candidates[0] ||
@@ -142,38 +167,51 @@ export async function generateImageWithNanoBanana(
       throw new Error('Invalid response structure from Gemini API');
     }
 
-    // Find inlineData part (image)
+    // Find all image parts in the response (can have multiple)
     const parts: unknown[] = data.candidates[0].content.parts;
-    const imagePart = parts.find((part) => {
+    const responseImageParts = parts.filter((part) => {
       if (part && typeof part === 'object' && part !== null) {
         return 'inlineData' in part;
       }
       return false;
-    }) as { inlineData?: { data?: string } } | undefined;
+    }) as Array<{ inlineData?: { data?: string; mimeType?: string } }>;
 
-    if (!imagePart || !imagePart.inlineData || !imagePart.inlineData.data) {
+    if (responseImageParts.length === 0) {
       throw new Error('No image data in Gemini API response');
     }
 
-    const base64Data = imagePart.inlineData.data;
+    // Extract base64 data from all image parts
+    const base64DataArray: string[] = [];
+    for (const imagePart of responseImageParts) {
+      if (imagePart.inlineData?.data) {
+        base64DataArray.push(imagePart.inlineData.data);
+      }
+    }
 
-    logger.info('Gemini API generation successful', {
-      seed: params.seed,
-      dataLength: base64Data.length,
-    });
+    if (base64DataArray.length === 0) {
+      throw new Error('Failed to extract image data from response');
+    }
 
-    // For preview, return single image; for full-res, could return multiple
-    // Currently Gemini returns one image per request, so we'll return that
+    if (process.env.NODE_ENV !== 'production') {
+      logger.info('Gemini API generation successful', {
+        seed: params.seed,
+        imageCount: base64DataArray.length,
+        totalDataSize: base64DataArray.reduce((sum, d) => sum + d.length, 0),
+      });
+    }
+
     return {
       urls: [], // URLs will be populated after upload to storage
-      base64Data: [base64Data],
+      base64Data: base64DataArray,
     };
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    logger.error('Nano Banana API error:', {
-      error: msg,
-      seed: params.seed,
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      logger.error('Nano Banana API error:', {
+        error: msg,
+        seed: params.seed,
+      });
+    }
     throw error;
   }
 }

@@ -167,7 +167,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('❌ Weather API error:', errorMsg);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('❌ Weather API error:', errorMsg);
+    }
     logger.error('Weather API error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch weather data' },
