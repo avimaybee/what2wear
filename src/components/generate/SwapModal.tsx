@@ -84,7 +84,7 @@ export const SwapModal = ({
 
       setWardrobeItems(filteredItems);
     } catch (error) {
-      logger.error('Error fetching wardrobe items:', error);
+      logger.error('Error fetching wardrobe items', { error });
       toast.error('Failed to load wardrobe items');
     } finally {
       setLoading(false);
@@ -128,7 +128,7 @@ export const SwapModal = ({
         onClose();
       }, 500);
     } catch (error) {
-      logger.error('Error confirming swap:', error);
+      logger.error('Error confirming swap', { error });
       toast.error('Failed to confirm swap. Please try again.');
     } finally {
       setConfirming(false);

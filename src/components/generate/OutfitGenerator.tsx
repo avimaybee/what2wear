@@ -102,7 +102,7 @@ export function OutfitGenerator({
       onGenerationComplete?.(data.previewUrls);
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err || 'Failed to generate outfit');
-      logger.error('Generation error:', errorMsg);
+      logger.error('Generation error', { error: errorMsg });
       setError(errorMsg);
       setJobStatus('failed');
       onError?.(errorMsg);
@@ -154,7 +154,7 @@ export function OutfitGenerator({
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.error('Polling error:', msg);
+        logger.error('Polling error', { error: msg });
         // Don't update error state on polling errors, just keep trying
       }
     }, 5000); // Poll every 5 seconds

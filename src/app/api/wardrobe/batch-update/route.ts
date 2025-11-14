@@ -43,7 +43,7 @@ export async function POST(
       .eq('user_id', user.id);
 
     if (fetchError) {
-      logger.error('Failed to fetch items:', fetchError);
+      logger.error('Failed to fetch items', { error: fetchError });
       return NextResponse.json(
         { success: false, error: 'Failed to fetch items' },
         { status: 500 }
@@ -83,7 +83,7 @@ export async function POST(
       .upsert(updates);
 
     if (updateError) {
-      logger.error('Failed to update items:', updateError);
+      logger.error('Failed to update items', { error: updateError });
       return NextResponse.json(
         { success: false, error: 'Failed to update items' },
         { status: 500 }
@@ -101,7 +101,7 @@ export async function POST(
       data: { updatedCount: count || items.length },
     });
   } catch (error) {
-    logger.error('Error in batch update:', error);
+    logger.error('Error in batch update', { error });
     return NextResponse.json(
       {
         success: false,

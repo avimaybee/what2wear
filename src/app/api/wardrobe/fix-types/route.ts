@@ -78,7 +78,7 @@ export async function POST(_request: NextRequest): Promise<NextResponse> {
     
     const errors = results.filter(r => r.error);
     if (errors.length > 0) {
-      logger.error('Some items failed to update:', errors);
+      logger.error('Some items failed to update', { errors });
     }
 
     const successCount = results.filter(r => !r.error).length;
@@ -90,7 +90,7 @@ export async function POST(_request: NextRequest): Promise<NextResponse> {
       total: items.length,
     });
   } catch (error) {
-    logger.error('Error fixing item types:', error);
+    logger.error('Error fixing item types', { error });
     return NextResponse.json(
       { 
         success: false, 

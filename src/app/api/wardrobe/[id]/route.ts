@@ -40,7 +40,7 @@ export async function GET(
         { status: 404 }
       );
     }
-    logger.error('Error fetching wardrobe item:', error);
+    logger.error('Error fetching wardrobe item', { error });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -101,7 +101,7 @@ export async function PUT(
       .single();
 
     if (error) {
-      logger.error('Error updating wardrobe item:', error);
+      logger.error('Error updating wardrobe item', { error });
       return NextResponse.json(
         { success: false, error: error.message },
         { status: 500 }
@@ -114,7 +114,7 @@ export async function PUT(
       message: 'Item updated successfully',
     });
   } catch (error) {
-    logger.error('Error processing PUT request:', error);
+    logger.error('Error processing PUT request', { error });
     return NextResponse.json(
       { success: false, error: 'Invalid request data' },
       { status: 400 }
@@ -152,7 +152,7 @@ export async function DELETE(
     .eq('user_id', user.id);
 
   if (error) {
-    logger.error('Error deleting wardrobe item:', error);
+    logger.error('Error deleting wardrobe item', { error });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

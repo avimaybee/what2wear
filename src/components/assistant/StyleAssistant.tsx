@@ -292,7 +292,7 @@ export function StyleAssistant({
       // onClose?.();
       
     } catch (error) {
-      logger.error('Style Assistant error:', error);
+      logger.error('Style Assistant error', { error });
       toast.error('Failed to execute action. Please try again.');
     } finally {
       setIsProcessing(false);

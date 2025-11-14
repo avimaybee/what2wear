@@ -66,7 +66,7 @@ export async function POST(
       message: 'Feedback recorded and analyzed',
     });
   } catch (error) {
-    logger.error('Error processing feedback:', error);
+    logger.error('Error processing feedback', { error });
     return NextResponse.json(
       {
         success: false,
@@ -117,7 +117,7 @@ export async function GET(
       message: 'Feedback history retrieved',
     });
   } catch (error) {
-    logger.error('Error fetching feedback:', error);
+    logger.error('Error fetching feedback', { error });
     return NextResponse.json(
       {
         success: false,

@@ -36,7 +36,7 @@ export async function POST(
       .eq('user_id', user.id);
 
     if (deleteError) {
-      logger.error('Failed to delete items:', deleteError);
+      logger.error('Failed to delete items', { error: deleteError });
       return NextResponse.json(
         { success: false, error: 'Failed to delete items' },
         { status: 500 }
@@ -54,7 +54,7 @@ export async function POST(
       data: { deletedCount: count || 0 },
     });
   } catch (error) {
-    logger.error('Error in batch delete:', error);
+    logger.error('Error in batch delete', { error });
     return NextResponse.json(
       {
         success: false,

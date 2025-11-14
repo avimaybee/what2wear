@@ -154,7 +154,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     console.error('❌ Error generating recommendation:', errorMsg);
-    logger.error('Error generating recommendation:', error);
+    logger.error('Error generating recommendation', { error });
     
     // Handle special cases for empty/insufficient wardrobe
     if (error instanceof Error) {
@@ -302,7 +302,7 @@ async function generateRecommendation(
         }
       }
     } catch (updateError) {
-      logger.error('Failed to backfill missing clothing item types', updateError);
+      logger.error('Failed to backfill missing clothing item types', { error: updateError });
     }
   }
 
@@ -438,7 +438,7 @@ async function generateRecommendation(
     .single();
 
   if (saveError) {
-    logger.error('Failed to save recommendation:', saveError);
+    logger.error('Failed to save recommendation', { error: saveError });
   }
 
   // Transform recommendation data to match frontend expectations
@@ -463,7 +463,7 @@ async function generateRecommendation(
             }
           }
         } catch (e) {
-          logger.error(`Error creating signed URL for recommendation item ${item.id}:`, e);
+          logger.error(`Error creating signed URL for recommendation item ${item.id}:`, { error: e });
           // fallthrough to return original item
         }
       }

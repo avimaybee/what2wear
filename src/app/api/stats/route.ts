@@ -48,7 +48,7 @@ export async function GET(_request: NextRequest) {
     });
     
   } catch (error) {
-    logger.error('Error fetching user stats:', error);
+    logger.error('Error fetching user stats', { error });
     return NextResponse.json(
       { 
         error: 'Failed to fetch statistics',

@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse<ApiRespon
     .eq('user_id', user.id);
 
   if (error) {
-    logger.error('Error fetching wardrobe items for metadata:', error);
+    logger.error('Error fetching wardrobe items for metadata', { error });
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 

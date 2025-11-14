@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse<ApiRespon
     .order('created_at', { ascending: false });
 
   if (error) {
-    logger.error('Error fetching wardrobe items:', error);
+    logger.error('Error fetching wardrobe items', { error });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -62,7 +62,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse<ApiRespon
             return { ...item, image_url: signedUrlData.signedUrl };
           }
         } catch (e) {
-          logger.error(`Error processing image URL for item ${item.id}:`, e);
+          logger.error(`Error processing image URL for item ${item.id}:`, { error: e });
           // Return original item if URL processing fails
           return item;
         }
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .single();
 
     if (error) {
-      logger.error('Error creating wardrobe item:', error);
+      logger.error('Error creating wardrobe item', { error });
       return NextResponse.json(
         { success: false, error: error.message },
         { status: 500 }
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       message: 'Item added successfully',
     }, { status: 201 });
   } catch (error) {
-    logger.error('Error processing wardrobe POST:', error);
+    logger.error('Error processing wardrobe POST', { error });
     return NextResponse.json(
       { success: false, error: 'Invalid request data' },
       { status: 400 }

@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       .eq('user_id', user.id);
 
     if (wardrobeError) {
-      logger.error('Error fetching wardrobe for template detection:', wardrobeError);
+      logger.error('Error fetching wardrobe for template detection', { error: wardrobeError });
       return NextResponse.json(
         { error: 'Failed to fetch wardrobe' },
         { status: 500 }
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error('Error in template detection endpoint:', error);
+    logger.error('Error in template detection endpoint', { error });
     return NextResponse.json(
       { error: 'Failed to detect templates' },
       { status: 500 }
