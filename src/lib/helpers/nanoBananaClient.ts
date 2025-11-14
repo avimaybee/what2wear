@@ -128,10 +128,22 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
         style: params.style,
         itemCount: params.itemImages.length,
         preview: params.preview,
+        // avoid logging raw base64; log sizes instead
+        itemImageSizes: params.itemImages.map((i) => (i.data ? i.data.length : 0)),
       });
     }
 
     // Call Gemini API with 2.5 Flash Image model (with image generation capability)
+    // Log a compact summary of the request (do not include base64 bodies)
+    if (process.env.NODE_ENV !== 'production') {
+      logger.debug('Gemini request summary', {
+        promptLength: String(enhancedPrompt).length,
+        partsCount: requestBody.contents?.[0]?.parts?.length ?? 0,
+        imageInputs: params.itemImages.length,
+        seed: params.seed,
+      });
+    }
+
     const response = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent',
       {
@@ -144,6 +156,15 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
       }
     );
 
+    // Log HTTP response status for easier debugging
+    if (process.env.NODE_ENV !== 'production') {
+      logger.info('Gemini API HTTP response', {
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers.get('content-type'),
+      });
+    }
+
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage = 'Unknown error';
@@ -153,6 +174,11 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
       } catch {
         errorMessage = errorText;
       }
+      logger.error('Gemini API returned non-OK response', {
+        status: response.status,
+        errorText: errorMessage,
+        seed: params.seed,
+      });
       throw new Error(
         `Gemini API error: ${response.status} - ${errorMessage}`
       );
@@ -173,6 +199,23 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
 
     // Find all image parts in the response (can have multiple)
     const parts: unknown[] = data.candidates[0].content.parts;
+
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const partTypes = (parts as unknown[]).map((p) => {
+          const obj = p as { text?: unknown; inlineData?: { mimeType?: unknown } };
+          return {
+            hasText: !!obj.text,
+            hasInlineData: !!obj.inlineData,
+            mimeType: typeof obj.inlineData?.mimeType === 'string' ? obj.inlineData!.mimeType : null,
+          };
+        });
+        logger.debug('Gemini response parts summary', { partTypes, seed: params.seed });
+      } catch {
+        logger.debug('Failed to summarize Gemini parts', { seed: params.seed });
+      }
+    }
+
     const responseImageParts = parts.filter((part) => {
       if (part && typeof part === 'object' && part !== null) {
         return 'inlineData' in part;
@@ -193,6 +236,7 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
     }
 
     if (base64DataArray.length === 0) {
+      logger.error('No base64 images extracted from Gemini response', { seed: params.seed });
       throw new Error('Failed to extract image data from response');
     }
 
@@ -214,6 +258,7 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
       logger.error('Nano Banana API error:', {
         error: msg,
         seed: params.seed,
+        stack: error instanceof Error ? error.stack : undefined,
       });
     }
     throw error;
@@ -229,6 +274,7 @@ export async function generateOutfitVariations(
 ): Promise<GenerationResult> {
   const base64Data: string[] = [];
 
+  const variationErrors: string[] = [];
   for (let i = 0; i < params.variationCount; i++) {
     try {
       // Use same base seed but vary it slightly for diversity
@@ -244,10 +290,18 @@ export async function generateOutfitVariations(
       }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to generate variation ${i}:`, msg);
+      logger.error(`Failed to generate variation ${i}:`, {
+        variationIndex: i,
+        error: msg,
+      });
+      variationErrors.push(msg);
       // Continue with other variations even if one fails
-      throw error; // Rethrow to stop generation on first failure (can be changed)
+      continue;
     }
+  }
+
+  if (base64Data.length === 0) {
+    throw new Error(`All variations failed: ${variationErrors.join(' | ')}`);
   }
 
   return {

@@ -303,6 +303,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       );
     }
 
+      logger.info('POST /api/generate/outfit-visual start', { userId: user.id });
+
     // 2. Parse and validate request
     let body: unknown;
     try {
@@ -340,6 +342,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
     }
 
   const req = body as GenerateOutfitRequest;
+
+    logger.info('Validated outfit visual request', {
+      userId: user.id,
+      recommendationId: (req as GenerateOutfitRequest).recommendationId,
+      itemCount: req.items.length,
+      silhouette: req.silhouette,
+      previewCount: req.previewCount || 3,
+    });
 
     // 3. Verify all items belong to user (security check for swap flow)
     // This ensures users can only generate outfits with their own wardrobe items
@@ -423,6 +433,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
     let previewUrls: string[] = [];
 
     try {
+      logger.info('Calling Nano Banana for preview generation', {
+        userId: user.id,
+        jobId,
+        seed,
+        previewCount,
+      });
       const nanoBananaResult = await callNanoBananaAPI(
         prompt,
         itemImages,
@@ -436,6 +452,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
         }
       );
       previewUrls = nanoBananaResult.urls;
+      logger.info('Nano Banana preview result', {
+        userId: user.id,
+        jobId,
+        previewCount: previewUrls.length,
+        samplePreview: previewUrls[0] || null,
+      });
     } catch (error: unknown) {
       logger.error('Nano Banana API error:', { error: getErrorMessage(error) });
       return NextResponse.json(
@@ -490,6 +512,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
         { status: 500 }
       );
     }
+
+      logger.info('Stored outfit_visual record', {
+        userId: user.id,
+        jobId,
+        insertedCount: Array.isArray(_outfitVisual) ? _outfitVisual.length : 0,
+        recordSample: Array.isArray(_outfitVisual) && _outfitVisual[0] ? { id: _outfitVisual[0].id, job_id: _outfitVisual[0].job_id } : null,
+      });
 
     // 11. Enqueue full-resolution job
     const { status: queueStatus, estimatedDurationSec } = await enqueueFullResolutionJob(
