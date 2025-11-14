@@ -9,7 +9,8 @@ export const logger = {
    * Debug logging - only in development
    */
   debug(message: string, ...args: unknown[]): void {
-    if (process.env.NODE_ENV === 'development') {
+    const allow = process.env.NODE_ENV === 'development' || process.env.ENABLE_DEBUG_LOGS === 'true';
+    if (allow) {
       console.debug(`[DEBUG] ${message}`, ...args);
     }
   },
@@ -18,7 +19,8 @@ export const logger = {
    * Info logging - development only
    */
   info(message: string, ...args: unknown[]): void {
-    if (process.env.NODE_ENV === 'development') {
+    const allow = process.env.NODE_ENV === 'development' || process.env.ENABLE_DEBUG_LOGS === 'true';
+    if (allow) {
       console.info(`[INFO] ${message}`, ...args);
     }
   },
@@ -41,7 +43,8 @@ export const logger = {
    * Log user actions for analytics (development only for privacy)
    */
   action(actionName: string, metadata?: Record<string, unknown>): void {
-    if (process.env.NODE_ENV === 'development') {
+    const allow = process.env.NODE_ENV === 'development' || process.env.ENABLE_DEBUG_LOGS === 'true';
+    if (allow) {
       console.log(`[ACTION] ${actionName}`, metadata);
     }
     // TODO: In production, send to analytics service
@@ -51,7 +54,8 @@ export const logger = {
    * Performance logging for debugging (development only)
    */
   perf(label: string, duration: number): void {
-    if (process.env.NODE_ENV === 'development') {
+    const allow = process.env.NODE_ENV === 'development' || process.env.ENABLE_DEBUG_LOGS === 'true';
+    if (allow) {
       console.log(`[PERF] ${label}: ${duration.toFixed(2)}ms`);
     }
   },
