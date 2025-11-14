@@ -169,8 +169,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     if (process.env.NODE_ENV === 'development') {
       console.error('❌ Weather API error:', errorMsg);
-    }
-    logger.error('Weather API error:', error);
+      }
+      logger.error('Weather API error', { error })
     return NextResponse.json(
       { success: false, error: 'Failed to fetch weather data' },
       { status: 500 }
@@ -259,11 +259,11 @@ async function fetchWeatherData(
             weatherData.air_quality_index = aqiIndex * 50;
           }
         } catch (aqiError) {
-          logger.error('AQI fetch error:', aqiError);
+          logger.error('AQI fetch error', { error: aqiError });
         }
       }
     } catch (error) {
-      logger.error('OpenWeatherMap fetch error:', error);
+      logger.error('OpenWeatherMap fetch error', { error });
     }
   }
   

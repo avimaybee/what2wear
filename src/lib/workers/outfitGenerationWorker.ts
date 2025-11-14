@@ -221,7 +221,7 @@ export async function processGenerationJob(
         .eq('user_id', jobData.userId);
     } catch (dbError: unknown) {
       const dbMsg = dbError instanceof Error ? dbError.message : String(dbError);
-      logger.error('Failed to update job error status:', dbMsg);
+      logger.error('Failed to update job error status', { error: dbMsg });
     }
 
     throw error;
