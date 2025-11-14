@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { generateOutfitVariations } from '@/lib/helpers/nanoBananaClient';
-import { uploadOutfitImages } from '@/lib/helpers/storageClient';
+import { uploadOutfitImages, createSignedUrl } from '@/lib/helpers/storageClient';
 
 /**
  * POST /api/generate/outfit-visual
@@ -364,7 +364,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
 
     const { data: userItems, error: itemQueryError } = await supabase
       .from('clothing_items')
-      .select('id')
+      .select('id, image_url')
       .eq('user_id', user.id)
       .in('id', itemIds);
 
@@ -386,7 +386,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
     if (!userItems || userItems.length !== itemIds.length) {
       const foundIds = userItems?.map((i) => i.id) || [];
       const missingIds = itemIds.filter((id) => !foundIds.includes(id));
-      
+
       logger.warn('Item ownership verification failed', {
         userId: user.id,
         requestedCount: itemIds.length,
@@ -399,7 +399,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
           success: false,
           error: {
             code: 'FORBIDDEN',
-            message: 'One or more items do not belong to the authenticated user or do not exist',
+            message:
+              'One or more items do not belong to the authenticated user or do not exist',
           },
         },
         { status: 403 }
@@ -421,13 +422,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
     const prompt = constructPhotorealisticPrompt(req, stylePreset);
 
     // 7. Fetch item images from storage or URLs
-    // TODO: Convert imageUrls to base64 or handle accordingly
-    const itemImages = req.items.map((item) => ({
-      url: item.imageUrl,
-      mimeType: 'image/jpeg',
-      // data would be populated after fetching from storage
-    }));
-
+    const itemImages = await Promise.all(
+      userItems.map(async (item) => {
+        const url = new URL(item.image_url);
+        const pathSegments = url.pathname.split('/clothing_images/');
+        if (pathSegments.length < 2 || !pathSegments[1]) {
+          throw new Error(`Could not extract storage path from URL for item ${item.id}`);
+        }
+        const storagePath = pathSegments[1];
+        const signedUrl = await createSignedUrl(storagePath, 120);
+        return {
+          url: signedUrl,
+          mimeType: 'image/jpeg',
+        };
+      })
+    );
     // 8. Call Nano Banana API for preview generation
     const startTime = Date.now();
     let previewUrls: string[] = [];
