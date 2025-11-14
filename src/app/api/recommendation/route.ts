@@ -478,6 +478,10 @@ async function generateRecommendation(
   try {
     if (savedRecommendation?.id && outfitWithSignedUrls.length >= 3) {
       // Build the request payload with proper field names
+      // Determine silhouette from user profile preferences (default to neutral)
+      const rawSilhouette = (((profile?.preferences as unknown) as { preferred_silhouette?: string })?.preferred_silhouette) || 'neutral';
+      const silhouetteValue: 'male' | 'female' | 'neutral' = (rawSilhouette === 'male' || rawSilhouette === 'female') ? (rawSilhouette as 'male' | 'female') : 'neutral';
+
       const requestPayload = {
         recommendationId: String(savedRecommendation.id),
         items: outfitWithSignedUrls.filter(item => item.image_url).map((item) => ({
@@ -488,7 +492,7 @@ async function generateRecommendation(
           material: item.material || null,
           styleTags: item.style_tags || [],
         })),
-        silhouette: 'neutral' as const, // Default; could be inferred from user preferences
+        silhouette: silhouetteValue,
         stylePreset: 'photorealistic',
         previewCount: 1,
         previewQuality: 'medium' as const,

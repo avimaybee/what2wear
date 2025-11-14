@@ -28,8 +28,6 @@ interface SwapModalProps {
   onClose: () => void;
   currentItem: IClothingItem | null;
   onItemSelected: (selectedItem: IClothingItem) => void;
-  recommendationId: string;
-  outfitItems: IClothingItem[];
 }
 
 const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%23f3f4f6' width='400' height='400'/%3E%3Cpath fill='%239ca3af' d='M150 100h100v200h-100z'/%3E%3Ccircle fill='%239ca3af' cx='200' cy='100' r='40'/%3E%3Ctext x='200' y='350' font-family='system-ui' font-size='20' fill='%236b7280' text-anchor='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -54,15 +52,10 @@ export const SwapModal = ({
   onClose,
   currentItem,
   onItemSelected,
-  recommendationId,
-  outfitItems,
 }: SwapModalProps) => {
   const [loading, setLoading] = useState(false);
   const [wardrobeItems, setWardrobeItems] = useState<IClothingItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<IClothingItem | null>(null);
-  const [previewGenerating, setPreviewGenerating] = useState(false);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [previewError, setPreviewError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   const fetchWardrobeItems = useCallback(async () => {
@@ -109,74 +102,12 @@ export const SwapModal = ({
   useEffect(() => {
     if (!isOpen) {
       setSelectedItem(null);
-      setPreviewUrls([]);
-      setPreviewError(null);
       setConfirming(false);
     }
   }, [isOpen]);
 
-  const handleItemSelect = async (item: IClothingItem) => {
+  const handleItemSelect = (item: IClothingItem) => {
     setSelectedItem(item);
-    setPreviewError(null);
-    
-    // Auto-generate preview on selection
-    await generatePreview(item);
-  };
-
-  const generatePreview = async (item: IClothingItem) => {
-    try {
-      setPreviewGenerating(true);
-      setPreviewError(null);
-
-      // Create a modified outfit with the swapped item
-      const modifiedOutfit = outfitItems.map((outfitItem) =>
-        outfitItem.id === currentItem?.id ? item : outfitItem
-      );
-
-      // Call the generation endpoint with preview-only flag
-      const response = await fetch('/api/generate/outfit-visual', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          recommendationId,
-          items: modifiedOutfit.map((outfitItem) => ({
-            id: outfitItem.id,
-            imageUrl: outfitItem.image_url,
-            type: outfitItem.type,
-            colors: outfitItem.color ? [outfitItem.color] : [],
-            material: outfitItem.material || null,
-            styleTags: outfitItem.style_tags || [],
-          })),
-          silhouette: 'neutral',
-          stylePreset: 'photorealistic',
-          previewCount: 1,
-          previewQuality: 'medium',
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate preview');
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.previewUrls && data.previewUrls.length > 0) {
-        setPreviewUrls(data.previewUrls);
-      } else {
-        throw new Error(data.message || 'No preview generated');
-      }
-    } catch (error) {
-      logger.error('Error generating preview:', error);
-      setPreviewError(
-        error instanceof Error 
-          ? error.message 
-          : 'Failed to generate preview. Please try again.'
-      );
-    } finally {
-      setPreviewGenerating(false);
-    }
   };
 
   const handleConfirmSwap = async () => {
@@ -377,65 +308,19 @@ export const SwapModal = ({
             )}
           </div>
 
-          {/* Preview Section */}
-          {selectedItem && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-3 border-t pt-4"
-            >
-              <p className="text-sm font-semibold">Preview</p>
-
-              {previewGenerating ? (
-                <div className="flex items-center justify-center py-8 text-muted-foreground">
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  <span>Generating preview...</span>
-                </div>
-              ) : previewError ? (
-                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm text-destructive flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold">Preview Generation Failed</p>
-                    <p className="text-xs mt-1">{previewError}</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mt-2 h-7 text-xs"
-                      onClick={() => generatePreview(selectedItem)}
-                    >
-                      Retry
-                    </Button>
-                  </div>
-                </div>
-              ) : previewUrls.length > 0 ? (
-                <div className="relative aspect-video bg-muted rounded-lg overflow-hidden border">
-                  <Image
-                    src={previewUrls[0]}
-                    alt="Outfit preview with swapped item"
-                    fill
-                    sizes="(max-width: 768px) 100vw, 600px"
-                    className="object-contain"
-                    priority
-                  />
-                </div>
-              ) : null}
-            </motion.div>
-          )}
-
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t">
             <Button
               variant="outline"
               onClick={onClose}
-              disabled={previewGenerating || confirming}
+              disabled={confirming}
               className="flex-1"
             >
               Cancel
             </Button>
             <Button
               onClick={handleConfirmSwap}
-              disabled={!selectedItem || previewGenerating || confirming}
+              disabled={!selectedItem || confirming}
               className="flex-1"
             >
               {confirming ? (

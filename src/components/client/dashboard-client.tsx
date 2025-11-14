@@ -646,8 +646,6 @@ export const DashboardClient = ({
         }}
         currentItem={swapItemInFocus}
         onItemSelected={handleSwapItem}
-        recommendationId={recommendation?.id || ''}
-        outfitItems={recommendation?.outfit || []}
       />
     </div>
   );

@@ -50,6 +50,7 @@ export default function SettingsPage() {
   const [temperatureSensitivity, setTemperatureSensitivity] = useState(0);
   const [varietyDays, setVarietyDays] = useState(7);
   const [fitPreference, setFitPreference] = useState<FitPreference>('Regular');
+  const [silhouette, setSilhouette] = useState<'male' | 'female' | 'other' | 'neutral'>('neutral');
   const [preferredStyles, setPreferredStyles] = useState<string[]>([]);
   const [dislikedStyles, setDislikedStyles] = useState<string[]>([]);
   const [preferredColors, setPreferredColors] = useState<string[]>([]);
@@ -86,6 +87,7 @@ export default function SettingsPage() {
               setDislikedColors(prefs.disliked_colors || []);
               setPreferredMaterials(prefs.preferred_materials || []);
               setDislikedMaterials(prefs.disliked_materials || []);
+              setSilhouette(prefs.preferred_silhouette || 'neutral');
             }
           }
         }
@@ -116,6 +118,7 @@ export default function SettingsPage() {
           temperature_sensitivity: temperatureSensitivity,
           variety_days: varietyDays,
           fit_preference: fitPreference,
+          preferred_silhouette: silhouette,
           preferred_styles: preferredStyles,
           disliked_styles: dislikedStyles,
           preferred_colors: preferredColors,
@@ -210,6 +213,23 @@ export default function SettingsPage() {
               {(['Slim', 'Regular', 'Oversized'] as FitPreference[]).map((fit) => (
                 <Button key={fit} variant={fitPreference === fit ? "default" : "outline"} onClick={() => setFitPreference(fit)}>
                   {fit}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Silhouette Preference */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><User className="h-5 w-5 text-primary" />Silhouette</CardTitle>
+            <CardDescription>Tell us which silhouette best represents you for outfit visual generation.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {(['male', 'female', 'other'] as const).map((s) => (
+                <Button key={s} variant={silhouette === s ? 'default' : 'outline'} onClick={() => setSilhouette(s)}>
+                  {s === 'other' ? 'Other / Prefer not to say' : s.charAt(0).toUpperCase() + s.slice(1)}
                 </Button>
               ))}
             </div>

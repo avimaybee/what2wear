@@ -93,7 +93,8 @@ Style: ${preset.prompt || params.style}
 Create a photorealistic full-body fashion portrait showing a person wearing these clothing items together. 
 Use the provided reference images to accurately represent the colors, textures, and styles of each garment.
 The composition should be: clean studio lighting, neutral background, full-body standing pose.
-Ensure the outfit looks cohesive and fashionable.`;
+Ensure the outfit looks cohesive and fashionable.
+Output image should be portrait orientation (3:4 aspect ratio) suitable for fashion photography.`;
 
     // Build request body for Gemini 2.5 Flash Image
     const requestBody = {
@@ -114,7 +115,10 @@ Ensure the outfit looks cohesive and fashionable.`;
         topK: 40,
         maxOutputTokens: 8192, // Allow for both text and image response
         seed: params.seed,
-        responseModalities: ['IMAGE'], // Request image output
+        responseModalities: ['image'], // Must be lowercase 'image'
+      },
+      image_config: {
+        aspect_ratio: '3:4', // Portrait orientation for fashion photography
       },
     };
 
@@ -127,7 +131,7 @@ Ensure the outfit looks cohesive and fashionable.`;
       });
     }
 
-    // Call Gemini API with 2.5 Flash Image model
+    // Call Gemini API with 2.5 Flash Image model (with image generation capability)
     const response = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent',
       {
