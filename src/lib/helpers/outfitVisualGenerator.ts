@@ -118,12 +118,10 @@ export async function generateOutfitVisualForRecommendation(
     const prompt = constructPhotorealisticPrompt(items, silhouette, stylePreset);
 
     // Fetch item images as base64
-    if (process.env.NODE_ENV !== 'production') {
-      logger.info('Fetching item images for visual generation', {
-        itemCount: items.length,
-        recommendationId,
-      });
-    }
+    logger.info('Fetching item images for visual generation', {
+      itemCount: items.length,
+      recommendationId,
+    });
 
     const imageBase64Array: string[] = [];
     for (const item of items) {
@@ -133,9 +131,7 @@ export async function generateOutfitVisualForRecommendation(
         imageBase64Array.push(base64);
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        if (process.env.NODE_ENV !== 'production') {
-          logger.warn(`Failed to fetch image for item ${item.id}:`, msg);
-        }
+        logger.warn(`Failed to fetch image for item ${item.id}:`, { error: msg });
         // Continue with other images
       }
     }
@@ -151,13 +147,11 @@ export async function generateOutfitVisualForRecommendation(
     }
 
     // Call Nano Banana API for generation
-    if (process.env.NODE_ENV !== 'production') {
-      logger.info('Calling Nano Banana API for outfit generation', {
-        seed,
-        itemCount: imageBase64Array.length,
-        previewCount,
-      });
-    }
+    logger.info('Calling Nano Banana API for outfit generation', {
+      seed,
+      itemCount: imageBase64Array.length,
+      previewCount,
+    });
 
     const result = await generateOutfitVariations({
       prompt,
@@ -183,11 +177,9 @@ export async function generateOutfitVisualForRecommendation(
     }
 
     // Upload generated images to storage
-    if (process.env.NODE_ENV !== 'production') {
-      logger.info('Uploading generated images to storage', {
-        count: result.base64Data.length,
-      });
-    }
+    logger.info('Uploading generated images to storage', {
+      count: result.base64Data.length,
+    });
 
     const previewUrls = await uploadOutfitImages(
       user.id,
@@ -217,9 +209,7 @@ export async function generateOutfitVisualForRecommendation(
       ]);
 
     if (insertError) {
-      if (process.env.NODE_ENV !== 'production') {
-        logger.error('Error storing outfit_visual record:', insertError);
-      }
+      logger.error('Error storing outfit_visual record:', { error: insertError });
       // Don't fail the request if DB insert fails, we still have the URLs
     }
 
@@ -230,12 +220,7 @@ export async function generateOutfitVisualForRecommendation(
     };
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    if (process.env.NODE_ENV !== 'production') {
-      logger.error('Error generating outfit visual:', {
-        error: msg,
-        recommendationId,
-      });
-    }
+    logger.error('Error generating outfit visual:', { error: msg, recommendationId });
     return {
       success: false,
       error: {

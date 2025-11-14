@@ -64,7 +64,7 @@ export async function processFeedback(input: FeedbackInput): Promise<{
       });
 
     if (feedbackError) {
-      logger.error('Failed to save feedback:', feedbackError);
+      logger.error('Failed to save feedback', { error: feedbackError });
       return { success: false, error: feedbackError.message };
     }
 
@@ -84,7 +84,7 @@ export async function processFeedback(input: FeedbackInput): Promise<{
 
     return { success: true, analysis };
   } catch (error) {
-    logger.error('Error processing feedback:', error);
+    logger.error('Error processing feedback', { error });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -166,7 +166,7 @@ async function updateUserPreferences(userId: string, analysis: FeedbackAnalysis)
       .single();
 
     if (fetchError) {
-      logger.warn('Could not fetch user profile for preferences:', fetchError);
+      logger.warn('Could not fetch user profile for preferences', { error: fetchError });
       return;
     }
 
@@ -196,12 +196,12 @@ async function updateUserPreferences(userId: string, analysis: FeedbackAnalysis)
       .eq('id', userId);
 
     if (updateError) {
-      logger.error('Failed to update user preferences:', updateError);
+      logger.error('Failed to update user preferences', { error: updateError });
     } else {
       logger.info('User preferences updated successfully', { userId });
     }
   } catch (error) {
-    logger.error('Error updating user preferences:', error);
+    logger.error('Error updating user preferences', { error });
   }
 }
 
@@ -254,7 +254,7 @@ export async function getUserPreferences(userId: string): Promise<{
       .single();
 
     if (error) {
-      logger.warn('Could not fetch user preferences:', error);
+      logger.warn('Could not fetch user preferences', { error });
       return { colors: [], styles: [], materials: [] };
     }
 
@@ -279,7 +279,7 @@ export async function getUserPreferences(userId: string): Promise<{
         .map(([material]) => material),
     };
   } catch (error) {
-    logger.error('Error getting user preferences:', error);
+    logger.error('Error getting user preferences', { error });
     return { colors: [], styles: [], materials: [] };
   }
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
+import { logger, generateRequestId } from '@/lib/logger';
 import { generateOutfitVariations } from '@/lib/helpers/nanoBananaClient';
 import { uploadOutfitImages, createSignedUrl } from '@/lib/helpers/storageClient';
 
@@ -303,7 +303,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       );
     }
 
-      logger.info('POST /api/generate/outfit-visual start', { userId: user.id });
+    const requestId = generateRequestId('gen');
+    const log = logger.child({ requestId, userId: user.id });
+    log.info('POST /api/generate/outfit-visual start');
 
     // 2. Parse and validate request
     let body: unknown;
@@ -324,7 +326,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
 
     const { valid, errors } = validateRequest(body);
     if (!valid) {
-      logger.error('Outfit visual request validation failed', {
+      log.error('Outfit visual request validation failed', {
         errors,
         bodyKeys: Object.keys(body as Record<string, unknown>),
       });
@@ -343,8 +345,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
 
   const req = body as GenerateOutfitRequest;
 
-    logger.info('Validated outfit visual request', {
-      userId: user.id,
+    log.info('Validated outfit visual request', {
       recommendationId: (req as GenerateOutfitRequest).recommendationId,
       itemCount: req.items.length,
       silhouette: req.silhouette,
@@ -369,7 +370,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       .in('id', itemIds);
 
     if (itemQueryError) {
-      logger.error('Error querying user items:', itemQueryError);
+      log.error('Error querying user items', { error: itemQueryError });
       return NextResponse.json(
         {
           success: false,
@@ -387,8 +388,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       const foundIds = userItems?.map((i) => i.id) || [];
       const missingIds = itemIds.filter((id) => !foundIds.includes(id));
 
-      logger.warn('Item ownership verification failed', {
-        userId: user.id,
+      log.warn('Item ownership verification failed', {
         requestedCount: itemIds.length,
         foundCount: userItems?.length || 0,
         missingIds,
@@ -442,8 +442,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
     let previewUrls: string[] = [];
 
     try {
-      logger.info('Calling Nano Banana for preview generation', {
-        userId: user.id,
+      log.info('Calling Nano Banana for preview generation', {
         jobId,
         seed,
         previewCount,
@@ -461,14 +460,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
         }
       );
       previewUrls = nanoBananaResult.urls;
-      logger.info('Nano Banana preview result', {
-        userId: user.id,
+      log.info('Nano Banana preview result', {
         jobId,
         previewCount: previewUrls.length,
         samplePreview: previewUrls[0] || null,
       });
     } catch (error: unknown) {
-      logger.error('Nano Banana API error:', { error: getErrorMessage(error) });
+      log.error('Nano Banana API error', { error: getErrorMessage(error) });
       return NextResponse.json(
         {
           success: false,
@@ -509,7 +507,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       .select();
 
     if (insertError) {
-      logger.error('Error storing outfit_visual record:', insertError);
+      log.error('Error storing outfit_visual record', { error: insertError });
       return NextResponse.json(
         {
           success: false,
@@ -522,12 +520,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       );
     }
 
-      logger.info('Stored outfit_visual record', {
-        userId: user.id,
-        jobId,
-        insertedCount: Array.isArray(_outfitVisual) ? _outfitVisual.length : 0,
-        recordSample: Array.isArray(_outfitVisual) && _outfitVisual[0] ? { id: _outfitVisual[0].id, job_id: _outfitVisual[0].job_id } : null,
-      });
+    log.info('Stored outfit_visual record', {
+      jobId,
+      insertedCount: Array.isArray(_outfitVisual) ? _outfitVisual.length : 0,
+      recordSample: Array.isArray(_outfitVisual) && _outfitVisual[0] ? { id: _outfitVisual[0].id, job_id: _outfitVisual[0].job_id } : null,
+    });
 
     // 11. Enqueue full-resolution job
     const { status: queueStatus, estimatedDurationSec } = await enqueueFullResolutionJob(
@@ -561,7 +558,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateO
       { status: 200 }
     );
   } catch (error: unknown) {
-    logger.error('Unexpected error in POST /api/generate/outfit-visual:', getErrorMessage(error));
+    logger.error('Unexpected error in POST /api/generate/outfit-visual', { error: getErrorMessage(error) });
     return NextResponse.json(
       {
         success: false,

@@ -122,27 +122,23 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
       },
     };
 
-    if (process.env.NODE_ENV !== 'production') {
-      logger.info('Calling Gemini 2.5 Flash Image API for outfit generation', {
-        seed: params.seed,
-        style: params.style,
-        itemCount: params.itemImages.length,
-        preview: params.preview,
-        // avoid logging raw base64; log sizes instead
-        itemImageSizes: params.itemImages.map((i) => (i.data ? i.data.length : 0)),
-      });
-    }
+    logger.info('Calling Gemini 2.5 Flash Image API for outfit generation', {
+      seed: params.seed,
+      style: params.style,
+      itemCount: params.itemImages.length,
+      preview: params.preview,
+      // avoid logging raw base64; log sizes instead
+      itemImageSizes: params.itemImages.map((i) => (i.data ? i.data.length : 0)),
+    });
 
     // Call Gemini API with 2.5 Flash Image model (with image generation capability)
     // Log a compact summary of the request (do not include base64 bodies)
-    if (process.env.NODE_ENV !== 'production') {
-      logger.debug('Gemini request summary', {
-        promptLength: String(enhancedPrompt).length,
-        partsCount: requestBody.contents?.[0]?.parts?.length ?? 0,
-        imageInputs: params.itemImages.length,
-        seed: params.seed,
-      });
-    }
+    logger.debug('Gemini request summary', {
+      promptLength: String(enhancedPrompt).length,
+      partsCount: requestBody.contents?.[0]?.parts?.length ?? 0,
+      imageInputs: params.itemImages.length,
+      seed: params.seed,
+    });
 
     const response = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent',
@@ -157,13 +153,11 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
     );
 
     // Log HTTP response status for easier debugging
-    if (process.env.NODE_ENV !== 'production') {
-      logger.info('Gemini API HTTP response', {
-        status: response.status,
-        ok: response.ok,
-        contentType: response.headers.get('content-type'),
-      });
-    }
+    logger.info('Gemini API HTTP response', {
+      status: response.status,
+      ok: response.ok,
+      contentType: response.headers.get('content-type'),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -200,20 +194,18 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
     // Find all image parts in the response (can have multiple)
     const parts: unknown[] = data.candidates[0].content.parts;
 
-    if (process.env.NODE_ENV !== 'production') {
-      try {
-        const partTypes = (parts as unknown[]).map((p) => {
-          const obj = p as { text?: unknown; inlineData?: { mimeType?: unknown } };
-          return {
-            hasText: !!obj.text,
-            hasInlineData: !!obj.inlineData,
-            mimeType: typeof obj.inlineData?.mimeType === 'string' ? obj.inlineData!.mimeType : null,
-          };
-        });
-        logger.debug('Gemini response parts summary', { partTypes, seed: params.seed });
-      } catch {
-        logger.debug('Failed to summarize Gemini parts', { seed: params.seed });
-      }
+    try {
+      const partTypes = (parts as unknown[]).map((p) => {
+        const obj = p as { text?: unknown; inlineData?: { mimeType?: unknown } };
+        return {
+          hasText: !!obj.text,
+          hasInlineData: !!obj.inlineData,
+          mimeType: typeof obj.inlineData?.mimeType === 'string' ? obj.inlineData!.mimeType : null,
+        };
+      });
+      logger.debug('Gemini response parts summary', { partTypes, seed: params.seed });
+    } catch {
+      logger.debug('Failed to summarize Gemini parts', { seed: params.seed });
     }
 
     const responseImageParts = parts.filter((part) => {
@@ -240,13 +232,11 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
       throw new Error('Failed to extract image data from response');
     }
 
-    if (process.env.NODE_ENV !== 'production') {
-      logger.info('Gemini API generation successful', {
-        seed: params.seed,
-        imageCount: base64DataArray.length,
-        totalDataSize: base64DataArray.reduce((sum, d) => sum + d.length, 0),
-      });
-    }
+    logger.info('Gemini API generation successful', {
+      seed: params.seed,
+      imageCount: base64DataArray.length,
+      totalDataSize: base64DataArray.reduce((sum, d) => sum + d.length, 0),
+    });
 
     return {
       urls: [], // URLs will be populated after upload to storage
@@ -254,13 +244,11 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
     };
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    if (process.env.NODE_ENV !== 'production') {
-      logger.error('Nano Banana API error:', {
-        error: msg,
-        seed: params.seed,
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-    }
+    logger.error('Nano Banana API error:', {
+      error: msg,
+      seed: params.seed,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { logger } from '@/lib/logger';
+import { logger, generateRequestId } from '@/lib/logger';
 
 /**
  * GET /api/generate/outfit-visual/[jobId]
@@ -59,6 +59,9 @@ export async function GET(
       );
     }
 
+    const requestId = generateRequestId('gen');
+    const log = logger.child({ requestId, userId: user.id });
+
     // 2. Fetch outfit_visuals record
     const { data: outfitVisual, error: queryError } = await supabase
       .from('outfit_visuals')
@@ -82,7 +85,7 @@ export async function GET(
         );
       }
 
-      logger.error('Error fetching outfit_visual:', queryError);
+      log.error('Error fetching outfit_visual', { error: queryError });
       return NextResponse.json(
         {
           success: false,
@@ -126,7 +129,7 @@ export async function GET(
     );
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    logger.error('Unexpected error in GET /api/generate/outfit-visual/[jobId]:', msg);
+    logger.error('Unexpected error in GET /api/generate/outfit-visual/[jobId]', { error: msg });
     return NextResponse.json(
       {
         success: false,

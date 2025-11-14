@@ -70,7 +70,7 @@ export function useOutfitGenerator(options: UseOutfitGeneratorOptions) {
         options.onPreviewReady?.(data.previewUrls);
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err || 'Failed to generate outfit');
-        logger.error('Generation error:', errorMsg);
+        logger.error('Generation error', { error: errorMsg });
         setError(errorMsg);
         options.onError?.(errorMsg);
       } finally {
@@ -114,7 +114,7 @@ export function useOutfitGenerator(options: UseOutfitGeneratorOptions) {
         return { done: false };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.error('Polling error:', msg);
+        logger.error('Polling error', { error: msg });
         throw err;
       }
     },
