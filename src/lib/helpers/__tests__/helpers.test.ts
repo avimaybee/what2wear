@@ -8,7 +8,8 @@ import {
   filterByLastWorn, 
   getDressCodeFromEvents,
   adjustInsulationForActivity,
-  calculateRequiredInsulation 
+  calculateRequiredInsulation,
+  getRecommendation,
 } from '../recommendationEngine';
 import { adjustPreferences } from '../preferenceLearning';
 import { 
@@ -175,5 +176,67 @@ console.log(`  Feedback: "too cold"`);
 console.log(`  Adjusted sensitivity: ${adjustedPrefs.temperature_sensitivity}`);
 console.log(`  (Positive = feels colder, will recommend warmer clothes)`);
 console.log('✅ Preference learning working\n');
+
+// Test 7: Recommendation resilience with missing insulation values
+console.log('🧥 Test 7: Recommendation handles missing insulation data');
+const wardrobeWithMissingInsulation: IClothingItem[] = [
+  {
+    id: 11,
+    user_id: 'test',
+    name: 'Graphic Tee',
+    type: 'Top',
+    material: null,
+    insulation_value: null,
+    last_worn_date: null,
+    image_url: 'tee.jpg',
+    season_tags: null,
+    style_tags: ['casual'],
+    dress_code: ['Casual'],
+    category: null,
+    color: 'white',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 12,
+    user_id: 'test',
+    name: 'Relaxed Chinos',
+    type: 'Bottom',
+    material: null,
+    insulation_value: null,
+    last_worn_date: null,
+    image_url: 'pants.jpg',
+    season_tags: null,
+    style_tags: ['casual'],
+    dress_code: ['Casual'],
+    category: null,
+    color: 'khaki',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 13,
+    user_id: 'test',
+    name: 'Minimal Sneakers',
+    type: 'Footwear',
+    material: null,
+    insulation_value: null,
+    last_worn_date: null,
+    image_url: 'shoes.jpg',
+    season_tags: null,
+    style_tags: ['casual'],
+    dress_code: ['Casual'],
+    category: null,
+    color: 'white',
+    created_at: new Date().toISOString(),
+  },
+];
+
+const resilienceRecommendation = getRecommendation(
+  wardrobeWithMissingInsulation,
+  { weather: mockWeather, user_preferences: {} },
+);
+
+console.log(`  Items chosen: ${resilienceRecommendation.items.map(item => `${item.name} (${item.insulation_value})`).join(', ')}`);
+console.log(`  Confidence score: ${resilienceRecommendation.confidence_score.toFixed(2)}`);
+console.log('✅ Recommendation still works when insulation data is missing\n');
 
 console.log('🎉 All tests passed! Backend helpers are functioning correctly.');

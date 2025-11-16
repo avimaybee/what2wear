@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, type GenerativeModel } from '@google/generative-ai';
 import { IClothingItem } from '@/lib/types';
 import { config } from '@/lib/config';
+import { resolveInsulationValue } from './recommendationEngine';
 
 /**
  * AI-Powered Outfit Analyzer using Gemini 2.5 Flash
@@ -181,7 +182,7 @@ Material: ${item.material}
 Color: ${item.color || 'unspecified'}
 Style Tags: ${item.style_tags?.join(', ') || 'none'}
 Dress Code: ${item.dress_code.join(', ')}
-Insulation: ${item.insulation_value}/10
+Insulation: ${resolveInsulationValue(item)}/10
 
 Provide a JSON response with:
 {
@@ -238,7 +239,7 @@ export async function generateOutfitCombinations(
     type: item.type,
     material: item.material,
     color: item.color,
-    insulation: item.insulation_value,
+    insulation: resolveInsulationValue(item),
     dressCode: item.dress_code,
     styleTags: item.style_tags,
   }));

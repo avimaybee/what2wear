@@ -6,9 +6,57 @@ import {
   DressCode,
   WeatherAlert,
   CalendarEvent,
+  RecommendationDebugEvent,
 } from '@/lib/types';
 import { config } from '@/lib/config';
 import chroma from 'chroma-js';
+
+export type RecommendationDebugCollector = (event: RecommendationDebugEvent) => void;
+
+const MATERIAL_INSULATION_PRESETS: Record<string, number> = {
+  wool: 8,
+  fleece: 7,
+  leather: 6,
+  denim: 5,
+  cotton: 3,
+  linen: 2,
+  silk: 2,
+  synthetic: 3,
+  polyester: 3,
+  nylon: 2,
+  'gore-tex': 6,
+  down: 8,
+  default: 3,
+};
+
+const TYPE_INSULATION_BASELINE: Record<IClothingItem['type'], number> = {
+  Outerwear: 7,
+  Top: 3,
+  Bottom: 4,
+  Footwear: 3,
+  Accessory: 1,
+  Headwear: 2,
+};
+
+const clampInsulation = (value: number) => Math.min(10, Math.max(0, value));
+
+export function resolveInsulationValue(item: Partial<IClothingItem>): number {
+  const raw = item.insulation_value;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return clampInsulation(raw);
+  }
+
+  const materialKey = item.material?.toLowerCase();
+  if (materialKey && MATERIAL_INSULATION_PRESETS[materialKey] !== undefined) {
+    return MATERIAL_INSULATION_PRESETS[materialKey];
+  }
+
+  if (item.type && TYPE_INSULATION_BASELINE[item.type]) {
+    return TYPE_INSULATION_BASELINE[item.type];
+  }
+
+  return MATERIAL_INSULATION_PRESETS.default;
+}
 
 // ============================================================================
 // NEW SCORING LOGIC
@@ -482,15 +530,25 @@ function scoreOutfit(items: IClothingItem[], context: RecommendationContext): nu
 export function getRecommendation(
   wardrobe: IClothingItem[],
   context: RecommendationContext,
-  constraints?: RecommendationConstraints
+  constraints?: RecommendationConstraints,
+  debug?: RecommendationDebugCollector
 ): OutfitRecommendation {
-  let availableItems = [...wardrobe];
+  const emitDebug = (stage: string, meta?: Record<string, unknown>) => {
+    if (!debug) return;
+    debug({ stage, timestamp: new Date().toISOString(), meta });
+  };
+
+  let availableItems = wardrobe.map(item => ({
+    ...item,
+    insulation_value: resolveInsulationValue(item),
+  }));
   const reasoning: string[] = [];
 
   // Task 1.4: Filter by last_worn_date for variety
   const minDaysSinceWorn = constraints?.min_days_since_worn || 
                           config.app.recommendations.minDaysSinceWorn;
   availableItems = filterByLastWorn(availableItems, minDaysSinceWorn);
+  emitDebug('filter:lastWorn', { remaining: availableItems.length, minDaysSinceWorn });
   // Skip verbose filtering debug text
 
   // Task 2.4: Apply dress code constraint
@@ -502,6 +560,7 @@ export function getRecommendation(
   if (dressCode) {
     availableItems = filterByDressCode(availableItems, dressCode);
     reasoning.push(`Selected ${dressCode} attire for your day`);
+    emitDebug('filter:dressCode', { dressCode, remaining: availableItems.length });
   }
 
   // Calculate insulation needs based on weather
@@ -526,9 +585,11 @@ export function getRecommendation(
 
   // Filter items by insulation (with some tolerance)
   const insulationTolerance = 2;
-  const insulationFilteredItems = availableItems.filter(item => 
-    Math.abs(item.insulation_value - requiredInsulation) <= insulationTolerance
-  );
+  const insulationFilteredItems = availableItems.filter(item => {
+    const itemInsulation = resolveInsulationValue(item);
+    return Math.abs(itemInsulation - requiredInsulation) <= insulationTolerance;
+  });
+  emitDebug('filter:insulation', { remaining: insulationFilteredItems.length, requiredInsulation });
   // Skip verbose insulation filter debug
 
   // Task 3.3: Consider weather alerts
@@ -555,8 +616,8 @@ export function getRecommendation(
 
   // Ensure we have at least one of each core item type
   if (itemsByType.Tops.length === 0 || itemsByType.Bottoms.length === 0 || itemsByType.Footwear.length === 0) {
-    // Fallback to old logic if not enough items for new logic
-    return getLegacyRecommendation(wardrobe, context, constraints);
+    emitDebug('fallback:legacy', { reason: 'missing core category' });
+    return getLegacyRecommendation(wardrobe, context, constraints, debug);
   }
 
   const combinations: { outfit: IClothingItem[], score: number }[] = [];
@@ -573,7 +634,8 @@ export function getRecommendation(
   }
   
   if (combinations.length === 0) {
-    return getLegacyRecommendation(wardrobe, context, constraints);
+    emitDebug('fallback:legacy', { reason: 'no viable combinations' });
+    return getLegacyRecommendation(wardrobe, context, constraints, debug);
   }
 
   // Sort combinations by score (highest first)
@@ -582,6 +644,7 @@ export function getRecommendation(
   // Add variety: instead of always picking the absolute best, select randomly from top candidates
   // This ensures each refresh shows a different outfit while maintaining quality
   const topCandidateCount = Math.min(5, Math.ceil(combinations.length * 0.2)); // Top 20% or 5 max
+  emitDebug('generator:combinations', { count: combinations.length, topCandidateCount });
   const topCandidates = combinations.slice(0, topCandidateCount);
   
   // Select randomly from top candidates, weighted toward higher scores
@@ -592,7 +655,7 @@ export function getRecommendation(
   const bestScore = selectedOutfit.score;
   // Skip verbose scoring debug - user doesn't need to see internal scores
 
-  const baseOutfitInsulation = bestOutfitItems.reduce((sum, item) => sum + item.insulation_value, 0);
+  const baseOutfitInsulation = bestOutfitItems.reduce((sum, item) => sum + resolveInsulationValue(item), 0);
   const insulationDeficit = requiredInsulation - baseOutfitInsulation;
 
   // Add outerwear if needed and available
@@ -602,7 +665,8 @@ export function getRecommendation(
 
     for (const outerwear of itemsByType.Outerwear) {
       // Only consider outerwear that helps meet the insulation deficit
-      if (outerwear.insulation_value >= insulationDeficit - insulationTolerance) {
+      const outerwearInsulation = resolveInsulationValue(outerwear);
+      if (outerwearInsulation >= insulationDeficit - insulationTolerance) {
         const outfitWithOuterwear = [...bestOutfitItems, outerwear];
         const score = scoreOutfit(outfitWithOuterwear, context);
         if (score > bestOutfitWithOuterwearScore) {
@@ -676,10 +740,16 @@ export function getRecommendation(
 
       detailedParts.push(`Recommendation confidence: ${(bestScore / 100 * 100).toFixed(0)}% based on color, style, fit and your preferences.`);
 
+      emitDebug('selection:final', {
+        itemIds: bestOutfitItems.map(item => item.id),
+        score: bestScore,
+        addedOuterwear: bestOutfitItems.length > 3,
+      });
+
       // Append short summary reasoning too for compact places
       const detailedReasoning = detailedParts.join('\n\n');
 
-      return {
+      const result = {
         items: bestOutfitItems,
         confidence_score: bestScore / 100,
         reasoning: reasoning.join('. '),
@@ -687,8 +757,14 @@ export function getRecommendation(
         alerts,
         context,
       };
+      return result;
     } catch (_e) {
       // Fallback to the original simpler response if anything goes wrong
+      emitDebug('selection:final', {
+        itemIds: bestOutfitItems.map(item => item.id),
+        score: bestScore,
+        warning: 'formatter_failed',
+      });
       return {
         items: bestOutfitItems,
         confidence_score: bestScore / 100,
@@ -705,7 +781,8 @@ export function getRecommendation(
 function getLegacyRecommendation(
   wardrobe: IClothingItem[],
   context: RecommendationContext,
-  constraints?: RecommendationConstraints
+  constraints?: RecommendationConstraints,
+  debug?: RecommendationDebugCollector
 ): OutfitRecommendation {
     // This is the original simple selection logic
     let availableItems = [...wardrobe];
@@ -714,7 +791,9 @@ function getLegacyRecommendation(
     availableItems = filterByLastWorn(availableItems, minDaysSinceWorn);
     const requiredInsulation = calculateRequiredInsulation(context.weather.feels_like);
     const insulationTolerance = 2;
-    availableItems = availableItems.filter(item => Math.abs(item.insulation_value - requiredInsulation) <= insulationTolerance);
+    availableItems = availableItems
+      .map(item => ({ ...item, insulation_value: resolveInsulationValue(item) }))
+      .filter(item => Math.abs(resolveInsulationValue(item) - requiredInsulation) <= insulationTolerance);
 
     const selectedItems: IClothingItem[] = [];
     const itemTypes: Array<IClothingItem['type']> = ['Top', 'Bottom', 'Footwear', 'Outerwear'];
@@ -731,13 +810,26 @@ function getLegacyRecommendation(
         }
     }
 
-    return {
+    const result = {
         items: selectedItems,
         confidence_score: 0.5, // Lower confidence for fallback
         reasoning: "Used fallback logic due to insufficient item variety for advanced recommendations.",
         alerts: constraints?.weather_alerts || [],
         context,
     };
+
+    if (debug) {
+      debug({
+        stage: 'selection:legacy',
+        timestamp: new Date().toISOString(),
+        meta: {
+          itemIds: selectedItems.map(item => item.id),
+          remainingItems: availableItems.length,
+        },
+      });
+    }
+
+    return result;
 }
 
 // ============================================================================
@@ -761,14 +853,15 @@ export function getRecommendationWithTemplate(
   wardrobe: IClothingItem[],
   context: RecommendationContext,
   templateId?: string,
-  constraints?: RecommendationConstraints
+  constraints?: RecommendationConstraints,
+  debug?: RecommendationDebugCollector
 ): OutfitRecommendation {
   // If no template specified, detect available templates and use the best one
   const availableTemplates = detectAvailableTemplates(wardrobe);
   
   if (availableTemplates.length === 0) {
     // Fall back to standard recommendation if no templates available
-    return getRecommendation(wardrobe, context, constraints);
+    return getRecommendation(wardrobe, context, constraints, debug);
   }
 
   // Find the template to use
@@ -818,7 +911,7 @@ export function getRecommendationWithTemplate(
   for (const type of selectedTemplate.requiredTypes) {
     if (filtered[type]) {
       filtered[type] = filtered[type].filter(item =>
-        Math.abs(item.insulation_value - requiredInsulation) <= insulationTolerance
+        Math.abs(resolveInsulationValue(item) - requiredInsulation) <= insulationTolerance
       );
     }
   }
@@ -831,7 +924,7 @@ export function getRecommendationWithTemplate(
   if (!hasRequiredItems) {
     // Fall back to standard recommendation if can't satisfy template
     reasoning.push('Insufficient items for template, using standard recommendation');
-    return getRecommendation(wardrobe, context, constraints);
+    return getRecommendation(wardrobe, context, constraints, debug);
   }
 
   // Select one item from each required type

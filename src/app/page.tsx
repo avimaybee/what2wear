@@ -20,11 +20,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OnboardingWizard } from "@/components/onboarding";
+import type { RecommendationDiagnostics } from "@/lib/types";
 
 // Lazy load heavy components
 const DashboardClient = lazy(() => 
   import("@/components/client/dashboard-client").then(mod => ({ default: mod.DashboardClient }))
 );
+
+type RecommendationApiResponse = {
+  success: boolean;
+  data?: Record<string, unknown>;
+  diagnostics?: RecommendationDiagnostics;
+  needsWardrobe?: boolean;
+  message?: string;
+  error?: string;
+};
 
 export default function HomePage() {
   const router = useRouter();
@@ -40,10 +50,66 @@ export default function HomePage() {
   const [hasWardrobe, setHasWardrobe] = useState(false);
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [recommendationDiagnostics, setRecommendationDiagnostics] = useState<RecommendationDiagnostics | null>(null);
+
+  const emitClientLog = useCallback((message: string, context?: Record<string, unknown>) => {
+    if (typeof window === "undefined") return;
+    const entry = {
+      message,
+      context: context ?? null,
+      ts: new Date().toISOString(),
+    };
+
+    try {
+      const globalWindow = window as typeof window & { __setmyfitLogBuffer?: typeof entry[] };
+      globalWindow.__setmyfitLogBuffer = globalWindow.__setmyfitLogBuffer || [];
+      globalWindow.__setmyfitLogBuffer.push(entry);
+      if (globalWindow.__setmyfitLogBuffer.length > 200) {
+        globalWindow.__setmyfitLogBuffer.shift();
+      }
+    } catch (_err) {
+      // Swallow serialization errors silently
+    }
+
+    if (context) {
+      console.info(`[setmyfit] ${message}`, context);
+    } else {
+      console.info(`[setmyfit] ${message}`);
+    }
+  }, []);
+
+  const logDiagnosticsToConsole = useCallback((diagnostics: RecommendationDiagnostics, coords?: { lat: number; lon: number }) => {
+    emitClientLog('recommendation:diagnostics', {
+      requestId: diagnostics.requestId,
+      warnings: diagnostics.warnings.length,
+      coords,
+    });
+
+    if (typeof window !== "undefined") {
+      const globalWindow = window as typeof window & { __setmyfitDiagnostics?: RecommendationDiagnostics };
+      globalWindow.__setmyfitDiagnostics = diagnostics;
+    }
+
+    console.groupCollapsed(`[setmyfit] Recommendation ${diagnostics.requestId}`);
+    if (coords) {
+      console.log('coords', coords);
+    }
+    if (diagnostics.summary?.filterCounts) {
+      console.table(diagnostics.summary.filterCounts);
+    }
+    diagnostics.events.forEach((event) => {
+      console.log(`${event.stage}`, event.meta ?? {});
+    });
+    if (diagnostics.warnings.length > 0) {
+      console.warn('diagnostic warnings', diagnostics.warnings);
+    }
+    console.groupEnd();
+  }, [emitClientLog]);
 
   // Request user location
-  const requestLocation = () => {
+  const requestLocation = useCallback(() => {
     setError(null);
+    emitClientLog('location:request:start');
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -52,6 +118,7 @@ export default function HomePage() {
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           };
+          emitClientLog('location:request:success', coords);
           setLocation(coords);
           localStorage.setItem("userLocation", JSON.stringify(coords));
           toast(`Location detected: ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`, { icon: "📍" });
@@ -61,11 +128,13 @@ export default function HomePage() {
           if (error.code === 1) errorMsg = "Location permission denied";
           if (error.code === 2) errorMsg = "Location unavailable";
           if (error.code === 3) errorMsg = "Location timeout";
+          emitClientLog('location:request:error', { code: error.code, message: errorMsg });
           
           // Fallback to default location (New York)
           const defaultLocation = { lat: 40.7128, lon: -74.0060 };
           setLocation(defaultLocation);
           toast(`${errorMsg}. Using New York instead.`, { icon: "⚠️" });
+          emitClientLog('location:request:fallback', defaultLocation);
         },
         {
           enableHighAccuracy: true,
@@ -78,11 +147,14 @@ export default function HomePage() {
       const defaultLocation = { lat: 40.7128, lon: -74.0060 };
       setLocation(defaultLocation);
       toast("Geolocation not supported. Using New York.", { icon: "📍" });
+      emitClientLog('location:request:notSupported');
     }
-  };
+  }, [emitClientLog]);
 
   // Fetch outfit recommendation
   const fetchRecommendation = useCallback(async (coords: { lat: number; lon: number }, retryCount = 0) => {
+    emitClientLog('recommendation:fetch:start', { coords, retryCount });
+
     try {
       setLoading(true);
       setError(null);
@@ -93,9 +165,11 @@ export default function HomePage() {
       if (!session) {
         setError("Please sign in to get outfit recommendations");
         setIsAuthError(true);
-        setLoading(false);
+        emitClientLog('recommendation:fetch:auth-missing');
         return;
       }
+
+      emitClientLog('recommendation:fetch:sessionReady', { userId: session.user.id });
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
@@ -112,18 +186,32 @@ export default function HomePage() {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
+        emitClientLog('recommendation:fetch:httpError', { status: response.status });
         throw new Error(`Failed to fetch recommendation: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      
+      const payload: RecommendationApiResponse = await response.json();
+      emitClientLog('recommendation:fetch:response', {
+        success: payload.success,
+        hasDiagnostics: Boolean(payload.diagnostics),
+      });
+
+      if (payload.diagnostics) {
+        setRecommendationDiagnostics(payload.diagnostics);
+        logDiagnosticsToConsole(payload.diagnostics, coords);
+      } else {
+        setRecommendationDiagnostics(null);
+      }
+
       // Handle empty/insufficient wardrobe gracefully - this is expected for new users
-      if (!data.success && data.needsWardrobe) {
+      if (!payload.success && payload.needsWardrobe) {
         setHasWardrobe(false);
+        emitClientLog('recommendation:fetch:needsWardrobe', { message: payload.message });
         
         // Check if the error mentions missing types - if so, try to fix them automatically
-        if (retryCount === 0 && (data.message?.toLowerCase().includes('type') || data.message?.toLowerCase().includes('category'))) {
+        if (retryCount === 0 && (payload.message?.toLowerCase().includes('type') || payload.message?.toLowerCase().includes('category'))) {
           try {
+            emitClientLog('recommendation:wardrobe:autoFix:start');
             const fixResponse = await fetch("/api/wardrobe/fix-types", {
               method: "POST",
             });
@@ -131,32 +219,40 @@ export default function HomePage() {
             
             if (fixData.success && fixData.fixed > 0) {
               toast(`Fixed ${fixData.fixed} wardrobe items, trying again...`, { icon: "🔧" });
+              emitClientLog('recommendation:wardrobe:autoFix:success', { fixed: fixData.fixed });
               // Retry once after fixing
               return fetchRecommendation(coords, retryCount + 1);
             }
+            emitClientLog('recommendation:wardrobe:autoFix:noChanges');
           } catch (_fixError) {
+            emitClientLog('recommendation:wardrobe:autoFix:error');
             // Silent fail - will show empty state instead
           }
         }
         
-        setError(data.message || "Add clothing items to your wardrobe to get started!");
-        setLoading(false);
+        setError(payload.message || "Add clothing items to your wardrobe to get started!");
         // Don't show error toast for empty wardrobe - it's expected for new users
         return;
       }
       
-      if (!data.success) {
-        throw new Error(data.error || "Failed to generate recommendation");
+      if (!payload.success) {
+        throw new Error(payload.error || "Failed to generate recommendation");
       }
 
       setHasWardrobe(true);
-      setRecommendationData(data.data);
-      setLoading(false);
+      setRecommendationData(payload.data ?? null);
+      emitClientLog('recommendation:fetch:success', {
+        outfitItems: Array.isArray((payload.data as any)?.recommendation?.outfit)
+          ? (payload.data as any).recommendation.outfit.length
+          : 0,
+      });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to load recommendation";
+      const isTimeout = err instanceof Error && err.name === 'AbortError';
+      emitClientLog('recommendation:fetch:error', { message: errorMsg, isTimeout, retryCount });
       
       // Handle timeout separately
-      if (err instanceof Error && err.name === 'AbortError') {
+      if (isTimeout) {
         setError("Recommendation request timed out. Please try again.");
         toast.error("Request took too long. Please try again.");
       } else {
@@ -166,9 +262,11 @@ export default function HomePage() {
           toast.error("Failed to generate outfit. Please try again.");
         }
       }
+      setRecommendationDiagnostics(null);
+    } finally {
       setLoading(false);
     }
-  }, []);
+  }, [emitClientLog, logDiagnosticsToConsole]);
 
   // Initialize: Get location and fetch recommendation
   useEffect(() => {
@@ -180,6 +278,9 @@ export default function HomePage() {
       if (session) {
         setIsAuthenticated(true);
         setUserId(session.user.id);
+        emitClientLog('auth:session', { userId: session.user.id });
+      } else {
+        emitClientLog('auth:noSession');
       }
       
       const savedLocation = localStorage.getItem("userLocation");
@@ -187,9 +288,11 @@ export default function HomePage() {
         try {
           const coords = JSON.parse(savedLocation);
           setLocation(coords);
+          emitClientLog('location:cache:hit', coords);
           return; // Don't fetch yet, wait for useEffect below
         } catch {
           // Invalid saved location, request new one
+          emitClientLog('location:cache:invalid');
         }
       }
       requestLocation();
@@ -210,7 +313,15 @@ export default function HomePage() {
     };
     
     init();
-  }, []); // Run only once on mount
+  }, [emitClientLog, requestLocation]); // Run only once on mount
+
+  useEffect(() => {
+    if (!recommendationData) return;
+    const outfitCount = Array.isArray((recommendationData as any)?.recommendation?.outfit)
+      ? (recommendationData as any).recommendation.outfit.length
+      : 0;
+    emitClientLog('recommendation:state:update', { outfitCount });
+  }, [recommendationData, emitClientLog]);
 
   // Fetch recommendation when location becomes available
   useEffect(() => {
@@ -388,6 +499,12 @@ export default function HomePage() {
           return !!obj && typeof obj === 'object' && Object.prototype.hasOwnProperty.call(obj as object, 'recommendation');
         }
 
+        const filterSummary = recommendationDiagnostics?.summary?.filterCounts
+          ? Object.entries(recommendationDiagnostics.summary.filterCounts)
+              .map(([stage, value]) => `${stage.split(':').slice(-1)}:${value}`)
+              .join(', ')
+          : 'n/a';
+
         return (
           <div className="fixed top-4 right-4 z-50 bg-white/90 border p-3 rounded-md shadow-md text-xs text-foreground max-w-sm">
             <div className="font-semibold mb-1">Debug</div>
@@ -397,6 +514,9 @@ export default function HomePage() {
             <div><strong>recommendation:</strong> {recommendationData ? (hasRecommendationKey(recommendationData) ? `ok (${recommendationData.recommendation.outfit?.length ?? 0})` : 'no recommendation key') : 'null'}</div>
             <div><strong>authenticated:</strong> {String(isAuthenticated)}</div>
             <div><strong>hasWardrobe:</strong> {String(hasWardrobe)}</div>
+            <div><strong>diag request:</strong> {recommendationDiagnostics?.requestId ?? 'n/a'}</div>
+            <div><strong>diag warnings:</strong> {recommendationDiagnostics?.warnings.length ?? 0}</div>
+            <div><strong>filters:</strong> {filterSummary}</div>
           </div>
         );
   })()}
@@ -482,6 +602,7 @@ export default function HomePage() {
                 const lon = parseFloat(manualLon);
                 if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
                   const coords = { lat, lon };
+                  emitClientLog('location:manual', coords);
                   setLocation(coords);
                   localStorage.setItem("userLocation", JSON.stringify(coords));
                   setShowLocationDialog(false);

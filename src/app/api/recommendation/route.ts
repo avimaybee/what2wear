@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, ClothingType, WeatherAlert } from '@/lib/types';
-import { filterByLastWorn, getRecommendation } from '@/lib/helpers/recommendationEngine';
+import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, ClothingType, WeatherAlert, RecommendationDiagnostics } from '@/lib/types';
+import { filterByLastWorn, getRecommendation, RecommendationDebugCollector, resolveInsulationValue } from '@/lib/helpers/recommendationEngine';
 import { generateOutfitVisualForRecommendation } from '../../../lib/helpers/outfitVisualGenerator';
 
 interface InsufficientItemsError extends Error {
   customMessage?: string;
 }
 import { validateBody, recommendationRequestSchema } from '@/lib/validation';
-import { logger } from '@/lib/logger';
+import { logger, generateRequestId } from '@/lib/logger';
  
 // DB row type used for items fetched from Supabase
 type DBClothingRow = Partial<IClothingItem> & {
@@ -142,14 +142,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (process.env.NODE_ENV === 'development') {
       console.log('🎯 Generating recommendation for:', { lat, lon, occasion });
     }
-    const recommendation = await generateRecommendation(user.id, lat, lon, occasion, request);
+    const { payload, diagnostics } = await generateRecommendation(user.id, lat, lon, occasion, request);
     if (process.env.NODE_ENV === 'development') {
       console.log('✓ Recommendation generated successfully');
     }
 
     return NextResponse.json({
       success: true,
-      data: recommendation,
+      data: payload,
+      diagnostics,
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -204,19 +205,37 @@ async function generateRecommendation(
   lon: number,
   occasion: string,
   request: NextRequest
-): Promise<{
-  recommendation: {
-    outfit: IClothingItem[];
-    confidence_score: number;
-    reasoning: string;
-    dress_code: string;
-    weather_alerts: WeatherAlert[];
-    id?: string | number;
+): Promise<{ payload: {
+    recommendation: {
+      outfit: IClothingItem[];
+      confidence_score: number;
+      reasoning: string;
+      dress_code: string;
+      weather_alerts: WeatherAlert[];
+      id?: string | number;
+    };
+    weather: WeatherData;
+    alerts: WeatherAlert[];
   };
-  weather: WeatherData;
-  alerts: WeatherAlert[];
+  diagnostics: RecommendationDiagnostics;
 }> {
   const supabase = await createClient();
+  const requestId = generateRequestId('rec');
+  const diagnostics: RecommendationDiagnostics = {
+    requestId,
+    warnings: [],
+    events: [],
+    summary: {
+      wardrobeCount: 0,
+      missingInsulationCount: 0,
+      filterCounts: {},
+      selectedItemIds: [],
+    },
+  };
+
+  const pushEvent = (stage: string, meta?: Record<string, unknown>) => {
+    diagnostics.events.push({ stage, timestamp: new Date().toISOString(), meta });
+  };
 
   // Fetch user's wardrobe
   const { data: wardrobeItems, error: wardrobeError } = await supabase
@@ -233,6 +252,9 @@ async function generateRecommendation(
     throw new Error('EMPTY_WARDROBE');
   }
 
+  diagnostics.summary.wardrobeCount = wardrobeItems.length;
+  pushEvent('wardrobe:fetched', { count: wardrobeItems.length });
+
   let normalizedWardrobeItems = (wardrobeItems as DBClothingRow[]).map((item) => {
     const normalizedType = deriveClothingType(item as DBClothingRow);
     return {
@@ -241,6 +263,16 @@ async function generateRecommendation(
       rawType: (item.type ?? null) as string | null,
       rawCategory: (item.category ?? null) as string | null,
     } as DBClothingRow & { normalizedType: ClothingType | null; rawType: string | null; rawCategory: string | null };
+  });
+
+  const missingInsulationCount = normalizedWardrobeItems.filter(item => typeof item.insulation_value !== 'number' || Number.isNaN(item.insulation_value as number)).length;
+  diagnostics.summary.missingInsulationCount = missingInsulationCount;
+  if (missingInsulationCount > 0) {
+    diagnostics.warnings.push(`${missingInsulationCount} wardrobe items are missing insulation data. Using intelligent defaults.`);
+  }
+  pushEvent('wardrobe:normalized', {
+    missingTypes: normalizedWardrobeItems.filter(item => !item.normalizedType).length,
+    missingInsulation: missingInsulationCount,
   });
 
   // Log normalized items for debugging
@@ -257,6 +289,10 @@ async function generateRecommendation(
   }
 
   const itemsNeedingBackfill = normalizedWardrobeItems.filter(item => (!item.rawType || !item.rawType.trim()) && item.normalizedType);
+  if (itemsNeedingBackfill.length > 0) {
+    diagnostics.warnings.push(`Backfilling ${itemsNeedingBackfill.length} wardrobe items missing explicit type labels.`);
+    pushEvent('wardrobe:autoFixTypes', { count: itemsNeedingBackfill.length });
+  }
 
   if (itemsNeedingBackfill.length > 0) {
     if (process.env.NODE_ENV === 'development') {
@@ -272,6 +308,9 @@ async function generateRecommendation(
       ));
       if (process.env.NODE_ENV === 'development') {
         console.log('Backfill results:', results.map(r => ({ error: r.error, count: r.count })));
+        pushEvent('wardrobe:autoFixTypes:completed', {
+          updated: results.reduce((sum, r) => sum + (r.count ?? 0), 0),
+        });
       }
       
       // CRITICAL: Refetch the items after backfilling to get the updated types
@@ -300,9 +339,11 @@ async function generateRecommendation(
             normalizedType: item.normalizedType
           })));
         }
+        pushEvent('wardrobe:autoFixTypes:refetched');
       }
     } catch (updateError) {
       logger.error('Failed to backfill missing clothing item types', { error: updateError });
+      diagnostics.warnings.push('Auto-fix for missing clothing types failed.');
     }
   }
 
@@ -320,6 +361,7 @@ async function generateRecommendation(
   if (!hasFootwear) missingCategories.push('Footwear');
 
   if (missingCategories.length > 0) {
+    pushEvent('wardrobe:missingCategories', { missingCategories, wardrobeCount: normalizedWardrobeItems.length });
     const detectedTypes = describeDetectedTypes(normalizedWardrobeItems);
     const wardrobeCount = normalizedWardrobeItems.length;
     const missingItemsMessageParts = [
@@ -358,6 +400,11 @@ async function generateRecommendation(
   const weatherData = await weatherResponse.json();
   const weather: WeatherData = weatherData.data.weather;
   const alerts = weatherData.data.alerts;
+  pushEvent('weather:fetched', {
+    provider: 'openWeather',
+    alerts: alerts?.length ?? 0,
+    feelsLike: weather.feels_like,
+  });
 
   // Fetch user preferences
   const { data: profile } = await supabase
@@ -402,15 +449,34 @@ async function generateRecommendation(
   }
 
   // Apply filtering logic
-  let availableItems = normalizedWardrobeItems.map(item => ({
-    ...item,
-    type: (item.normalizedType ?? normalizeTypeValue(item.rawType) ?? 'Top') as ClothingType,
-  })) as IClothingItem[];
+  let availableItems = normalizedWardrobeItems.map(item => {
+    const resolvedType = (item.normalizedType ?? normalizeTypeValue(item.rawType) ?? 'Top') as ClothingType;
+    return {
+      ...(item as IClothingItem),
+      type: resolvedType,
+      material: (item.material ?? null) as string | null,
+      insulation_value: resolveInsulationValue({ ...item, type: resolvedType }),
+    };
+  }) as IClothingItem[];
   
   // Filter by last worn date
   availableItems = filterByLastWorn(availableItems);
+  pushEvent('filter:preRecommendation', { count: availableItems.length });
 
   // Generate the recommendation
+  const filterCounts = diagnostics.summary.filterCounts ?? {};
+  diagnostics.summary.filterCounts = filterCounts;
+
+  const debugCollector: RecommendationDebugCollector = (event) => {
+    diagnostics.events.push(event);
+    if (event.stage.startsWith('filter:')) {
+      const remaining = event.meta?.remaining;
+      if (typeof remaining === 'number') {
+        filterCounts[event.stage] = remaining;
+      }
+    }
+  };
+
   const recommendation = getRecommendation(
     availableItems,
     {
@@ -419,8 +485,15 @@ async function generateRecommendation(
     },
     {
       weather_alerts: alerts,
-    }
+    },
+    debugCollector
   );
+
+  diagnostics.summary.selectedItemIds = recommendation.items.map((i: IClothingItem) => i.id);
+  pushEvent('selection:engineComplete', {
+    itemIds: diagnostics.summary.selectedItemIds,
+    confidence: recommendation.confidence_score,
+  });
 
   // Store recommendation in database for feedback tracking
   const { data: savedRecommendation, error: saveError } = await supabase
@@ -506,6 +579,11 @@ async function generateRecommendation(
             totalItems: outfitWithSignedUrls.length,
           });
         }
+        diagnostics.warnings.push('Skipped outfit preview generation: not enough items with images.');
+        pushEvent('visuals:skipped', {
+          reason: 'not_enough_items',
+          itemsWithImages: requestPayload.items.length,
+        });
       } else {
         // Directly call the visual generation logic
         if (process.env.NODE_ENV !== 'production') {
@@ -517,6 +595,10 @@ async function generateRecommendation(
         }
 
         try {
+          pushEvent('visuals:requested', {
+            recommendationId: requestPayload.recommendationId,
+            itemCount: requestPayload.items.length,
+          });
           // Call the visual generation directly
           const visualResult = await generateOutfitVisualForRecommendation(
             requestPayload.recommendationId,
@@ -535,6 +617,9 @@ async function generateRecommendation(
                 urlCount: outfitVisualUrls.length,
               });
             }
+            pushEvent('visuals:completed', {
+              urlCount: outfitVisualUrls.length,
+            });
           } else {
             if (process.env.NODE_ENV !== 'production') {
               logger.warn('Failed to generate outfit visual preview', {
@@ -542,6 +627,10 @@ async function generateRecommendation(
                 error: visualResult.error,
               });
             }
+            diagnostics.warnings.push('Outfit preview service did not return an image.');
+            pushEvent('visuals:error', {
+              reason: visualResult.error || 'unknown',
+            });
           }
         } catch (generateError) {
           if (process.env.NODE_ENV !== 'production') {
@@ -549,6 +638,10 @@ async function generateRecommendation(
               error: generateError instanceof Error ? generateError.message : String(generateError),
             });
           }
+          diagnostics.warnings.push('Unexpected error during outfit preview generation.');
+          pushEvent('visuals:error', {
+            reason: generateError instanceof Error ? generateError.message : String(generateError),
+          });
         }
       }
     }
@@ -558,6 +651,10 @@ async function generateRecommendation(
         error: visualError instanceof Error ? visualError.message : String(visualError),
       });
     }
+    diagnostics.warnings.push('Visual generation threw an exception.');
+    pushEvent('visuals:error', {
+      reason: visualError instanceof Error ? visualError.message : String(visualError),
+    });
     // Don't fail the recommendation if visual generation fails
   }
 
@@ -576,7 +673,11 @@ async function generateRecommendation(
     alerts: recommendation.alerts || [],
   };
 
-  return transformedData;
+  pushEvent('response:ready', {
+    outfitVisualCount: outfitVisualUrls.length,
+  });
+
+  return { payload: transformedData, diagnostics };
 }
 
 /**

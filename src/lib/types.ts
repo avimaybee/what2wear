@@ -62,8 +62,8 @@ export interface IClothingItem {
   type: ClothingType;
   category: string | null; // Legacy field, kept for backwards compatibility
   color: string | null;
-  material: string; // Changed to string for flexibility with AI-generated materials
-  insulation_value: number; // 0-10 scale, higher = warmer
+  material: string | null; // AI may leave this blank until we analyze the item
+  insulation_value: number | null; // 0-10 scale, higher = warmer
   last_worn_date: string | null; // ISO date string from database
   image_url: string;
   season_tags: string[] | null;
@@ -174,6 +174,24 @@ export interface RecommendationConstraints {
   activity_level?: ActivityLevel;
   weather_alerts?: WeatherAlert[];
   min_days_since_worn?: number;
+}
+
+export interface RecommendationDebugEvent {
+  stage: string;
+  timestamp: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface RecommendationDiagnostics {
+  requestId: string;
+  warnings: string[];
+  events: RecommendationDebugEvent[];
+  summary?: {
+    wardrobeCount?: number;
+    missingInsulationCount?: number;
+    filterCounts?: Record<string, number>;
+    selectedItemIds?: Array<number | string>;
+  };
 }
 
 export interface OutfitRecommendation {
