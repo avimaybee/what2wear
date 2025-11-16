@@ -333,9 +333,10 @@ const MATERIAL_TEXTURE_MAP: Record<string, number> = {
 function scoreMaterialHarmony(items: IClothingItem[]): number {
   if (items.length < 2) return 50;
 
-  const textureWeights = items.map(item => 
-    MATERIAL_TEXTURE_MAP[item.material?.toLowerCase()] || MATERIAL_TEXTURE_MAP.default
-  );
+  const textureWeights = items.map(item => {
+    const materialKey = (item.material ?? 'default').toLowerCase();
+    return MATERIAL_TEXTURE_MAP[materialKey] ?? MATERIAL_TEXTURE_MAP.default;
+  });
 
   // Calculate standard deviation of texture weights
   const mean = textureWeights.reduce((a, b) => a + b, 0) / textureWeights.length;
