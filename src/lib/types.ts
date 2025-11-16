@@ -204,6 +204,21 @@ export interface OutfitRecommendation {
   context: RecommendationContext;
 }
 
+export interface RecommendationApiPayload {
+  recommendation: {
+    outfit: IClothingItem[];
+    confidence_score: number;
+    reasoning: string;
+    detailed_reasoning?: string | null;
+    dress_code: string;
+    weather_alerts: WeatherAlert[];
+    id?: string | number | null;
+    outfit_visual_urls?: string[];
+  };
+  weather: WeatherData;
+  alerts: WeatherAlert[];
+}
+
 // ============================================================================
 // Feedback & Learning Types (Task 4.x)
 // ============================================================================

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, ClothingType, WeatherAlert, RecommendationDiagnostics } from '@/lib/types';
+import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, ClothingType, RecommendationDiagnostics, RecommendationApiPayload } from '@/lib/types';
 import { filterByLastWorn, getRecommendation, RecommendationDebugCollector, resolveInsulationValue } from '@/lib/helpers/recommendationEngine';
 import { generateOutfitVisualForRecommendation } from '../../../lib/helpers/outfitVisualGenerator';
 
@@ -205,20 +205,7 @@ async function generateRecommendation(
   lon: number,
   occasion: string,
   request: NextRequest
-): Promise<{ payload: {
-    recommendation: {
-      outfit: IClothingItem[];
-      confidence_score: number;
-      reasoning: string;
-      dress_code: string;
-      weather_alerts: WeatherAlert[];
-      id?: string | number;
-    };
-    weather: WeatherData;
-    alerts: WeatherAlert[];
-  };
-  diagnostics: RecommendationDiagnostics;
-}> {
+): Promise<{ payload: RecommendationApiPayload; diagnostics: RecommendationDiagnostics }> {
   const supabase = await createClient();
   const requestId = generateRequestId('rec');
   const diagnostics: RecommendationDiagnostics = {
@@ -658,7 +645,7 @@ async function generateRecommendation(
     // Don't fail the recommendation if visual generation fails
   }
 
-  const transformedData = {
+  const transformedData: RecommendationApiPayload = {
     recommendation: {
       outfit: outfitWithSignedUrls,
       confidence_score: recommendation.confidence_score,

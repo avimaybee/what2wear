@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OnboardingWizard } from "@/components/onboarding";
-import type { RecommendationDiagnostics } from "@/lib/types";
+import type { RecommendationApiPayload, RecommendationDiagnostics } from "@/lib/types";
 
 // Lazy load heavy components
 const DashboardClient = lazy(() => 
@@ -29,7 +29,7 @@ const DashboardClient = lazy(() =>
 
 type RecommendationApiResponse = {
   success: boolean;
-  data?: Record<string, unknown>;
+  data?: RecommendationApiPayload;
   diagnostics?: RecommendationDiagnostics;
   needsWardrobe?: boolean;
   message?: string;
@@ -39,7 +39,7 @@ type RecommendationApiResponse = {
 export default function HomePage() {
   const router = useRouter();
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
-  const [recommendationData, setRecommendationData] = useState<Record<string, unknown> | null>(null);
+  const [recommendationData, setRecommendationData] = useState<RecommendationApiPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthError, setIsAuthError] = useState(false);
@@ -242,9 +242,7 @@ export default function HomePage() {
       setHasWardrobe(true);
       setRecommendationData(payload.data ?? null);
       emitClientLog('recommendation:fetch:success', {
-        outfitItems: Array.isArray((payload.data as any)?.recommendation?.outfit)
-          ? (payload.data as any).recommendation.outfit.length
-          : 0,
+        outfitItems: payload.data?.recommendation.outfit.length ?? 0,
       });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to load recommendation";
@@ -317,9 +315,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!recommendationData) return;
-    const outfitCount = Array.isArray((recommendationData as any)?.recommendation?.outfit)
-      ? (recommendationData as any).recommendation.outfit.length
-      : 0;
+    const outfitCount = recommendationData?.recommendation.outfit.length ?? 0;
     emitClientLog('recommendation:state:update', { outfitCount });
   }, [recommendationData, emitClientLog]);
 
@@ -493,17 +489,16 @@ export default function HomePage() {
         }}
       />
       
-      {/* Type guard for debug banner to avoid using `any` */}
-  {process.env.NODE_ENV === 'development' && (function renderDebugHelper() {
-        function hasRecommendationKey(obj: unknown): obj is { recommendation: { outfit?: unknown[] } } {
-          return !!obj && typeof obj === 'object' && Object.prototype.hasOwnProperty.call(obj as object, 'recommendation');
-        }
-
+      {process.env.NODE_ENV === 'development' && (function renderDebugHelper() {
         const filterSummary = recommendationDiagnostics?.summary?.filterCounts
           ? Object.entries(recommendationDiagnostics.summary.filterCounts)
               .map(([stage, value]) => `${stage.split(':').slice(-1)}:${value}`)
               .join(', ')
           : 'n/a';
+
+        const recommendationStatus = recommendationData
+          ? `ok (${recommendationData.recommendation.outfit.length})`
+          : 'null';
 
         return (
           <div className="fixed top-4 right-4 z-50 bg-white/90 border p-3 rounded-md shadow-md text-xs text-foreground max-w-sm">
@@ -511,7 +506,7 @@ export default function HomePage() {
             <div><strong>loading:</strong> {String(loading)}</div>
             <div><strong>location:</strong> {location ? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : 'null'}</div>
             <div><strong>error:</strong> {error ? error : 'none'}</div>
-            <div><strong>recommendation:</strong> {recommendationData ? (hasRecommendationKey(recommendationData) ? `ok (${recommendationData.recommendation.outfit?.length ?? 0})` : 'no recommendation key') : 'null'}</div>
+            <div><strong>recommendation:</strong> {recommendationStatus}</div>
             <div><strong>authenticated:</strong> {String(isAuthenticated)}</div>
             <div><strong>hasWardrobe:</strong> {String(hasWardrobe)}</div>
             <div><strong>diag request:</strong> {recommendationDiagnostics?.requestId ?? 'n/a'}</div>
