@@ -117,9 +117,6 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
         seed: params.seed,
         responseModalities: ['image'], // Must be lowercase 'image'
       },
-      image_config: {
-        aspect_ratio: '3:4', // Portrait orientation for fashion photography
-      },
     };
 
     logger.info('Calling Gemini 2.5 Flash Image API for outfit generation', {
