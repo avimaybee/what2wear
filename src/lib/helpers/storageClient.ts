@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
  * @param userId - The ID of the user.
  * @param jobId - The ID of the generation job.
  * @param base64Data - An array of base64 encoded image data.
- * @paramisPreview - Whether the images are previews.
+ * @param isPreview - Whether the images are previews.
  * @returns An array of signed URLs for the uploaded images.
  */
 export async function uploadOutfitImages(
@@ -18,34 +18,49 @@ export async function uploadOutfitImages(
 ): Promise<string[]> {
   const supabase = await createClient();
   const urls: string[] = [];
-  const SIGNED_URL_TTL = 60 * 5; // 5 minutes
+
+  // Bucket + folder structure enforced by Supabase RLS policies:
+  // outfit-visuals/{previews|final}/{userId}/{jobId}/image.png
+  const BUCKET_ID = 'outfit-visuals';
+  const ROOT_FOLDER = 'outfit-visuals';
+  const SIGNED_URL_TTL_SECONDS = 60 * 30; // 30 minutes for client rendering & caching
 
   for (let i = 0; i < base64Data.length; i++) {
     const fileBody = Buffer.from(base64Data[i], 'base64');
     const fileType = 'image/png';
-    const fileName = `${jobId}_${isPreview ? 'preview' : 'full'}_${i}.png`;
-    const filePath = `${userId}/${fileName}`;
+    const qualityFolder = isPreview ? 'previews' : 'final';
+    const fileName = `img_${i + 1}.png`;
+    const storagePath = `${ROOT_FOLDER}/${qualityFolder}/${userId}/${jobId}/${fileName}`;
 
     const { error } = await supabase.storage
-      .from('outfit_images')
-      .upload(filePath, fileBody, {
+      .from(BUCKET_ID)
+      .upload(storagePath, fileBody, {
         contentType: fileType,
         upsert: true,
       });
 
     if (error) {
-      logger.error('Error uploading outfit image:', { error, filePath });
+      logger.error('Error uploading outfit image to bucket', {
+        error,
+        storagePath,
+        bucket: BUCKET_ID,
+      });
       throw new Error(`Failed to upload image ${i + 1}/${base64Data.length}`);
     }
 
     const { data, error: signedUrlError } = await supabase.storage
-      .from('outfit_images')
-      .createSignedUrl(filePath, SIGNED_URL_TTL);
+      .from(BUCKET_ID)
+      .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);
 
-    if (signedUrlError) {
-        logger.error('Error creating signed URL for outfit image:', { error, filePath });
-        throw new Error(`Failed to create signed URL for image ${i + 1}/${base64Data.length}`);
+    if (signedUrlError || !data?.signedUrl) {
+      logger.error('Error creating signed URL for outfit image', {
+        error: signedUrlError,
+        storagePath,
+        bucket: BUCKET_ID,
+      });
+      throw new Error(`Failed to create signed URL for image ${i + 1}/${base64Data.length}`);
     }
+
     urls.push(data.signedUrl);
   }
 
