@@ -66,10 +66,10 @@ export function resolveInsulationValue(item: Partial<IClothingItem>): number {
 /**
  * Task 1.4: Filter items by last_worn_date to ensure variety
  */
-export function filterByLastWorn(
-  items: IClothingItem[],
+export function filterByLastWorn<T extends IClothingItem>(
+  items: T[],
   minDaysSinceWorn: number = config.app.recommendations.minDaysSinceWorn
-): IClothingItem[] {
+): T[] {
   const now = new Date();
   const minMilliseconds = minDaysSinceWorn * 24 * 60 * 60 * 1000;
 
@@ -88,7 +88,7 @@ export function filterByLastWorn(
     const timeSinceWorn = now.getTime() - lastWorn.getTime();
     
     return timeSinceWorn >= minMilliseconds;
-  });
+  }) as T[];
 }
 
 /**
