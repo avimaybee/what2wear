@@ -24,8 +24,18 @@ export interface GenerateOutfitVisualResult {
   error?: {
     code: string;
     message: string;
+    retryAfterMs?: number;
   };
 }
+
+let previewCooldownUntil: number | null = null;
+
+const isPreviewGenerationPaused = (): { paused: boolean; remainingMs?: number } => {
+  if (previewCooldownUntil && Date.now() < previewCooldownUntil) {
+    return { paused: true, remainingMs: previewCooldownUntil - Date.now() };
+  }
+  return { paused: false };
+};
 
 function constructPhotorealisticPrompt(
   items: OutfitItem[],
@@ -104,6 +114,28 @@ export async function generateOutfitVisualForRecommendation(
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Need at least 3 items to generate outfit visual',
+        },
+      };
+    }
+
+    const cooldownState = isPreviewGenerationPaused();
+    if (cooldownState.paused) {
+      const remainingSeconds = cooldownState.remainingMs
+        ? Math.ceil(cooldownState.remainingMs / 1000)
+        : undefined;
+      logger.warn('Skipping outfit visual generation due to active cooldown', {
+        recommendationId,
+        remainingMs: cooldownState.remainingMs,
+      });
+      return {
+        success: false,
+        error: {
+          code: 'QUOTA_COOLDOWN',
+          message:
+            remainingSeconds !== undefined
+              ? `Outfit previews temporarily paused. Please try again in ${remainingSeconds}s.`
+              : 'Outfit previews temporarily paused. Please try again later.',
+          retryAfterMs: cooldownState.remainingMs,
         },
       };
     }
@@ -188,6 +220,9 @@ export async function generateOutfitVisualForRecommendation(
       true // isPreview
     );
 
+    // Successful generation clears any cooldown
+    previewCooldownUntil = null;
+
     // Store outfit_visuals record
     const { error: insertError } = await supabase
       .from('outfit_visuals')
@@ -220,7 +255,41 @@ export async function generateOutfitVisualForRecommendation(
     };
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    logger.error('Error generating outfit visual:', { error: msg, recommendationId });
+    const quotaRetryMs =
+      typeof error === 'object' &&
+      error !== null &&
+      'retryAfterMs' in error &&
+      typeof (error as { retryAfterMs?: unknown }).retryAfterMs === 'number'
+        ? (error as { retryAfterMs?: number }).retryAfterMs
+        : undefined;
+    const errorCode =
+      typeof error === 'object' && error !== null && 'code' in error
+        ? (error as { code?: string }).code
+        : undefined;
+
+    if (errorCode === 'QUOTA_EXCEEDED') {
+      const retryAfterMs = quotaRetryMs ?? 5 * 60 * 1000;
+      previewCooldownUntil = Date.now() + retryAfterMs;
+      const retrySeconds = Math.ceil(retryAfterMs / 1000);
+      logger.warn('Gemini quota exceeded; pausing outfit previews', {
+        recommendationId,
+        retryAfterMs,
+      });
+      return {
+        success: false,
+        error: {
+          code: 'QUOTA_EXCEEDED',
+          message: `Outfit previews temporarily disabled due to Gemini quota limits. Please try again in ${retrySeconds}s.`,
+          retryAfterMs,
+        },
+      };
+    }
+
+    logger.error('Error generating outfit visual:', {
+      error: msg,
+      recommendationId,
+      code: errorCode,
+    });
     return {
       success: false,
       error: {

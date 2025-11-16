@@ -616,9 +616,18 @@ async function generateRecommendation(
                 error: visualResult.error,
               });
             }
-            diagnostics.warnings.push('Outfit preview service did not return an image.');
+            const errorCode = visualResult.error?.code ?? 'unknown';
+            if (errorCode === 'QUOTA_EXCEEDED' || errorCode === 'QUOTA_COOLDOWN') {
+              diagnostics.warnings.push('Outfit previews paused due to Gemini API quota limits.');
+            } else if (errorCode === 'SERVICE_UNAVAILABLE') {
+              diagnostics.warnings.push('Outfit preview service temporarily unavailable.');
+            } else {
+              diagnostics.warnings.push('Outfit preview service did not return an image.');
+            }
             pushEvent('visuals:error', {
-              reason: visualResult.error || 'unknown',
+              reason: errorCode,
+              message: visualResult.error?.message ?? 'unknown',
+              retryAfterMs: visualResult.error?.retryAfterMs ?? null,
             });
           }
         } catch (generateError) {

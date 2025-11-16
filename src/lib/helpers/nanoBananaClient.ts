@@ -19,6 +19,11 @@ export interface GenerationResult {
   base64Data?: string[];
 }
 
+type GeminiApiError = Error & {
+  code?: 'QUOTA_EXCEEDED' | 'API_ERROR';
+  retryAfterMs?: number;
+};
+
 /**
  * Style preset configuration for Nano Banana
  */
@@ -56,6 +61,34 @@ const STYLE_PRESETS: Record<
     prompt: 'athletic and active wear',
   },
 };
+
+function parseRetryAfter(headerValue: string | null, fallbackMessage: string): number | undefined {
+  if (headerValue) {
+    const numeric = Number(headerValue);
+    if (!Number.isNaN(numeric) && numeric > 0) {
+      return numeric * 1000;
+    }
+  }
+
+  const match = /retry in\s+([\d.]+)s/i.exec(fallbackMessage);
+  if (match) {
+    const seconds = Number(match[1]);
+    if (!Number.isNaN(seconds)) {
+      return seconds * 1000;
+    }
+  }
+
+  return undefined;
+}
+
+function isGeminiQuotaError(error: unknown): error is GeminiApiError {
+  return (
+    !!error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 'QUOTA_EXCEEDED'
+  );
+}
 
 /**
  * Call Gemini 2.5 Flash Image API (Nano Banana) to generate outfit silhouette
@@ -170,9 +203,24 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
         errorText: errorMessage,
         seed: params.seed,
       });
-      throw new Error(
+
+      if (response.status === 429) {
+        const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'), errorMessage);
+        const quotaError = new Error(
+          `Gemini API quota exceeded: ${errorMessage}`
+        ) as GeminiApiError;
+        quotaError.code = 'QUOTA_EXCEEDED';
+        if (retryAfterMs) {
+          quotaError.retryAfterMs = retryAfterMs;
+        }
+        throw quotaError;
+      }
+
+      const apiError = new Error(
         `Gemini API error: ${response.status} - ${errorMessage}`
-      );
+      ) as GeminiApiError;
+      apiError.code = 'API_ERROR';
+      throw apiError;
     }
 
     const data = await response.json();
@@ -245,6 +293,7 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
       error: msg,
       seed: params.seed,
       stack: error instanceof Error ? error.stack : undefined,
+      code: typeof error === 'object' && error !== null && 'code' in error ? (error as GeminiApiError).code : undefined,
     });
     throw error;
   }
@@ -280,6 +329,9 @@ export async function generateOutfitVariations(
         error: msg,
       });
       variationErrors.push(msg);
+      if (isGeminiQuotaError(error)) {
+        throw error;
+      }
       // Continue with other variations even if one fails
       continue;
     }
