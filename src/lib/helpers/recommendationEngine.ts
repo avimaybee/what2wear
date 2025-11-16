@@ -13,6 +13,9 @@ import chroma from 'chroma-js';
 
 export type RecommendationDebugCollector = (event: RecommendationDebugEvent) => void;
 
+// Item type where insulation_value has been resolved to a non-null number
+export type ResolvedClothingItem = Omit<IClothingItem, 'insulation_value'> & { insulation_value: number };
+
 const MATERIAL_INSULATION_PRESETS: Record<string, number> = {
   wool: 8,
   fleece: 7,
@@ -117,13 +120,13 @@ export function getDressCodeFromEvents(events: CalendarEvent[]): DressCode | und
 /**
  * Task 2.4: Filter items by dress code
  */
-export function filterByDressCode(
-  items: IClothingItem[],
+export function filterByDressCode<T extends IClothingItem>(
+  items: T[],
   dressCode: DressCode
-): IClothingItem[] {
+): T[] {
   return items.filter(item => 
     item.dress_code && item.dress_code.includes(dressCode)
-  );
+  ) as T[];
 }
 
 /**
@@ -539,10 +542,10 @@ export function getRecommendation(
     debug({ stage, timestamp: new Date().toISOString(), meta });
   };
 
-  let availableItems = wardrobe.map(item => ({
+  let availableItems: ResolvedClothingItem[] = wardrobe.map(item => ({
     ...item,
     insulation_value: resolveInsulationValue(item),
-  }));
+  } as ResolvedClothingItem));
   const reasoning: string[] = [];
 
   // Task 1.4: Filter by last_worn_date for variety
