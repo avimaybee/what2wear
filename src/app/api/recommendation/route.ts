@@ -220,6 +220,8 @@ async function generateRecommendation(
     },
   };
 
+  const summary = diagnostics.summary as NonNullable<RecommendationDiagnostics['summary']>;
+
   const pushEvent = (stage: string, meta?: Record<string, unknown>) => {
     diagnostics.events.push({ stage, timestamp: new Date().toISOString(), meta });
   };
@@ -239,7 +241,7 @@ async function generateRecommendation(
     throw new Error('EMPTY_WARDROBE');
   }
 
-  diagnostics.summary.wardrobeCount = wardrobeItems.length;
+  summary.wardrobeCount = wardrobeItems.length;
   pushEvent('wardrobe:fetched', { count: wardrobeItems.length });
 
   let normalizedWardrobeItems = (wardrobeItems as DBClothingRow[]).map((item) => {
@@ -253,7 +255,7 @@ async function generateRecommendation(
   });
 
   const missingInsulationCount = normalizedWardrobeItems.filter(item => typeof item.insulation_value !== 'number' || Number.isNaN(item.insulation_value as number)).length;
-  diagnostics.summary.missingInsulationCount = missingInsulationCount;
+  summary.missingInsulationCount = missingInsulationCount;
   if (missingInsulationCount > 0) {
     diagnostics.warnings.push(`${missingInsulationCount} wardrobe items are missing insulation data. Using intelligent defaults.`);
   }
@@ -451,8 +453,8 @@ async function generateRecommendation(
   pushEvent('filter:preRecommendation', { count: availableItems.length });
 
   // Generate the recommendation
-  const filterCounts = diagnostics.summary.filterCounts ?? {};
-  diagnostics.summary.filterCounts = filterCounts;
+  const filterCounts = summary.filterCounts ?? {};
+  summary.filterCounts = filterCounts;
 
   const debugCollector: RecommendationDebugCollector = (event) => {
     diagnostics.events.push(event);
@@ -476,9 +478,9 @@ async function generateRecommendation(
     debugCollector
   );
 
-  diagnostics.summary.selectedItemIds = recommendation.items.map((i: IClothingItem) => i.id);
+  summary.selectedItemIds = recommendation.items.map((i: IClothingItem) => i.id);
   pushEvent('selection:engineComplete', {
-    itemIds: diagnostics.summary.selectedItemIds,
+    itemIds: summary.selectedItemIds,
     confidence: recommendation.confidence_score,
   });
 
