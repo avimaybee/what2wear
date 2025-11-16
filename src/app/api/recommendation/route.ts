@@ -472,7 +472,7 @@ async function generateRecommendation(
   );
 
   // Generate outfit visual preview immediately
-  // Generate outfit visual preview using Gemini 2.5 Flash Image (Nano Banana)
+  // Generate outfit visual preview using Gemini 2.0 Flash (Nano Banana)
   let outfitVisualUrls: string[] = [];
   
   try {
@@ -509,7 +509,7 @@ async function generateRecommendation(
       } else {
         // Directly call the visual generation logic
         if (process.env.NODE_ENV !== 'production') {
-          logger.info('Generating outfit visual with Gemini 2.5 Flash Image:', {
+          logger.info('Generating outfit visual with Gemini 2.0 Flash:', {
             recommendationId: requestPayload.recommendationId,
             itemCount: requestPayload.items.length,
             itemIds: requestPayload.items.map(i => i.id),

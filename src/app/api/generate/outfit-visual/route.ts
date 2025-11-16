@@ -7,7 +7,7 @@ import { uploadOutfitImages, createSignedUrl } from '@/lib/helpers/storageClient
 /**
  * POST /api/generate/outfit-visual
  *
- * Generates photorealistic silhouette renders of outfit recommendations using Nano Banana API.
+ * Generates photorealistic silhouette renders of outfit recommendations using Gemini 2.0 Flash.
  * Supports a hybrid pipeline:
  * 1. Preview generation (fast, low-resolution) returned immediately
  * 2. Full-resolution generation (async) queued for background processing

@@ -133,7 +133,7 @@ export async function GET(): Promise<NextResponse<{ features: FeatureStatus[] }>
   features.push({
     name: 'Outfit Visual Generation',
     status: 'working',
-    notes: 'Calls gemini-2.5-flash-image API to generate silhouette renders',
+    notes: 'Calls gemini-2.0-flash-exp API to generate silhouette renders',
     lastChecked: now,
   });
 

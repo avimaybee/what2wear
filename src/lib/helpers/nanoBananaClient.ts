@@ -1,8 +1,9 @@
 import { logger } from '@/lib/logger';
 
 /**
- * Nano Banana / Gemini 2.5 Flash Image API Integration
+ * Nano Banana / Gemini 2.0 Flash Image API Integration
  * Handles text-to-image generation for photorealistic silhouette renders
+ * Uses Gemini 2.0 Flash with IMAGE response modality for generating outfit visuals
  */
 
 export interface GenerateImageParams {
@@ -58,10 +59,10 @@ const STYLE_PRESETS: Record<
 };
 
 /**
- * Call Gemini 2.5 Flash Image API (Nano Banana) to generate outfit silhouette
+ * Call Gemini 2.0 Flash API (Nano Banana) to generate outfit silhouette
  * Returns base64-encoded image data
  * 
- * Uses the Gemini 2.5 Flash Image model which supports:
+ * Uses the Gemini 2.0 Flash model with IMAGE response modality which supports:
  * - Text-to-image generation
  * - Multi-image composition
  * - Response modalities in both text and images
@@ -96,7 +97,7 @@ The composition should be: clean studio lighting, neutral background, full-body 
 Ensure the outfit looks cohesive and fashionable.
 Output image should be portrait orientation (3:4 aspect ratio) suitable for fashion photography.`;
 
-    // Build request body for Gemini 2.5 Flash Image
+    // Build request body for Gemini 2.0 Flash with image generation
     const requestBody = {
       contents: [
         {
@@ -115,14 +116,11 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
         topK: 40,
         maxOutputTokens: 8192, // Allow for both text and image response
         seed: params.seed,
-        responseModalities: ['image'], // Must be lowercase 'image'
-      },
-      image_config: {
-        aspect_ratio: '3:4', // Portrait orientation for fashion photography
+        responseModalities: ['IMAGE'], // Must be uppercase 'IMAGE' for Gemini 2.0
       },
     };
 
-    logger.info('Calling Gemini 2.5 Flash Image API for outfit generation', {
+    logger.info('Calling Gemini 2.0 Flash API for outfit generation', {
       seed: params.seed,
       style: params.style,
       itemCount: params.itemImages.length,
@@ -131,7 +129,7 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
       itemImageSizes: params.itemImages.map((i) => (i.data ? i.data.length : 0)),
     });
 
-    // Call Gemini API with 2.5 Flash Image model (with image generation capability)
+    // Call Gemini API with 2.0 Flash Experimental model (with IMAGE response modality)
     // Log a compact summary of the request (do not include base64 bodies)
     logger.debug('Gemini request summary', {
       promptLength: String(enhancedPrompt).length,
@@ -141,7 +139,7 @@ Output image should be portrait orientation (3:4 aspect ratio) suitable for fash
     });
 
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
       {
         method: 'POST',
         headers: {
