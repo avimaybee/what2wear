@@ -7,10 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toaster";
 import {
+  Wind,
   Sun,
+  Droplets,
   Sparkles,
   RefreshCw,
   MapPin,
+  AlertCircle,
 } from "lucide-react";
 import { formatTemp } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -235,6 +238,22 @@ export const DashboardClient = ({
     }
   };
 
+  const getAQIStatus = (aqi: number) => {
+    if (aqi <= 50) return { label: "Good", color: "text-green-600" };
+    if (aqi <= 100) return { label: "Moderate", color: "text-yellow-600" };
+    return { label: "Unhealthy", color: "text-red-600" };
+  };
+
+  const getUVStatus = (uv: number) => {
+    if (uv <= 2) return { label: "Low", color: "text-green-600" };
+    if (uv <= 5) return { label: "Moderate", color: "text-yellow-600" };
+    if (uv <= 7) return { label: "High", color: "text-orange-600" };
+    return { label: "Very High", color: "text-red-600" };
+  };
+
+  const aqiStatus = weather ? getAQIStatus(weather.air_quality_index || 0) : { label: "N/A", color: "text-muted-foreground" };
+  const uvStatus = weather ? getUVStatus(weather.uv_index || 0) : { label: "N/A", color: "text-muted-foreground" };
+
   // Generate weather alerts - only show critical severity
   const weatherAlerts = weather ? generateWeatherAlerts(weather).filter(alert => alert.severity === 'critical') : [];
   
@@ -327,13 +346,14 @@ export const DashboardClient = ({
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Card className="overflow-hidden">
-              <CardHeader className="pb-4">
+            {/* Weather Card - Minimal & Compact */}
+            <Card className="border-none shadow-sm">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Sun className="h-4 w-4 text-primary" />
-                      {locationName || 'Weather Now'}
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-base font-medium">
+                      {weather.location}
                     </CardTitle>
                   </div>
                   {onAutoDetectLocation && (
@@ -341,30 +361,60 @@ export const DashboardClient = ({
                       variant="ghost"
                       size="sm"
                       onClick={onAutoDetectLocation}
-                      className="h-8 px-2 text-xs"
+                      className="h-8 text-xs"
                     >
-                      <MapPin className="h-3 w-3 mr-1" />
                       Auto-detect
                     </Button>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {weather.weather_condition || "Current conditions"}
-                </p>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Temperature Display - Simplified */}
-                <div className="text-center py-4">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
-                    Feels Like
-                  </p>
-                  <p className="text-5xl font-bold text-primary">
-                    {formatTemp(weather.feels_like)}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Actual: {formatTemp(weather.temperature)}
-                  </p>
+              <CardContent className="space-y-3">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold">
+                    {Math.round(weather.temperature)}°
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {weather.weather_condition}
+                  </span>
                 </div>
+                
+                {/* Compact Metrics Grid */}
+                <div className="grid grid-cols-4 gap-2 pt-2 border-t">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Droplets className="h-3 w-3" />
+                      <span className="text-xs">Humidity</span>
+                    </div>
+                    <p className="text-sm font-medium">{weather.humidity}%</p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Wind className="h-3 w-3" />
+                      <span className="text-xs">Wind</span>
+                    </div>
+                    <p className="text-sm font-medium">{Math.round(weather.wind_speed)} km/h</p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Sun className="h-3 w-3" />
+                      <span className="text-xs">UV</span>
+                    </div>
+                    <p className={`text-sm font-medium ${uvStatus.color}`}>{weather.uv_index || 0}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">AQI</p>
+                    <p className={`text-sm font-medium ${aqiStatus.color}`}>{weather.air_quality_index || 0}</p>
+                  </div>
+                </div>
+                
+                {weatherAlerts.length > 0 && (
+                  <div className="flex items-start gap-2 p-2 rounded-md bg-destructive/10 border border-destructive/20">
+                    <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
+                    <p className="text-sm text-destructive">
+                      {weatherAlerts[0].message}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
