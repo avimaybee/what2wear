@@ -64,7 +64,7 @@ export interface IClothingItem {
   color: string | null;
   material: string | null; // AI may leave this blank until we analyze the item
   insulation_value: number | null; // 0-10 scale, higher = warmer
-  last_worn_date: string | null; // ISO date string from database
+  last_worn: string | null; // ISO date string from database
   image_url: string;
   season_tags: string[] | null;
   style_tags: string[] | null;

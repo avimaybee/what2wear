@@ -18,7 +18,6 @@ import { createClient } from "@/lib/supabase/client";
 import { uploadClothingImage, deleteClothingImage } from "@/lib/supabase/storage";
 import type { ClothingType, IClothingItem, DressCode } from "@/types";
 import { EmptyState } from "@/components/ui/empty-state";
-import BatchOperations from "@/components/wardrobe/BatchOperations";
 import Image from "next/image";
 
 const clothingTypes: ClothingType[] = ["Outerwear", "Top", "Bottom", "Footwear", "Accessory", "Headwear"];
@@ -45,9 +44,6 @@ export default function WardrobePage() {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [_modalSource, setModalSource] = useState<"add-button" | "delete" | "edit" | null>(null);
   const [deleting, setDeleting] = useState(false);
-  
-  // Batch operations state
-  const [selectedItems, setSelectedItems] = useState<IClothingItem[]>([]);
   
   // Edit state
   const [editItem, setEditItem] = useState<IClothingItem | null>(null);
@@ -146,10 +142,10 @@ export default function WardrobePage() {
         case "recent":
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case "lastWorn":
-          if (!a.last_worn_date && !b.last_worn_date) return 0;
-          if (!a.last_worn_date) return 1;
-          if (!b.last_worn_date) return -1;
-          return new Date(b.last_worn_date).getTime() - new Date(a.last_worn_date).getTime();
+          if (!a.last_worn && !b.last_worn) return 0;
+          if (!a.last_worn) return 1;
+          if (!b.last_worn) return -1;
+          return new Date(b.last_worn).getTime() - new Date(a.last_worn).getTime();
         case "name":
           return a.name.localeCompare(b.name);
         case "type":
@@ -425,22 +421,6 @@ export default function WardrobePage() {
     } finally {
       setSaving(false);
     }
-  };
-
-  // Batch operations handlers
-  const toggleItemSelection = (item: IClothingItem) => {
-    setSelectedItems(prev => {
-      const isSelected = prev.some(i => i.id === item.id);
-      if (isSelected) {
-        return prev.filter(i => i.id !== item.id);
-      } else {
-        return [...prev, item];
-      }
-    });
-  };
-
-  const handleBatchSelectionChange = (items: IClothingItem[]) => {
-    setSelectedItems(items);
   };
 
   // Loading state
@@ -938,7 +918,7 @@ export default function WardrobePage() {
 
                   {/* "Most Worn" or "Never Worn" Badge */}
                   <AnimatePresence>
-                    {!item.last_worn_date && hoveredItem !== item.id && (
+                    {!item.last_worn && hoveredItem !== item.id && (
                       <motion.div
                         className="absolute top-2 left-2"
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -954,31 +934,16 @@ export default function WardrobePage() {
                     )}
                   </AnimatePresence>
 
-                  {/* Delete Button + Checkbox on Hover */}
+                  {/* Delete Button on Hover */}
                   <AnimatePresence>
                     {hoveredItem === item.id && (
                       <motion.div
-                        className="absolute top-2 left-2 flex gap-2"
+                        className="absolute top-2 left-2"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {/* Checkbox for batch selection */}
-                        <label className="flex items-center h-8 w-8 bg-white rounded-md shadow-lg cursor-pointer hover:bg-gray-100">
-                          <input
-                            type="checkbox"
-                            checked={selectedItems.some(i => i.id === item.id)}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              toggleItemSelection(item);
-                            }}
-                            className="ml-1 w-4 h-4 cursor-pointer"
-                            aria-label={`Select ${item.name} for batch operations`}
-                          />
-                        </label>
-                        
-                        {/* Delete Button */}
                         <Button
                           size="icon"
                           variant="destructive"
@@ -1008,7 +973,7 @@ export default function WardrobePage() {
                         <Calendar className="h-3 w-3" aria-hidden="true" />
                         <span>Last Worn</span>
                       </div>
-                      <p className="font-medium">{getRelativeTime(item.last_worn_date)}</p>
+                      <p className="font-medium">{getRelativeTime(item.last_worn)}</p>
                     </div>
                     {item.color && (
                       <div
@@ -1409,14 +1374,6 @@ export default function WardrobePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Batch Operations Component */}
-      <BatchOperations
-        selectedItems={selectedItems}
-        onSelectionChange={handleBatchSelectionChange}
-        onItemsUpdated={fetchWardrobe}
-        wardrobeItems={wardrobeItems}
-      />
     </div>
   );
 }

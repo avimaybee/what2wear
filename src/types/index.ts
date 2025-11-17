@@ -38,7 +38,7 @@ export interface IClothingItem {
   type: ClothingType;
   material: string; // Changed to string for flexibility with AI-generated materials
   insulation_value: number;
-  last_worn_date: string | null; // ISO Date String
+  last_worn: string | null; // ISO Date String
   image_url: string;
   color: string | null;
   season_tags: string[] | null;

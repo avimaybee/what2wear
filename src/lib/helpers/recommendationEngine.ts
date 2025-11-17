@@ -67,7 +67,7 @@ export function resolveInsulationValue(item: Partial<IClothingItem>): number {
 
 
 /**
- * Task 1.4: Filter items by last_worn_date to ensure variety
+ * Task 1.4: Filter items by last_worn to ensure variety
  */
 export function filterByLastWorn<T extends IClothingItem>(
   items: T[],
@@ -82,12 +82,12 @@ export function filterByLastWorn<T extends IClothingItem>(
       return true;
     }
     
-    if (!item.last_worn_date) {
+    if (!item.last_worn) {
       // Never worn items are always eligible
       return true;
     }
 
-    const lastWorn = new Date(item.last_worn_date);
+    const lastWorn = new Date(item.last_worn);
     const timeSinceWorn = now.getTime() - lastWorn.getTime();
     
     return timeSinceWorn >= minMilliseconds;
@@ -286,9 +286,9 @@ function scoreStyleMatch(items: IClothingItem[]): number {
  */
 function scoreLastWorn(items: IClothingItem[]): number {
     const now = new Date().getTime();
-    const daysSinceWorn = items.map(item => {
-        if (!item.last_worn_date) return 365; // Treat never-worn items as worn a year ago
-        const lastWorn = new Date(item.last_worn_date).getTime();
+      const daysSinceWorn = items.map(item => {
+        if (!item.last_worn) return 365; // Treat never-worn items as worn a year ago
+        const lastWorn = new Date(item.last_worn).getTime();
         return (now - lastWorn) / (1000 * 3600 * 24);
     });
 
@@ -548,7 +548,7 @@ export function getRecommendation(
   } as ResolvedClothingItem));
   const reasoning: string[] = [];
 
-  // Task 1.4: Filter by last_worn_date for variety
+  // Task 1.4: Filter by last_worn for variety
   const minDaysSinceWorn = constraints?.min_days_since_worn || 
                           config.app.recommendations.minDaysSinceWorn;
   availableItems = filterByLastWorn(availableItems, minDaysSinceWorn);
@@ -806,9 +806,9 @@ function getLegacyRecommendation(
         const itemsOfType = availableItems.filter(item => item.type === type);
         if (itemsOfType.length > 0) {
             const sorted = itemsOfType.sort((a, b) => {
-                if (!a.last_worn_date) return -1;
-                if (!b.last_worn_date) return 1;
-                return new Date(a.last_worn_date).getTime() - new Date(b.last_worn_date).getTime();
+                if (!a.last_worn) return -1;
+                if (!b.last_worn) return 1;
+                return new Date(a.last_worn).getTime() - new Date(b.last_worn).getTime();
             });
             selectedItems.push(sorted[0]);
         }
