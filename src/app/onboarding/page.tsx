@@ -275,7 +275,7 @@ export default function OnboardingPage() {
                   </div>
                   <CardTitle className="text-3xl">Welcome to setmyfit!</CardTitle>
                   <CardDescription className="text-base">
-                    Your AI-powered outfit assistant that knows the weather, your schedule, and your style
+                    Your smart outfit recommendation app that knows the weather and your style
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

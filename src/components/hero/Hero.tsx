@@ -246,7 +246,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                 <motion.div variants={sparkleVariants}>
                   <Sparkles className="h-4 w-4" />
                 </motion.div>
-                <span className="text-sm font-semibold">AI-Powered Style Assistant</span>
+                <span className="text-sm font-semibold">Smart Recommendations</span>
               </motion.div>
             </motion.div>
 

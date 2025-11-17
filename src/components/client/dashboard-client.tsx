@@ -15,14 +15,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { formatTemp } from "@/lib/utils";
-import { HourlyForecast } from "@/components/client/hourly-forecast";
 import { createClient } from "@/lib/supabase/client";
 import { WeatherAlertBanner, generateWeatherAlerts } from "@/components/ui/weather-alert-banner";
 import { SwapModal } from "@/components/generate/SwapModal";
 import { OutfitHero } from "@/components/outfit";
-import { NaturalLanguageHandler } from "@/components/assistant/NaturalLanguageHandler";
 import LocationSelector from "@/components/LocationSelector";
-import TemplateDisplay from "@/components/TemplateDisplay";
 import type { IClothingItem } from "@/lib/types";
 
 interface DashboardClientProps {
@@ -41,8 +38,6 @@ export const DashboardClient = ({
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const [isLogging, setIsLogging] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [occasionPrompt, setOccasionPrompt] = useState("");
   const [locationName, setLocationName] = useState<string | null>(null);
   const [_showLocationSelector, setShowLocationSelector] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(location);
@@ -119,7 +114,14 @@ export const DashboardClient = ({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to log outfit");
+        const errorData = await response.json();
+        console.error("Failed to log outfit:", errorData);
+        throw new Error(errorData.error || "Failed to log outfit");
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || "Failed to log outfit");
       }
 
       // Show success toast after a brief delay to let UI update
@@ -127,8 +129,10 @@ export const DashboardClient = ({
         setIsLogging(false);
         toast.success("Outfit logged successfully! 🎉", { duration: 3000 });
       }, 800);
-    } catch (_error) {
-      toast.error("Failed to log outfit. Please try again.");
+    } catch (error) {
+      console.error("Error logging outfit:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to log outfit. Please try again.";
+      toast.error(errorMessage);
       setIsLogging(false);
     }
   };
@@ -213,62 +217,8 @@ export const DashboardClient = ({
     }
   };
 
-  const handleGenerateWithPrompt = async () => {
-    if (!occasionPrompt.trim()) {
-      toast("Please describe your occasion first", { icon: "✏️" });
-      return;
-    }
-
-    setIsGeneratingAI(true);
-    
-    try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        toast.error("Please sign in to use AI recommendations");
-        setIsGeneratingAI(false);
-        return;
-      }
-
-      const response = await fetch("/api/recommendation/ai", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          lat: location.lat,
-          lon: location.lon,
-          occasion: occasionPrompt,
-          season: "current",
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate AI outfit");
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        toast.success(`AI outfit curated for: "${occasionPrompt}" 🎯`, {
-          duration: 3000,
-        });
-        setOccasionPrompt("");
-        
-        // Refresh the page to show new recommendation
-        await onRefresh();
-      } else {
-        throw new Error(data.error || "Failed to generate outfit");
-      }
-    } catch (_error) {
-      toast.error("Failed to generate AI outfit. Please try again.");
-    } finally {
-      setIsGeneratingAI(false);
-    }
-  };
-
-  const handleOpenSwapModal = (item: IClothingItem) => {
+  // Swap modal handlers
+  const _handleOpenSwapModal = (item: IClothingItem) => {
     setSwapItemInFocus(item);
     setSwapModalOpen(true);
   };
@@ -398,114 +348,6 @@ export const DashboardClient = ({
           </motion.div>
 
           {/* Outfit Gallery removed - AI visual generation disabled */}
-
-          {/* Unified Natural Language Handler - Outfit Modifier Mode */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.25 }}
-          >
-            <NaturalLanguageHandler
-              mode="outfit_modifier"
-              outfitItems={recommendation?.outfit || []}
-              onProcessInput={async (input, parsedAction) => {
-                if (!parsedAction || parsedAction.type === 'unknown') return;
-
-                try {
-                  switch (parsedAction.type) {
-                    case 'swap':
-                      if (!parsedAction.params.itemType) {
-                        toast.error('Please specify which item to swap');
-                        return;
-                      }
-                      // Find matching item in current outfit
-                      const targetItem = recommendation?.outfit?.find(
-                        (item: IClothingItem) => item.type.toLowerCase() === parsedAction.params.itemType?.toLowerCase()
-                      );
-                      if (targetItem) {
-                        handleOpenSwapModal(targetItem);
-                      }
-                      break;
-                    case 'regenerate':
-                      await handleRegenerateOutfit();
-                      break;
-                    case 'style_change':
-                      setOccasionPrompt(`${parsedAction.params.targetStyle} style outfit`);
-                      await handleGenerateWithPrompt();
-                      break;
-                  }
-                } catch (_error) {
-                  toast.error('Failed to process request');
-                }
-              }}
-              isProcessing={isRegenerating}
-            />
-          </motion.div>
-
-          {/* Unified Natural Language Handler - Occasion Planner Mode */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <NaturalLanguageHandler
-              mode="occasion_planner"
-              onProcessInput={async (input) => {
-                setOccasionPrompt(input);
-                // Call AI generation with the occasion
-                try {
-                  setIsGeneratingAI(true);
-                  const supabase = createClient();
-                  const { data: { session } } = await supabase.auth.getSession();
-
-                  if (!session) {
-                    toast.error("Please sign in to use AI recommendations");
-                    return;
-                  }
-
-                  const response = await fetch("/api/recommendation/ai", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      lat: location.lat,
-                      lon: location.lon,
-                      occasion: input,
-                      season: "current",
-                    }),
-                  });
-
-                  if (!response.ok) {
-                    throw new Error("Failed to generate AI outfit");
-                  }
-
-                  const data = await response.json();
-                  
-                  if (data.success) {
-                    toast.success(`AI outfit curated for: "${input}" 🎯`, {
-                      duration: 3000,
-                    });
-                    // Refresh the page to show new recommendation
-                    await onRefresh();
-                  } else {
-                    throw new Error(data.error || "Failed to generate outfit");
-                  }
-                } catch (_error) {
-                  toast.error("Failed to generate AI outfit. Please try again.");
-                } finally {
-                  setIsGeneratingAI(false);
-                }
-              }}
-              isProcessing={isGeneratingAI}
-              placeholder="E.g., Casual brunch with friends, Important client meeting..."
-              submitLabel="Generate AI Outfit"
-              suggestions={['Casual brunch', 'Job interview', 'Date night', 'Gym workout']}
-            />
-          </motion.div>
-
-          {/* Hourly Forecast */}
-          <HourlyForecast location={location} />
         </div>
 
         {/* Sidebar */}
@@ -516,36 +358,11 @@ export const DashboardClient = ({
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.25 }}
           >
-            <Card className="overflow-hidden glass-effect">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Your Location</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <LocationSelector
-                  onLocationSelect={handleLocationSelect}
-                  currentLocation={currentLocation}
-                  currentLocationName={locationName || undefined}
-                />
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Outfit Templates */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.28 }}
-          >
-            <Card className="overflow-hidden glass-effect">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Outfit Templates</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TemplateDisplay onSelectTemplate={(templateId) => {
-                  toast(`Selected template: ${templateId}`, { icon: "⚡" });
-                }} />
-              </CardContent>
-            </Card>
+            <LocationSelector
+              onLocationSelect={handleLocationSelect}
+              currentLocation={currentLocation}
+              currentLocationName={locationName || undefined}
+            />
           </motion.div>
 
           {/* Current Weather */}

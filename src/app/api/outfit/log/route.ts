@@ -36,6 +36,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const feedback = body.feedback || null;
     const currentDate = new Date().toISOString();
 
+    // Log for debugging
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Log outfit request:', {
+        userId: user.id,
+        itemIds,
+        outfitDate,
+        feedback,
+      });
+    }
+
     // Create outfit record
     const { data: outfit, error: outfitError } = await supabase
       .from('outfits')
@@ -48,8 +58,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .single();
 
     if (outfitError || !outfit) {
+      console.error('Error creating outfit:', outfitError);
       return NextResponse.json(
-        { success: false, error: 'Failed to create outfit record' },
+        { 
+          success: false, 
+          error: 'Failed to create outfit record',
+          details: process.env.NODE_ENV !== 'production' ? outfitError?.message : undefined
+        },
         { status: 500 }
       );
     }
@@ -65,24 +80,29 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .insert(outfitItems);
 
     if (itemsError) {
+      console.error('Error inserting outfit items:', itemsError);
       // Rollback: delete the outfit if items couldn't be linked
       await supabase.from('outfits').delete().eq('id', outfit.id);
       return NextResponse.json(
-        { success: false, error: 'Failed to link items to outfit' },
+        { 
+          success: false, 
+          error: 'Failed to link items to outfit',
+          details: process.env.NODE_ENV !== 'production' ? itemsError?.message : undefined
+        },
         { status: 500 }
       );
     }
 
-    // Update last_worn_date for all items in the outfit
+    // Update last_worn and wear_count for all items in the outfit
     const { data: updatedItems, error: updateError } = await supabase
       .from('clothing_items')
-      .update({ last_worn_date: currentDate })
+      .update({ last_worn: outfitDate })
       .in('id', itemIds)
       .eq('user_id', user.id)
       .select('id');
 
     if (updateError) {
-      console.error('Error updating last_worn_date:', updateError);
+      console.error('Error updating last_worn:', updateError);
       // Don't fail the request, just log the error
     }
 
@@ -97,10 +117,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       message: `Successfully logged outfit with ${itemIds.length} items`,
     });
   } catch (error) {
+    console.error('Unexpected error logging outfit:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
+        error: error instanceof Error ? error.message : 'Internal server error',
+        details: process.env.NODE_ENV !== 'production' && error instanceof Error ? error.stack : undefined
       },
       { status: 500 }
     );
