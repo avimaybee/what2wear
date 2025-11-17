@@ -2,56 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
-import { 
-  Sparkles, 
-  ArrowRight, 
-  ArrowLeft, 
-  Check,
-  Shirt,
-  Cloud,
-  MapPin,
-  User,
-  Palette,
-} from "lucide-react";
+import { ArrowRight, ArrowLeft, Check, Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-const steps = [
-  { id: 1, title: "Welcome", icon: Sparkles },
-  { id: 2, title: "Profile", icon: User },
-  { id: 3, title: "Preferences", icon: Palette },
-  { id: 4, title: "Location", icon: MapPin },
-];
-
 const styleOptions = [
-  "Casual", "Business", "Formal", "Athletic", "Streetwear", 
-  "Vintage", "Minimalist", "Bohemian", "Preppy"
-];
-
-const colorOptions = [
-  "Black", "White", "Navy", "Grey", "Beige", "Blue", "Red", 
-  "Green", "Brown", "Pink", "Yellow", "Purple"
+  "Casual & Comfy",
+  "Business Casual",
+  "Streetwear",
+  "Formal & Elegant",
+  "Sporty & Athletic",
+  "Minimalist",
 ];
 
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [name, setName] = useState("");
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [temperatureSensitivity, setTemperatureSensitivity] = useState(0);
-  const [_userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
-  const [locationGranted, setLocationGranted] = useState(false);
+  const [additionalNotes, setAdditionalNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkAuth = async () => {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -72,461 +43,327 @@ export default function OnboardingPage() {
     );
   };
 
-  const handleColorToggle = (color: string) => {
-    setSelectedColors(prev => 
-      prev.includes(color) 
-        ? prev.filter(c => c !== color)
-        : [...prev, color]
-    );
-  };
-
-  const requestLocation = () => {
-    if ("geolocation" in navigator) {
-      // Show immediate feedback that we're requesting location
-      toast("Requesting location permission... Please allow access in your browser.", {
-        icon: "📍",
-        duration: 3000,
-      });
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-          };
-          setUserLocation(coords);
-          setLocationGranted(true);
-          localStorage.setItem("userLocation", JSON.stringify(coords));
-          toast.success("Location saved! 📍", { duration: 2000 });
-        },
-        (error) => {
-          console.error("Location error:", error);
-          
-          // Show specific error message
-          if (error.code === error.PERMISSION_DENIED) {
-            toast.error("Location permission denied. Please enable it in your browser settings.", {
-              duration: 5000,
-            });
-          } else if (error.code === error.TIMEOUT) {
-            toast.error("Location request timed out. Please try again.", {
-              duration: 3000,
-            });
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            toast.error("Location information unavailable. Using default location.", {
-              duration: 3000,
-            });
-            // Use default location as fallback
-            const defaultLocation = { lat: 40.7128, lon: -74.0060 };
-            setUserLocation(defaultLocation);
-            setLocationGranted(true);
-            localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
-          } else {
-            toast.error("Failed to get location. Using default location.", {
-              duration: 3000,
-            });
-            // Use default location as fallback
-            const defaultLocation = { lat: 40.7128, lon: -74.0060 };
-            setUserLocation(defaultLocation);
-            setLocationGranted(true);
-            localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
-          }
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    } else {
-      toast.error("Geolocation is not supported by your browser");
-    }
-  };
-
-  const handleNext = () => {
-    if (currentStep === 2 && !name.trim()) {
-      toast("Please enter your name", { icon: "✏️" });
-      return;
-    }
-    if (currentStep === 3 && selectedStyles.length === 0) {
-      toast("Please select at least one style preference", { icon: "🎨" });
-      return;
-    }
-    setCurrentStep(prev => Math.min(prev + 1, steps.length));
-  };
-
-  const handleBack = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
-
-  const handleFinish = async () => {
-    if (!locationGranted) {
-      toast("Please grant location permission", { icon: "📍" });
-      return;
-    }
-
-    setSaving(true);
-
+  const handleComplete = async () => {
     try {
+      setSaving(true);
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        throw new Error("Not authenticated");
-      }
-
-      // Save profile
-      const response = await fetch("/api/settings/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          preferences: {
-            styles: selectedStyles,
-            colors: selectedColors,
-            temperature_sensitivity: temperatureSensitivity,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Profile save error:", errorData);
-        throw new Error(errorData.error || "Failed to save profile");
-      }
-
-      const result = await response.json();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (result.success) {
-        toast.success("Profile saved! Let's get started! 🎉", { duration: 3000 });
-        
-        // Redirect to home after a short delay
-        setTimeout(() => {
-          router.push("/");
-          router.refresh();
-        }, 1000);
-      } else {
-        throw new Error(result.error || "Failed to save profile");
-      }
-    } catch (error) {
-      console.error("Error saving profile:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save profile. Please try again."
-      );
+      if (!user) return;
+
+      await supabase
+        .from("profiles")
+        .update({
+          style_preferences: {
+            preferences: selectedStyles,
+            notes: additionalNotes,
+          },
+        })
+        .eq("id", user.id);
+
+      router.push("/");
+    } catch (err) {
+      console.error("Error saving profile:", err);
+    } finally {
       setSaving(false);
     }
   };
 
+  const progress = (currentStep / 3) * 100;
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl"
-      >
-        {/* Progress Steps */}
-        <div className="flex justify-between mb-8">
-          {steps.map((step, index) => (
-            <div
-              key={step.id}
-              className="flex flex-col items-center gap-2 flex-1"
-            >
-              <div
-                className={`h-10 w-10 rounded-full flex items-center justify-center transition-all ${
-                  currentStep > step.id
-                    ? "bg-primary text-primary-foreground"
-                    : currentStep === step.id
-                    ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {currentStep > step.id ? (
-                  <Check className="h-5 w-5" />
-                ) : (
-                  <step.icon className="h-5 w-5" />
-                )}
-              </div>
-              <p className="text-xs font-medium text-muted-foreground hidden sm:block">
-                {step.title}
-              </p>
-              {index < steps.length - 1 && (
-                <div className="absolute left-1/2 top-5 w-full h-0.5 bg-muted -z-10" />
-              )}
+    <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-4">
+      <div className="w-full max-w-3xl">
+        {/* Logo/Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-[var(--primary)] rounded-xl flex items-center justify-center text-white font-bold text-lg">
+              R
             </div>
-          ))}
+            <span className="font-heading text-2xl text-gray-900">SetMyFit</span>
+          </div>
         </div>
 
-        <Card className="glass-effect">
+        {/* Main Card */}
+        <div className="bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-8 md:p-12">
+          {/* Step Indicator */}
+          <div className="flex items-center justify-center mb-8 gap-4">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all ${
+                    step < currentStep
+                      ? "bg-teal-500 text-white"
+                      : step === currentStep
+                      ? "bg-[var(--primary)] text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {step < currentStep ? <Check className="w-6 h-6" /> : step}
+                </div>
+                {step < 3 && (
+                  <div className="w-16 md:w-24 h-1 mx-2">
+                    <div
+                      className={`h-full transition-all ${
+                        step < currentStep ? "bg-teal-500" : "bg-gray-200"
+                      }`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-[var(--primary)] rounded-full"
+                initial={{ width: "0%" }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+          </div>
+
+          {/* Step Content */}
           <AnimatePresence mode="wait">
-            {/* Step 1: Welcome */}
             {currentStep === 1 && (
               <motion.div
                 key="step1"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
               >
-                <CardHeader className="text-center space-y-4">
-                  <div className="flex justify-center">
-                    <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                      <Sparkles className="h-10 w-10 text-primary-foreground" />
-                    </div>
+                <div className="text-center space-y-3">
+                  <h2 className="font-heading text-2xl md:text-3xl text-gray-900">
+                    What's Your Vibe?
+                  </h2>
+                  <p className="text-gray-600">
+                    Help our AI stylist get to know you. The more it knows, the better your fits!
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold text-gray-900">
+                    My style is often...
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {styleOptions.map((style) => (
+                      <button
+                        key={style}
+                        onClick={() => handleStyleToggle(style)}
+                        className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                          selectedStyles.includes(style)
+                            ? "border-[var(--primary)] bg-[var(--primary)]/5"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                              selectedStyles.includes(style)
+                                ? "border-[var(--primary)] bg-[var(--primary)]"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {selectedStyles.includes(style) && (
+                              <Check className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-gray-900">
+                            {style}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                  <CardTitle className="text-3xl">Welcome to setmyfit!</CardTitle>
-                  <CardDescription className="text-base">
-                    Your AI-powered outfit assistant that knows the weather, your schedule, and your style
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 rounded-lg bg-primary/5">
-                      <Cloud className="h-8 w-8 mx-auto mb-2 text-primary" />
-                      <h3 className="font-semibold mb-1">Weather Smart</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Real-time weather integration
-                      </p>
-                    </div>
-                    <div className="text-center p-4 rounded-lg bg-primary/5">
-                      <Shirt className="h-8 w-8 mx-auto mb-2 text-primary" />
-                      <h3 className="font-semibold mb-1">AI Powered</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Gemini AI recommendations
-                      </p>
-                    </div>
-                    <div className="text-center p-4 rounded-lg bg-primary/5">
-                      <Sparkles className="h-8 w-8 mx-auto mb-2 text-primary" />
-                      <h3 className="font-semibold mb-1">Personalized</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Learns your preferences
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-gray-900">
+                    Anything else we should know?
+                  </label>
+                  <textarea
+                    value={additionalNotes}
+                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                    placeholder="e.g., I never wear yellow, I love vintage band tees, comfort is key..."
+                    className="w-full p-4 border-2 border-gray-200 rounded-2xl focus:border-[var(--primary)] focus:outline-none text-sm resize-none"
+                    rows={3}
+                  />
+                  <p className="text-xs text-gray-500">
+                    This helps the AI fine-tune your recommendations
+                  </p>
+                </div>
               </motion.div>
             )}
 
-            {/* Step 2: Profile */}
             {currentStep === 2 && (
               <motion.div
                 key="step2"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
               >
-                <CardHeader>
-                  <CardTitle>Tell us about yourself</CardTitle>
-                  <CardDescription>
-                    This helps us personalize your experience
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">What should we call you?</Label>
-                    <Input
-                      id="name"
-                      placeholder="Your name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="text-lg h-12"
-                      autoFocus
-                    />
+                <div className="text-center space-y-3">
+                  <h2 className="font-heading text-2xl md:text-3xl text-gray-900">
+                    Build Your Virtual Wardrobe
+                  </h2>
+                  <p className="text-gray-600">
+                    Start by adding a few items. Good photos get the best results!
+                  </p>
+                </div>
+
+                {/* Upload Tips Card */}
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Camera className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="space-y-3 flex-1">
+                      <h3 className="font-semibold text-gray-900">Photo Tips</h3>
+                      <div className="space-y-2 text-sm text-gray-700">
+                        <div className="flex items-start gap-2">
+                          <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-green-600" />
+                          </div>
+                          <p>Use a flat, neutral background with good lighting</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Check className="w-3 h-3 text-green-600" />
+                          </div>
+                          <p>Lay item flat or hang it on a plain wall/door</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-xs text-red-600">✕</span>
+                          </div>
+                          <p>Avoid cluttered, dark, or wrinkled photos</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <Label>How do you feel about temperature?</Label>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-muted-foreground w-24">
-                        Always Cold
-                      </span>
-                      <input
-                        type="range"
-                        min="-2"
-                        max="2"
-                        value={temperatureSensitivity}
-                        onChange={(e) => setTemperatureSensitivity(Number(e.target.value))}
-                        className="flex-1 h-2 rounded-full appearance-none bg-muted cursor-pointer"
-                      />
-                      <span className="text-sm text-muted-foreground w-24 text-right">
-                        Always Warm
-                      </span>
+                  {/* Example comparison would go here in the real implementation */}
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/50">
+                    <div className="space-y-2">
+                      <div className="aspect-square bg-white rounded-xl border-2 border-green-400 flex items-center justify-center">
+                        <span className="text-4xl">👕</span>
+                      </div>
+                      <p className="text-xs font-semibold text-green-700 text-center">
+                        Good Photo
+                      </p>
                     </div>
-                    <p className="text-xs text-center text-muted-foreground">
-                      {temperatureSensitivity === -2 && "I'm always freezing!"}
-                      {temperatureSensitivity === -1 && "I tend to feel cold"}
-                      {temperatureSensitivity === 0 && "I'm just right"}
-                      {temperatureSensitivity === 1 && "I tend to feel warm"}
-                      {temperatureSensitivity === 2 && "I'm always hot!"}
-                    </p>
+                    <div className="space-y-2">
+                      <div className="aspect-square bg-gray-800 rounded-xl border-2 border-red-400 flex items-center justify-center">
+                        <span className="text-4xl opacity-30">👕</span>
+                      </div>
+                      <p className="text-xs font-semibold text-red-700 text-center">
+                        Bad Photo
+                      </p>
+                    </div>
                   </div>
-                </CardContent>
+                </div>
+
+                <button
+                  onClick={() => router.push("/wardrobe/upload")}
+                  className="w-full bg-[var(--primary)] text-white px-8 py-4 rounded-full font-semibold hover:opacity-90 transition-opacity"
+                >
+                  Start Uploading Items
+                </button>
               </motion.div>
             )}
 
-            {/* Step 3: Preferences */}
             {currentStep === 3 && (
               <motion.div
                 key="step3"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
               >
-                <CardHeader>
-                  <CardTitle>What&apos;s your style?</CardTitle>
-                  <CardDescription>
-                    Select your favorite styles and colors (choose as many as you like)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+                <div className="text-center space-y-3">
+                  <h2 className="font-heading text-2xl md:text-3xl text-gray-900">
+                    Your Style Preview
+                  </h2>
+                  <p className="text-gray-600">
+                    Here's a starter idea our AI stylist whipped up for you!
+                  </p>
+                </div>
+
+                {/* Outfit suggestion placeholder */}
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 space-y-6">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">👔</div>
+                    <div className="space-y-2 flex-1">
+                      <h3 className="font-semibold text-gray-900">Outfit Suggestion</h3>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        A light-wash denim shirt, unbuttoned over a simple white crew-neck t-shirt, 
+                        paired with relaxed-fit olive chinos and white canvas sneakers. Accessorize 
+                        with a minimalist watch.
+                      </p>
+                      <p className="text-xs text-gray-600 mt-4 italic">
+                        ✨ This outfit perfectly aligns with a casual preference, offering comfort 
+                        and style for mild, sunny weather
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-6 border-t border-gray-100">
+                  <h3 className="font-semibold text-gray-900 text-center">What happens next?</h3>
                   <div className="space-y-3">
-                    <Label>Preferred Styles</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {styleOptions.map((style) => (
-                        <Badge
-                          key={style}
-                          variant={selectedStyles.includes(style) ? "default" : "outline"}
-                          className="cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105"
-                          onClick={() => handleStyleToggle(style)}
-                        >
-                          {style}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>Favorite Colors</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {colorOptions.map((color) => (
-                        <Badge
-                          key={color}
-                          variant={selectedColors.includes(color) ? "default" : "outline"}
-                          className="cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105"
-                          onClick={() => handleColorToggle(color)}
-                        >
-                          {color}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </motion.div>
-            )}
-
-            {/* Step 4: Location */}
-            {currentStep === 4 && (
-              <motion.div
-                key="step4"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <CardHeader>
-                  <CardTitle>Enable location</CardTitle>
-                  <CardDescription>
-                    We need your location to provide accurate weather-based outfit recommendations
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="text-center py-8 space-y-4">
-                    <div className="flex justify-center">
-                      <div className={`h-20 w-20 rounded-3xl flex items-center justify-center transition-all ${
-                        locationGranted 
-                          ? "bg-green-500/10" 
-                          : "bg-primary/10"
-                      }`}>
-                        <MapPin className={`h-10 w-10 ${
-                          locationGranted ? "text-green-500" : "text-primary"
-                        }`} />
+                    {[
+                      { num: "1️⃣", text: 'Visit your dashboard and tap "Get Outfit"' },
+                      { num: "2️⃣", text: "We'll suggest 1–3 outfits with reasons why they work" },
+                      { num: "3️⃣", text: "Generate a visual preview and swap items if you want" },
+                      { num: "4️⃣", text: "Save outfits you love and track what you wear!" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <span className="text-2xl flex-shrink-0">{item.num}</span>
+                        <p className="text-sm text-gray-700 pt-1">{item.text}</p>
                       </div>
-                    </div>
-                    
-                    {locationGranted ? (
-                      <div className="space-y-2">
-                        <p className="text-lg font-semibold text-green-500">
-                          ✓ Location Enabled
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          You&apos;re all set! We&apos;ll use your location for weather-based recommendations.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                          Click the button below to grant location permission. We&apos;ll use this to get accurate weather data for your outfit recommendations.
-                        </p>
-                        <Button
-                          size="lg"
-                          onClick={requestLocation}
-                          className="mx-auto"
-                        >
-                          <MapPin className="h-4 w-4 mr-2" />
-                          Grant Location Permission
-                        </Button>
-                      </div>
-                    )}
+                    ))}
                   </div>
-
-                  <div className="p-4 rounded-lg bg-muted/50 space-y-2">
-                    <p className="text-xs font-medium">Why we need location:</p>
-                    <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>&bull; Real-time weather data for your area</li>
-                      <li>&bull; Accurate temperature and conditions</li>
-                      <li>&bull; UV index and air quality information</li>
-                      <li>&bull; Better outfit recommendations</li>
-                    </ul>
-                  </div>
-                </CardContent>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* Navigation */}
-          <CardContent className="pt-0">
-            <div className="flex justify-between gap-4">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                disabled={currentStep === 1 || saving}
-                className="min-w-[100px]"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+            <button
+              onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
+              disabled={currentStep === 1}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-0 disabled:pointer-events-none"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            <button
+              onClick={() => {
+                if (currentStep === 3) {
+                  handleComplete();
+                } else {
+                  setCurrentStep((prev) => Math.min(3, prev + 1));
+                }
+              }}
+              disabled={saving}
+              className="inline-flex items-center gap-2 bg-[var(--primary)] text-white px-8 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity"
+            >
+              {currentStep === 3 ? (saving ? "Saving..." : "Let's Go!") : "Next"}
+              {currentStep < 3 && <ArrowRight className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
 
-              {currentStep < steps.length ? (
-                <Button
-                  onClick={handleNext}
-                  className="min-w-[100px]"
-                >
-                  Next
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleFinish}
-                  disabled={!locationGranted || saving}
-                  className="min-w-[120px]"
-                >
-                  {saving ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                    </motion.div>
-                  ) : (
-                    <>
-                      Get Started
-                      <Check className="h-4 w-4 ml-2" />
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+        <p className="text-center text-xs text-gray-500 mt-6">
+          SetMyFit Alpha v0.1
+        </p>
+      </div>
     </div>
   );
 }

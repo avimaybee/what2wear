@@ -1,620 +1,287 @@
-"use client";
+'use client';
 
-import { useState, useEffect, Suspense, lazy, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { MapPin, AlertCircle, LogIn, Shirt } from "lucide-react";
-import { toast } from "@/components/ui/toaster";
-import { createClient } from "@/lib/supabase/client";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Hero } from "@/components/hero/Hero";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { OnboardingWizard } from "@/components/onboarding";
-import type { RecommendationApiPayload, RecommendationDiagnostics } from "@/lib/types";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { createClient } from '@/lib/supabase/client';
+import { Sparkles, Shirt, History, Settings } from 'lucide-react';
 
-// Lazy load heavy components
-const DashboardClient = lazy(() => 
-  import("@/components/client/dashboard-client").then(mod => ({ default: mod.DashboardClient }))
-);
-
-type RecommendationApiResponse = {
-  success: boolean;
-  data?: RecommendationApiPayload;
-  diagnostics?: RecommendationDiagnostics;
-  needsWardrobe?: boolean;
-  message?: string;
-  error?: string;
-};
-
-export default function HomePage() {
+export default function DashboardPage() {
   const router = useRouter();
-  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
-  const [recommendationData, setRecommendationData] = useState<RecommendationApiPayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isAuthError, setIsAuthError] = useState(false);
-  const [showLocationDialog, setShowLocationDialog] = useState(false);
-  const [manualLat, setManualLat] = useState("");
-  const [manualLon, setManualLon] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [hasWardrobe, setHasWardrobe] = useState(false);
-  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [recommendationDiagnostics, setRecommendationDiagnostics] = useState<RecommendationDiagnostics | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [wardrobeCount, setWardrobeCount] = useState(0);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-  const emitClientLog = useCallback((message: string, context?: Record<string, unknown>) => {
-    if (typeof window === "undefined") return;
-    const entry = {
-      message,
-      context: context ?? null,
-      ts: new Date().toISOString(),
-    };
+  const supabase = createClient();
 
-    try {
-      const globalWindow = window as typeof window & { __setmyfitLogBuffer?: typeof entry[] };
-      globalWindow.__setmyfitLogBuffer = globalWindow.__setmyfitLogBuffer || [];
-      globalWindow.__setmyfitLogBuffer.push(entry);
-      if (globalWindow.__setmyfitLogBuffer.length > 200) {
-        globalWindow.__setmyfitLogBuffer.shift();
-      }
-    } catch (_err) {
-      // Swallow serialization errors silently
-    }
-
-    if (context) {
-      console.info(`[setmyfit] ${message}`, context);
-    } else {
-      console.info(`[setmyfit] ${message}`);
-    }
+  useEffect(() => {
+    checkAuth();
   }, []);
 
-  const logDiagnosticsToConsole = useCallback((diagnostics: RecommendationDiagnostics, coords?: { lat: number; lon: number }) => {
-    emitClientLog('recommendation:diagnostics', {
-      requestId: diagnostics.requestId,
-      warnings: diagnostics.warnings.length,
-      coords,
-    });
-
-    if (typeof window !== "undefined") {
-      const globalWindow = window as typeof window & { __setmyfitDiagnostics?: RecommendationDiagnostics };
-      globalWindow.__setmyfitDiagnostics = diagnostics;
-    }
-
-    console.groupCollapsed(`[setmyfit] Recommendation ${diagnostics.requestId}`);
-    if (coords) {
-      console.log('coords', coords);
-    }
-    if (diagnostics.summary?.filterCounts) {
-      console.table(diagnostics.summary.filterCounts);
-    }
-    diagnostics.events.forEach((event) => {
-      console.log(`${event.stage}`, event.meta ?? {});
-    });
-    if (diagnostics.warnings.length > 0) {
-      console.warn('diagnostic warnings', diagnostics.warnings);
-    }
-    console.groupEnd();
-  }, [emitClientLog]);
-
-  // Request user location
-  const requestLocation = useCallback(() => {
-    setError(null);
-    emitClientLog('location:request:start');
-
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-          };
-          emitClientLog('location:request:success', coords);
-          setLocation(coords);
-          localStorage.setItem("userLocation", JSON.stringify(coords));
-          toast(`Location detected: ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`, { icon: "📍" });
-        },
-        (error) => {
-          let errorMsg = "Location access denied";
-          if (error.code === 1) errorMsg = "Location permission denied";
-          if (error.code === 2) errorMsg = "Location unavailable";
-          if (error.code === 3) errorMsg = "Location timeout";
-          emitClientLog('location:request:error', { code: error.code, message: errorMsg });
-          
-          // Fallback to default location (New York)
-          const defaultLocation = { lat: 40.7128, lon: -74.0060 };
-          setLocation(defaultLocation);
-          toast(`${errorMsg}. Using New York instead.`, { icon: "⚠️" });
-          emitClientLog('location:request:fallback', defaultLocation);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
-    } else {
-      // Fallback if geolocation not supported
-      const defaultLocation = { lat: 40.7128, lon: -74.0060 };
-      setLocation(defaultLocation);
-      toast("Geolocation not supported. Using New York.", { icon: "📍" });
-      emitClientLog('location:request:notSupported');
-    }
-  }, [emitClientLog]);
-
-  // Fetch outfit recommendation
-  const fetchRecommendation = useCallback(async (coords: { lat: number; lon: number }, retryCount = 0) => {
-    emitClientLog('recommendation:fetch:start', { coords, retryCount });
-
+  async function checkAuth() {
     try {
-      setLoading(true);
-      setError(null);
-
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        setError("Please sign in to get outfit recommendations");
-        setIsAuthError(true);
-        emitClientLog('recommendation:fetch:auth-missing');
-        return;
-      }
-
-      emitClientLog('recommendation:fetch:sessionReady', { userId: session.user.id });
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-      const response = await fetch("/api/recommendation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(coords),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        emitClientLog('recommendation:fetch:httpError', { status: response.status });
-        throw new Error(`Failed to fetch recommendation: ${response.statusText}`);
-      }
-
-      const payload: RecommendationApiResponse = await response.json();
-      emitClientLog('recommendation:fetch:response', {
-        success: payload.success,
-        hasDiagnostics: Boolean(payload.diagnostics),
-      });
-
-      if (payload.diagnostics) {
-        setRecommendationDiagnostics(payload.diagnostics);
-        logDiagnosticsToConsole(payload.diagnostics, coords);
-      } else {
-        setRecommendationDiagnostics(null);
-      }
-
-      // Handle empty/insufficient wardrobe gracefully - this is expected for new users
-      if (!payload.success && payload.needsWardrobe) {
-        setHasWardrobe(false);
-        emitClientLog('recommendation:fetch:needsWardrobe', { message: payload.message });
-        
-        // Check if the error mentions missing types - if so, try to fix them automatically
-        if (retryCount === 0 && (payload.message?.toLowerCase().includes('type') || payload.message?.toLowerCase().includes('category'))) {
-          try {
-            emitClientLog('recommendation:wardrobe:autoFix:start');
-            const fixResponse = await fetch("/api/wardrobe/fix-types", {
-              method: "POST",
-            });
-            const fixData = await fixResponse.json();
-            
-            if (fixData.success && fixData.fixed > 0) {
-              toast(`Fixed ${fixData.fixed} wardrobe items, trying again...`, { icon: "🔧" });
-              emitClientLog('recommendation:wardrobe:autoFix:success', { fixed: fixData.fixed });
-              // Retry once after fixing
-              return fetchRecommendation(coords, retryCount + 1);
-            }
-            emitClientLog('recommendation:wardrobe:autoFix:noChanges');
-          } catch (_fixError) {
-            emitClientLog('recommendation:wardrobe:autoFix:error');
-            // Silent fail - will show empty state instead
-          }
-        }
-        
-        setError(payload.message || "Add clothing items to your wardrobe to get started!");
-        // Don't show error toast for empty wardrobe - it's expected for new users
-        return;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!payload.success) {
-        throw new Error(payload.error || "Failed to generate recommendation");
+      if (!user) {
+        router.push('/auth/sign-in');
+        return;
       }
 
-      setHasWardrobe(true);
-      setRecommendationData(payload.data ?? null);
-      emitClientLog('recommendation:fetch:success', {
-        outfitItems: payload.data?.recommendation.outfit.length ?? 0,
-      });
+      await loadWardrobeCount(user.id);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to load recommendation";
-      const isTimeout = err instanceof Error && err.name === 'AbortError';
-      emitClientLog('recommendation:fetch:error', { message: errorMsg, isTimeout, retryCount });
-      
-      // Handle timeout separately
-      if (isTimeout) {
-        setError("Recommendation request timed out. Please try again.");
-        toast.error("Request took too long. Please try again.");
-      } else {
-        setError(errorMsg);
-        // Only show error toast for actual errors, not empty wardrobe
-        if (!errorMsg.toLowerCase().includes("wardrobe")) {
-          toast.error("Failed to generate outfit. Please try again.");
-        }
-      }
-      setRecommendationDiagnostics(null);
+      console.error('Auth check error:', err);
     } finally {
       setLoading(false);
     }
-  }, [emitClientLog, logDiagnosticsToConsole]);
+  }
 
-  // Initialize: Get location and fetch recommendation
-  useEffect(() => {
-    const init = async () => {
-      // Check authentication status first
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+  async function loadWardrobeCount(userId: string) {
+    try {
+      const { count } = await supabase
+        .from('clothing_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      setWardrobeCount(count || 0);
       
-      if (session) {
-        setIsAuthenticated(true);
-        setUserId(session.user.id);
-        emitClientLog('auth:session', { userId: session.user.id });
-      } else {
-        emitClientLog('auth:noSession');
+      if (count === 0) {
+        setNeedsOnboarding(true);
       }
-      
-      const savedLocation = localStorage.getItem("userLocation");
-      if (savedLocation) {
-        try {
-          const coords = JSON.parse(savedLocation);
-          setLocation(coords);
-          emitClientLog('location:cache:hit', coords);
-          return; // Don't fetch yet, wait for useEffect below
-        } catch {
-          // Invalid saved location, request new one
-          emitClientLog('location:cache:invalid');
-        }
-      }
-      requestLocation();
-      
-      // Safety timeout: If no location after 15 seconds, use default
-      const safetyTimer = setTimeout(() => {
-        setLocation(prevLocation => {
-          if (!prevLocation) {
-            const defaultLocation = { lat: 40.7128, lon: -74.0060 };
-            localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
-            return defaultLocation;
-          }
-          return prevLocation;
-        });
-      }, 15000);
-      
-      return () => clearTimeout(safetyTimer);
-    };
-    
-    init();
-  }, [emitClientLog, requestLocation]); // Run only once on mount
-
-  useEffect(() => {
-    if (!recommendationData) return;
-    const outfitCount = recommendationData?.recommendation.outfit.length ?? 0;
-    emitClientLog('recommendation:state:update', { outfitCount });
-  }, [recommendationData, emitClientLog]);
-
-  // Fetch recommendation when location becomes available
-  useEffect(() => {
-    // When we get a location, trigger a recommendation fetch.
-    // Previous check used `!loading` which prevented the first fetch because
-    // `loading` is initially true. Call fetch when we have a location.
-    if (location) {
-      fetchRecommendation(location);
+    } catch (err) {
+      console.error('Error loading wardrobe count:', err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location]); // Only depend on location, not fetchRecommendation to avoid loops
-
-  // Loading state
-  if (loading || !location) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-6">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-96" />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              <Card>
-                <CardHeader>
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-4 w-full" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-4 gap-4">
-                    {[1, 2, 3, 4].map((i) => (
-                      <Skeleton key={i} className="aspect-square" />
-                    ))}
-                  </div>
-                  <Skeleton className="h-12 w-full" />
-                </CardContent>
-              </Card>
-            </div>
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <Skeleton className="h-6 w-32" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-32 w-full" />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
   }
 
-  // Error state
-  if (error) {
-    const isWardrobeError = error.toLowerCase().includes("wardrobe") || 
-                           error.toLowerCase().includes("clothes") ||
-                           error.toLowerCase().includes("top") ||
-                           error.toLowerCase().includes("bottom") ||
-                           error.toLowerCase().includes("shoes");
-    
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full">
-          {isAuthError ? (
-            <EmptyState
-              icon={LogIn}
-              title="Authentication Required"
-              description="Please sign in to get personalized outfit recommendations based on your wardrobe and preferences."
-              actions={[
-                {
-                  label: "Sign In",
-                  onClick: () => router.push("/auth/sign-in"),
-                  icon: LogIn,
-                  variant: "default"
-                }
-              ]}
-              tips={[
-                "Create your account in seconds",
-                "Build your digital wardrobe",
-                "Get AI-powered outfit suggestions",
-                "Track your style over time"
-              ]}
-              variant="illustrated"
-            />
-          ) : isWardrobeError ? (
-            <>
-              <EmptyState
-                icon={Shirt}
-                title="Missing Essential Clothing"
-                description={error}
-                actions={[
-                  {
-                    label: "Add Clothing Items",
-                    onClick: () => setShowOnboardingWizard(true),
-                    icon: Shirt,
-                    variant: "default"
-                  },
-                  {
-                    label: "Try Again",
-                    onClick: () => location && fetchRecommendation(location),
-                    variant: "outline"
-                  }
-                ]}
-                tips={[
-                  "Snap photos of your favorite clothes",
-                  "AI will detect colors, materials, and styles",
-                  "Get weather-based outfit suggestions",
-                  "Track what you wear and when"
-                ]}
-                variant="illustrated"
-              />
-              
-              {/* Onboarding Wizard Modal */}
-              {userId && (
-                <OnboardingWizard
-                  open={showOnboardingWizard}
-                  onComplete={() => {
-                    setShowOnboardingWizard(false);
-                    // Refresh the recommendation
-                    if (location) {
-                      fetchRecommendation(location);
-                    }
-                  }}
-                  onSkip={() => setShowOnboardingWizard(false)}
-                  userId={userId}
-                />
-              )}
-            </>
-          ) : (
-            <EmptyState
-              icon={AlertCircle}
-              title="Oops! Something Went Wrong"
-              description={error}
-              actions={[
-                {
-                  label: "Try Again",
-                  onClick: () => location && fetchRecommendation(location),
-                  variant: "default"
-                },
-                {
-                  label: "Change Location",
-                  onClick: requestLocation,
-                  icon: MapPin,
-                  variant: "outline"
-                }
-              ]}
-              variant="default"
-            />
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Success - show dashboard with real data
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section - Brand moment */}
-      <Hero 
-        isAuthenticated={isAuthenticated}
-        hasWardrobe={hasWardrobe}
-        onGetOutfitClick={() => {
-          const dashboardElement = document.getElementById('dashboard');
-          if (dashboardElement) {
-            dashboardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }}
-      />
+  async function generateOutfit() {
+    try {
+      setGenerating(true);
       
-      {process.env.NODE_ENV === 'development' && (function renderDebugHelper() {
-        const filterSummary = recommendationDiagnostics?.summary?.filterCounts
-          ? Object.entries(recommendationDiagnostics.summary.filterCounts)
-              .map(([stage, value]) => `${stage.split(':').slice(-1)}:${value}`)
-              .join(', ')
-          : 'n/a';
+      const response = await fetch('/api/outfit/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: new Date().toISOString().split('T')[0] }),
+      });
 
-        const recommendationStatus = recommendationData
-          ? `ok (${recommendationData.recommendation.outfit.length})`
-          : 'null';
+      if (!response.ok) throw new Error('Failed to generate outfit');
+      
+      const { data } = await response.json();
+      if (data && data[0]?.id) {
+        router.push(`/outfit/${data[0].id}`);
+      }
+    } catch (err) {
+      console.error('Error generating outfit:', err);
+    } finally {
+      setGenerating(false);
+    }
+  }
 
-        return (
-          <div className="fixed top-4 right-4 z-50 bg-white/90 border p-3 rounded-md shadow-md text-xs text-foreground max-w-sm">
-            <div className="font-semibold mb-1">Debug</div>
-            <div><strong>loading:</strong> {String(loading)}</div>
-            <div><strong>location:</strong> {location ? `${location.lat.toFixed(4)}, ${location.lon.toFixed(4)}` : 'null'}</div>
-            <div><strong>error:</strong> {error ? error : 'none'}</div>
-            <div><strong>recommendation:</strong> {recommendationStatus}</div>
-            <div><strong>authenticated:</strong> {String(isAuthenticated)}</div>
-            <div><strong>hasWardrobe:</strong> {String(hasWardrobe)}</div>
-            <div><strong>diag request:</strong> {recommendationDiagnostics?.requestId ?? 'n/a'}</div>
-            <div><strong>diag warnings:</strong> {recommendationDiagnostics?.warnings.length ?? 0}</div>
-            <div><strong>filters:</strong> {filterSummary}</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-4xl">⏳</div>
+          <p className="text-sm text-[var(--muted-foreground)]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (needsOnboarding) {
+    return (
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-8 md:p-12 text-center space-y-6">
+          <div className="text-6xl">👋</div>
+          <div className="space-y-3">
+            <h1 className="font-heading text-3xl md:text-4xl text-gray-900">
+              Welcome to SetMyFit
+            </h1>
+            <p className="text-gray-600 text-base md:text-lg">
+              Let's build your style profile and virtual wardrobe to get started!
+            </p>
           </div>
-        );
-  })()}
-      <Suspense fallback={
-        <div className="container mx-auto p-4 space-y-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-48 w-full" />
+          
+          <button
+            onClick={() => router.push('/onboarding')}
+            className="inline-flex items-center gap-2 bg-[var(--primary)] text-white px-8 py-4 rounded-full font-semibold text-base hover:opacity-90 transition-opacity shadow-lg"
+          >
+            <Sparkles className="w-5 h-5" />
+            Get Started
+          </button>
         </div>
-      }>
-        <div id="dashboard">
-          <DashboardClient 
-            recommendationData={recommendationData}
-            location={location}
-            onLocationChange={() => setShowLocationDialog(true)}
-            onRefresh={() => location && fetchRecommendation(location)}
-          />
-        </div>
-      </Suspense>
+      </div>
+    );
+  }
 
-      {/* Location Change Dialog */}
-      <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change Location</DialogTitle>
-            <DialogDescription>
-              Update your location to get accurate weather and outfit recommendations.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Button
-              onClick={() => {
-                requestLocation();
-                setShowLocationDialog(false);
-                toast("Requesting current location...", { icon: "📍" });
-              }}
-              className="w-full"
-              size="lg"
+  return (
+    <div className="min-h-screen bg-[var(--bg)]">
+      {/* Header */}
+      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[var(--primary)] rounded-xl flex items-center justify-center text-white font-bold text-lg">
+              R
+            </div>
+            <span className="font-heading text-xl text-gray-900">SetMyFit</span>
+          </div>
+          
+          <nav className="hidden md:flex items-center gap-1">
+            <button
+              onClick={() => router.push('/')}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-900 bg-gray-100"
             >
-              <MapPin className="h-4 w-4 mr-2" />
-              Use Current Location
-            </Button>
+              Dashboard
+            </button>
+            <button
+              onClick={() => router.push('/wardrobe')}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              My Wardrobe
+            </button>
+            <button
+              onClick={() => router.push('/history')}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              Outfit History
+            </button>
+          </nav>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or enter coordinates
-                </span>
-              </div>
+          <button
+            onClick={() => router.push('/settings')}
+            className="p-2 rounded-lg hover:bg-gray-100"
+          >
+            <Settings className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-5xl mx-auto px-4 py-8 md:py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="space-y-8"
+        >
+          {/* Hero Section */}
+          <div className="bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-8 md:p-12 text-center space-y-6">
+            <div className="space-y-3">
+              <h1 className="font-heading text-3xl md:text-4xl text-gray-900">
+                Create Your Fit
+              </h1>
+              <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
+                Select items from your wardrobe to see them come to life
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="latitude">Latitude</Label>
-                <Input
-                  id="latitude"
-                  placeholder="e.g., 40.7128"
-                  value={manualLat}
-                  onChange={(e) => setManualLat(e.target.value)}
-                  type="number"
-                  step="0.0001"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="longitude">Longitude</Label>
-                <Input
-                  id="longitude"
-                  placeholder="e.g., -74.0060"
-                  value={manualLon}
-                  onChange={(e) => setManualLon(e.target.value)}
-                  type="number"
-                  step="0.0001"
-                />
-              </div>
+            {/* Category Selection Placeholder */}
+            <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto py-8">
+              <button
+                onClick={() => router.push('/wardrobe?category=tops')}
+                className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all flex flex-col items-center justify-center gap-3 p-6"
+              >
+                <Shirt className="w-8 h-8 md:w-12 md:h-12 text-gray-400" />
+                <div className="text-center">
+                  <p className="text-sm font-medium text-gray-700">Select a Top</p>
+                  <div className="mt-2 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mx-auto">
+                    <span className="text-gray-400 text-lg">+</span>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => router.push('/wardrobe?category=bottoms')}
+                className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all flex flex-col items-center justify-center gap-3 p-6"
+              >
+                <div className="w-8 h-8 md:w-12 md:h-12 text-gray-400">👖</div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-gray-700">Select a Bottom</p>
+                  <div className="mt-2 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mx-auto">
+                    <span className="text-gray-400 text-lg">+</span>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => router.push('/wardrobe?category=shoes')}
+                className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all flex flex-col items-center justify-center gap-3 p-6"
+              >
+                <div className="w-8 h-8 md:w-12 md:h-12 text-gray-400">👟</div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-gray-700">Select Shoes</p>
+                  <div className="mt-2 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mx-auto">
+                    <span className="text-gray-400 text-lg">+</span>
+                  </div>
+                </div>
+              </button>
             </div>
 
-            <Button
-              onClick={() => {
-                const lat = parseFloat(manualLat);
-                const lon = parseFloat(manualLon);
-                if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-                  const coords = { lat, lon };
-                  emitClientLog('location:manual', coords);
-                  setLocation(coords);
-                  localStorage.setItem("userLocation", JSON.stringify(coords));
-                  setShowLocationDialog(false);
-                  toast("Location updated successfully", { icon: "✅" });
-                } else {
-                  toast.error("Please enter valid coordinates");
-                }
-              }}
-              className="w-full"
-              variant="outline"
-              disabled={!manualLat || !manualLon}
+            {/* Get My Fit Button */}
+            <button
+              onClick={generateOutfit}
+              disabled={generating || wardrobeCount < 3}
+              className="inline-flex items-center gap-2 bg-[var(--primary)] text-white px-10 py-4 rounded-full font-semibold text-base hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Set Manual Location
-            </Button>
+              <Sparkles className="w-5 h-5" />
+              {generating ? 'Creating Your Fit...' : 'Get My Fit!'}
+            </button>
+
+            {wardrobeCount < 3 && (
+              <p className="text-sm text-gray-500 mt-2">
+                Add at least 3 items to your wardrobe to generate outfits
+              </p>
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <button
+              onClick={() => router.push('/wardrobe')}
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                  <Shirt className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{wardrobeCount}</p>
+                  <p className="text-sm text-gray-600">Items</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push('/history')}
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
+                  <History className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-sm text-gray-600">Outfits</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push('/wardrobe/upload')}
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-left col-span-2 md:col-span-1"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">📸</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Add Items</p>
+                  <p className="text-xs text-gray-600">Upload to wardrobe</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </motion.div>
+      </main>
     </div>
   );
 }

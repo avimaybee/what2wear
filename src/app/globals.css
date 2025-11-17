@@ -1,197 +1,227 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Belleza&display=swap');
 
 /* Custom variant for dark mode support */
 @custom-variant dark (&:is(.dark *));
 
-/* Light theme (default) - Following Apple HIG */
-/* Avoid pure white, use subtle off-whites */
+/* Papercraft Theme - Playful, tactile, warm design system */
 :root {
-  /* Base colors - Off-white instead of pure white (#FFFFFF) */
-  /* Using very light gray with subtle warmth */
-  --background: oklch(0.985 0.002 264.376); /* Off-white background */
-  --foreground: oklch(0.20 0.010 286.375); /* Not pure black */
+  /* Base colors - Warm papercraft palette */
+  --background: oklch(0.98 0.01 60); /* Warm off-white with slight cream */
+  --foreground: oklch(0.25 0.02 30); /* Soft dark brown for text */
   
-  /* Card & Surface colors */
-  --card: oklch(0.99 0.001 0); /* Slightly elevated from background */
-  --card-foreground: oklch(0.20 0.010 286.375);
+  /* Card & Panel colors - Papercraft style with borders */
+  --card: oklch(0.99 0.01 70); /* Light paper cards */
+  --card-foreground: oklch(0.25 0.02 30);
   
   /* Popover colors */
-  --popover: oklch(0.99 0.001 0);
-  --popover-foreground: oklch(0.20 0.010 286.375);
+  --popover: oklch(0.99 0.01 70);
+  --popover-foreground: oklch(0.25 0.02 30);
   
-  /* Apple HIG Label Hierarchy - Semantic text colors (Light Mode) */
-  /* Primary: Maximum contrast for important content */
-  --color-text-primary: oklch(0.20 0.010 286.375); /* label - primary text */
-  /* Secondary: ~60% opacity for supporting content */
-  --color-text-secondary: oklch(0.45 0.012 286.375); /* secondaryLabel */
-  /* Tertiary: ~40% opacity for de-emphasized content */
-  --color-text-tertiary: oklch(0.60 0.015 286.375); /* tertiaryLabel */
-  /* Quaternary: ~25% opacity for disabled states */
-  --color-text-quaternary: oklch(0.72 0.015 286.375); /* quaternaryLabel */
-  /* Keep muted for backwards compatibility */
-  --color-text-muted: oklch(0.60 0.015 286.375);
+  /* Text hierarchy - Warm and readable */
+  --color-text-primary: oklch(0.25 0.02 30); /* Soft dark brown */
+  --color-text-secondary: oklch(0.45 0.015 30); /* Medium brown */
+  --color-text-tertiary: oklch(0.60 0.01 35); /* Light brown */
+  --color-text-quaternary: oklch(0.72 0.008 35); /* Very light */
+  --color-text-muted: oklch(0.60 0.01 35);
   
-  /* Surface & elevation layers */
-  --color-surface: oklch(1 0 0);
-  --color-surface-1: oklch(0.99 0.002 264.376);
-  --color-surface-2: oklch(0.96 0.006 286.375);
-  --color-surface-3: oklch(0.94 0.008 286.375);
+  /* Surface & elevation layers - Papercraft textures */
+  --color-surface: oklch(0.98 0.01 60);
+  --color-surface-1: oklch(0.99 0.01 70);
+  --color-surface-2: oklch(0.96 0.02 50);
+  --color-surface-3: oklch(0.94 0.02 45);
   
-  /* Shadow system for elevation */
-  --shadow-xs: 0 1px 2px 0 rgba(16, 24, 40, 0.05);
-  --shadow-sm: 0 1px 2px 0 rgba(16, 24, 40, 0.06), 0 1px 3px 0 rgba(16, 24, 40, 0.10);
-  --shadow-md: 0 2px 4px -2px rgba(16, 24, 40, 0.06), 0 4px 8px -2px rgba(16, 24, 40, 0.10);
-  --shadow-lg: 0 4px 6px -2px rgba(16, 24, 40, 0.05), 0 12px 16px -4px rgba(16, 24, 40, 0.10);
-  --shadow-xl: 0 8px 8px -4px rgba(16, 24, 40, 0.04), 0 20px 24px -4px rgba(16, 24, 40, 0.10);
-  --shadow-2xl: 0 24px 48px -12px rgba(16, 24, 40, 0.25);
+  /* Papercraft shadows - Softer, warmer */
+  --shadow-xs: 0 2px 3px 0 rgba(120, 80, 40, 0.08);
+  --shadow-sm: 0 2px 4px 0 rgba(120, 80, 40, 0.10), 0 2px 6px 0 rgba(120, 80, 40, 0.12);
+  --shadow-md: 0 4px 8px -2px rgba(120, 80, 40, 0.10), 0 6px 12px -2px rgba(120, 80, 40, 0.14);
+  --shadow-lg: 0 6px 10px -2px rgba(120, 80, 40, 0.12), 0 12px 20px -4px rgba(120, 80, 40, 0.16);
+  --shadow-xl: 0 10px 16px -4px rgba(120, 80, 40, 0.14), 0 20px 32px -4px rgba(120, 80, 40, 0.18);
+  --shadow-2xl: 0 24px 48px -12px rgba(120, 80, 40, 0.28);
   
-  /* Motion system tokens */
-  --motion-duration-fast: 120ms;
-  --motion-duration-medium: 240ms;
-  --motion-duration-slow: 420ms;
+  /* Papercraft motion - Bouncy and playful */
+  --motion-duration-fast: 150ms;
+  --motion-duration-medium: 300ms;
+  --motion-duration-slow: 500ms;
   --motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
   --motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
   --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --motion-ease-elastic: cubic-bezier(0.2, 0.9, 0.2, 1);
-  --motion-ease-bounce: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1); /* More bounce */
+  --motion-ease-bounce: cubic-bezier(0.22, 1.2, 0.36, 1.1); /* Extra playful */
+  --motion-ease-pop: cubic-bezier(0.18, 0.89, 0.32, 1.28); /* Pop effect */
   
-  /* Primary brand color - Warm Coral/Peach with high contrast */
-  --primary: oklch(0.65 0.19 35);
-  --primary-foreground: oklch(0.99 0.002 264.376);
+  /* Papercraft brand colors - Warm and inviting */
+  --primary: oklch(0.68 0.18 40); /* Warm coral/peach */
+  --primary-foreground: oklch(0.99 0.01 70);
   
-  /* Secondary colors - derived from primary with reduced saturation */
-  --secondary: oklch(0.96 0.006 286.375);
-  --secondary-foreground: oklch(0.15 0.007 286.375);
+  /* Accent colors - Complementary papercraft palette */
+  --accent-blue: oklch(0.65 0.15 240); /* Sky blue */
+  --accent-green: oklch(0.70 0.14 140); /* Mint green */
+  --accent-yellow: oklch(0.85 0.16 85); /* Sunny yellow */
+  --accent-pink: oklch(0.75 0.17 15); /* Soft pink */
+  --accent-purple: oklch(0.65 0.16 300); /* Lavender */
   
-  /* Muted colors for subtle elements */
-  --muted: oklch(0.96 0.006 286.375);
-  --muted-foreground: oklch(0.52 0.015 286.375);
-  
-  /* Accent colors for highlights - derived from primary with lighter tone */
-  --accent: oklch(from var(--primary) calc(l + 0.31) calc(c * 0.05) h);
-  --accent-foreground: oklch(0.15 0.007 286.375);
-  
-  /* Destructive/Error colors */
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.99 0.002 264.376);
-  
-  /* Border & Input colors with primary accent */
-  --border: oklch(0.92 0.006 286.375);
-  --input: oklch(0.92 0.006 286.375);
-  --ring: var(--primary);
-  
-  /* Chart colors for data visualization - derived from primary hue */
-  --chart-1: var(--primary);
-  --chart-2: oklch(from var(--primary) l c calc(h + 120));
-  --chart-3: oklch(from var(--primary) calc(l - 0.15) c calc(h + 180));
-  --chart-4: oklch(from var(--primary) calc(l + 0.15) c calc(h - 60));
-  --chart-5: oklch(from var(--primary) calc(l + 0.10) c calc(h + 30));
-  
-  /* Border radius scale */
-  --radius: 0.625rem;
-  
-  /* Sidebar colors (for future use) */
-  --sidebar: oklch(0.99 0.002 264.376);
-  --sidebar-foreground: oklch(0.15 0.007 286.375);
-  --sidebar-primary: oklch(0.65 0.19 35);
-  --sidebar-primary-foreground: oklch(0.99 0.002 264.376);
-  --sidebar-accent: oklch(0.96 0.008 35);
-  --sidebar-accent-foreground: oklch(0.15 0.007 286.375);
-  --sidebar-border: oklch(0.92 0.006 286.375);
-  --sidebar-ring: oklch(0.65 0.19 35);
-}
-
-/* Dark theme - Following Apple HIG Dark Mode Guidelines */
-/* Avoid pure black, use elevated grays for depth */
-.dark {
-  /* Base colors - Apple-style dark grays (not pure black) */
-  /* Using ~#1C1C1E equivalent in OKLCH for base background */
-  --background: oklch(0.17 0.008 286.375); /* ~#1C1C1E - Apple's base dark */
-  --foreground: oklch(0.98 0.002 286.375); /* Off-white, not pure white */
-  
-  /* Card & Surface colors - Elevated materials */
-  /* Cards should be lighter than background for depth */
-  --card: oklch(0.21 0.010 286.375); /* Elevated surface */
-  --card-foreground: oklch(0.98 0.002 286.375);
-  
-  /* Popover colors - Even more elevated */
-  --popover: oklch(0.24 0.012 286.375);
-  --popover-foreground: oklch(0.98 0.002 286.375);
-  
-  /* Apple HIG Label Hierarchy - Semantic text colors */
-  /* Primary: Maximum contrast for important content */
-  --color-text-primary: oklch(0.98 0.002 286.375); /* label - primary text */
-  /* Secondary: ~60% opacity for supporting content */
-  --color-text-secondary: oklch(0.70 0.006 286.375); /* secondaryLabel */
-  /* Tertiary: ~40% opacity for de-emphasized content */
-  --color-text-tertiary: oklch(0.52 0.010 286.375); /* tertiaryLabel */
-  /* Quaternary: ~25% opacity for disabled states */
-  --color-text-quaternary: oklch(0.42 0.012 286.375); /* quaternaryLabel */
-  /* Keep muted for backwards compatibility */
-  --color-text-muted: oklch(0.52 0.010 286.375);
-  
-  /* Apple HIG Material Elevation System for Dark Mode */
-  /* Base: Primary background layer */
-  --color-surface: oklch(0.17 0.008 286.375); /* Base material */
-  /* Elevated: Raised UI elements (cards, sheets) */
-  --color-surface-1: oklch(0.21 0.010 286.375); /* Elevated material */
-  /* Light: Specific overlays and modals */
-  --color-surface-2: oklch(0.26 0.012 286.375); /* Light material */
-  /* Ultra Light: Highest elevation (tooltips, popovers) */
-  --color-surface-3: oklch(0.30 0.014 286.375); /* Ultra light material */
-  
-  /* Shadow system adapted for dark mode */
-  /* Shadows are more pronounced in dark mode for depth perception */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.20);
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25), 0 1px 3px 0 rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 2px 4px -2px rgba(0, 0, 0, 0.25), 0 4px 8px -2px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 4px 6px -2px rgba(0, 0, 0, 0.30), 0 12px 16px -4px rgba(0, 0, 0, 0.40);
-  --shadow-xl: 0 8px 8px -4px rgba(0, 0, 0, 0.35), 0 20px 24px -4px rgba(0, 0, 0, 0.45);
-  --shadow-2xl: 0 24px 48px -12px rgba(0, 0, 0, 0.65);
-  
-  /* Primary brand color - Slightly brighter for dark mode */
-  /* Increased luminosity for better visibility on dark backgrounds */
-  --primary: oklch(0.72 0.17 40); /* Brighter coral for dark mode */
-  --primary-foreground: oklch(0.15 0.008 286.375); /* Dark text on bright button */
-  
-  /* Secondary colors - derived from primary with reduced saturation */
-  --secondary: oklch(0.26 0.012 286.375);
-  --secondary-foreground: oklch(0.98 0.002 286.375);
+  /* Secondary colors */
+  --secondary: oklch(0.92 0.02 50);
+  --secondary-foreground: oklch(0.25 0.02 30);
   
   /* Muted colors */
-  --muted: oklch(0.26 0.012 286.375);
-  --muted-foreground: oklch(0.70 0.006 286.375); /* Secondary label level */
+  --muted: oklch(0.94 0.02 45);
+  --muted-foreground: oklch(0.50 0.015 35);
   
-  /* Accent colors - derived from primary, elevated from background */
-  --accent: oklch(from var(--primary) calc(l - 0.44) calc(c * 0.10) h);
-  --accent-foreground: oklch(0.98 0.002 286.375);
+  /* Accent for highlights */
+  --accent: oklch(0.85 0.16 85); /* Sunny yellow */
+  --accent-foreground: oklch(0.25 0.02 30);
   
-  /* Destructive/Error colors - More vibrant for dark mode */
-  --destructive: oklch(0.64 0.24 27.325);
-  --destructive-foreground: oklch(0.98 0.002 286.375);
+  /* Success color - Green sticker */
+  --success: oklch(0.70 0.14 140);
+  --success-foreground: oklch(0.99 0.01 70);
   
-  /* Border & Input colors - Visible but not harsh */
-  /* Using elevated material color for subtle separation */
-  --border: oklch(0.30 0.012 286.375);
-  --input: oklch(0.30 0.012 286.375);
+  /* Warning color - Amber sticker */
+  --warning: oklch(0.80 0.15 70);
+  --warning-foreground: oklch(0.25 0.02 30);
+  
+  /* Error colors - Red sticker */
+  --destructive: oklch(0.60 0.20 25);
+  --destructive-foreground: oklch(0.99 0.01 70);
+  
+  /* Info color - Blue sticker */
+  --info: oklch(0.65 0.15 240);
+  --info-foreground: oklch(0.99 0.01 70);
+  
+  /* Border & Input - Warm borders */
+  --border: oklch(0.85 0.03 40);
+  --input: oklch(0.90 0.02 45);
   --ring: var(--primary);
   
-  /* Chart colors for dark mode - derived from primary hue */
+  /* Chart colors - Papercraft palette */
   --chart-1: var(--primary);
-  --chart-2: oklch(from var(--primary) l c calc(h + 120));
-  --chart-3: oklch(from var(--primary) calc(l + 0.05) c calc(h + 30));
-  --chart-4: oklch(from var(--primary) calc(l - 0.10) c calc(h + 240));
-  --chart-5: oklch(from var(--primary) calc(l - 0.05) c calc(h - 25));
+  --chart-2: var(--accent-blue);
+  --chart-3: var(--accent-green);
+  --chart-4: var(--accent-pink);
+  --chart-5: var(--accent-purple);
   
-  /* Sidebar colors for dark mode */
-  --sidebar: oklch(0.18 0.012 286.375);
-  --sidebar-foreground: oklch(0.98 0.003 286.375);
-  --sidebar-primary: oklch(0.7 0.18 40);
-  --sidebar-primary-foreground: oklch(0.15 0.012 286.375);
-  --sidebar-accent: oklch(0.25 0.018 35);
-  --sidebar-accent-foreground: oklch(0.98 0.003 286.375);
-  --sidebar-border: oklch(0.28 0.015 286.375);
-  --sidebar-ring: oklch(0.7 0.18 40);
+  /* Border radius - Rounded corners for papercraft feel */
+  --radius: 1rem; /* 16px for pronounced rounded corners */
+  --radius-sm: 0.75rem; /* 12px */
+  --radius-lg: 1.5rem; /* 24px */
+  
+  /* Papercraft patterns */
+  --pattern-checker: repeating-conic-gradient(oklch(0.96 0.02 50) 0% 25%, oklch(0.98 0.01 60) 0% 50%) 50% / 20px 20px;
+  --pattern-dots: radial-gradient(circle, oklch(0.90 0.03 50) 1px, transparent 1px) 0 0 / 12px 12px;
+  --pattern-lines: repeating-linear-gradient(45deg, transparent, transparent 10px, oklch(0.94 0.02 45) 10px, oklch(0.94 0.02 45) 11px);
+  
+  /* Sidebar colors */
+  --sidebar: oklch(0.99 0.01 70);
+  --sidebar-foreground: oklch(0.25 0.02 30);
+  --sidebar-primary: oklch(0.68 0.18 40);
+  --sidebar-primary-foreground: oklch(0.99 0.01 70);
+  --sidebar-accent: oklch(0.92 0.02 50);
+  --sidebar-accent-foreground: oklch(0.25 0.02 30);
+  --sidebar-border: oklch(0.85 0.03 40);
+  --sidebar-ring: oklch(0.68 0.18 40);
+}
+
+/* Dark theme - Papercraft with warm dark tones */
+.dark {
+  /* Base colors - Warm dark paper */
+  --background: oklch(0.20 0.02 30); /* Warm dark brown */
+  --foreground: oklch(0.95 0.01 60); /* Warm off-white */
+  
+  /* Card & Panel colors */
+  --card: oklch(0.25 0.025 35);
+  --card-foreground: oklch(0.95 0.01 60);
+  
+  /* Popover colors */
+  --popover: oklch(0.28 0.03 35);
+  --popover-foreground: oklch(0.95 0.01 60);
+  
+  /* Text hierarchy */
+  --color-text-primary: oklch(0.95 0.01 60);
+  --color-text-secondary: oklch(0.70 0.015 50);
+  --color-text-tertiary: oklch(0.55 0.02 45);
+  --color-text-quaternary: oklch(0.45 0.02 40);
+  --color-text-muted: oklch(0.55 0.02 45);
+  
+  /* Surface layers */
+  --color-surface: oklch(0.20 0.02 30);
+  --color-surface-1: oklch(0.25 0.025 35);
+  --color-surface-2: oklch(0.30 0.03 40);
+  --color-surface-3: oklch(0.35 0.035 42);
+  
+  /* Papercraft shadows - Darker */
+  --shadow-xs: 0 2px 3px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.35), 0 2px 6px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.4), 0 6px 12px -2px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 6px 10px -2px rgba(0, 0, 0, 0.45), 0 12px 20px -4px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 10px 16px -4px rgba(0, 0, 0, 0.5), 0 20px 32px -4px rgba(0, 0, 0, 0.55);
+  --shadow-2xl: 0 24px 48px -12px rgba(0, 0, 0, 0.7);
+  
+  /* Primary brand - Brighter for dark mode */
+  --primary: oklch(0.75 0.17 45);
+  --primary-foreground: oklch(0.20 0.02 30);
+  
+  /* Accent colors */
+  --accent-blue: oklch(0.70 0.14 240);
+  --accent-green: oklch(0.75 0.13 140);
+  --accent-yellow: oklch(0.88 0.15 85);
+  --accent-pink: oklch(0.78 0.16 15);
+  --accent-purple: oklch(0.70 0.15 300);
+  
+  /* Secondary */
+  --secondary: oklch(0.30 0.03 40);
+  --secondary-foreground: oklch(0.95 0.01 60);
+  
+  /* Muted */
+  --muted: oklch(0.28 0.025 38);
+  --muted-foreground: oklch(0.65 0.018 48);
+  
+  /* Accent */
+  --accent: oklch(0.88 0.15 85);
+  --accent-foreground: oklch(0.20 0.02 30);
+  
+  /* Success */
+  --success: oklch(0.75 0.13 140);
+  --success-foreground: oklch(0.20 0.02 30);
+  
+  /* Warning */
+  --warning: oklch(0.82 0.14 70);
+  --warning-foreground: oklch(0.20 0.02 30);
+  
+  /* Error */
+  --destructive: oklch(0.65 0.19 25);
+  --destructive-foreground: oklch(0.95 0.01 60);
+  
+  /* Info */
+  --info: oklch(0.70 0.14 240);
+  --info-foreground: oklch(0.20 0.02 30);
+  
+  /* Border & Input */
+  --border: oklch(0.35 0.04 42);
+  --input: oklch(0.32 0.035 40);
+  --ring: var(--primary);
+  
+  /* Chart colors */
+  --chart-1: var(--primary);
+  --chart-2: var(--accent-blue);
+  --chart-3: var(--accent-green);
+  --chart-4: var(--accent-pink);
+  --chart-5: var(--accent-purple);
+  
+  /* Papercraft patterns for dark */
+  --pattern-checker: repeating-conic-gradient(oklch(0.25 0.025 35) 0% 25%, oklch(0.28 0.03 38) 0% 50%) 50% / 20px 20px;
+  --pattern-dots: radial-gradient(circle, oklch(0.32 0.035 40) 1px, transparent 1px) 0 0 / 12px 12px;
+  --pattern-lines: repeating-linear-gradient(45deg, transparent, transparent 10px, oklch(0.30 0.03 38) 10px, oklch(0.30 0.03 38) 11px);
+  
+  /* Sidebar */
+  --sidebar: oklch(0.22 0.022 32);
+  --sidebar-foreground: oklch(0.95 0.01 60);
+  --sidebar-primary: oklch(0.75 0.17 45);
+  --sidebar-primary-foreground: oklch(0.20 0.02 30);
+  --sidebar-accent: oklch(0.30 0.03 40);
+  --sidebar-accent-foreground: oklch(0.95 0.01 60);
+  --sidebar-border: oklch(0.35 0.04 42);
+  --sidebar-ring: oklch(0.75 0.17 45);
 }
 
 /* Map CSS variables to Tailwind utilities using @theme inline */
@@ -222,12 +252,29 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   
+  /* Papercraft accent colors */
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-green: var(--accent-green);
+  --color-accent-yellow: var(--accent-yellow);
+  --color-accent-pink: var(--accent-pink);
+  --color-accent-purple: var(--accent-purple);
+  
+  /* Status colors */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  
   /* Radius scale */
-  --radius-xs: calc(var(--radius) - 4px);
-  --radius-sm: calc(var(--radius) - 2px);
+  --radius-xs: calc(var(--radius) - 8px);
+  --radius-sm: var(--radius-sm);
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-2xl: 2rem;
+  --radius-3xl: 3rem;
   
   /* Sidebar colors */
   --color-sidebar: var(--sidebar);
@@ -270,9 +317,16 @@
   
   body {
     @apply bg-background text-foreground;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 400;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Belleza', sans-serif;
+    font-weight: 400;
   }
   
   /* Focus styles for accessibility */
@@ -288,46 +342,83 @@
   }
 }
 
-/* Squircle filter utilities - Apple-style smooth rounded corners */
+/* Papercraft utilities */
 @layer utilities {
-  .squircle-filter {
-    filter: url(#SkiperSquiCircleFilterLayout);
-    /* Fallback for unsupported browsers */
-    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
-      border-radius: var(--radius-xl);
-    }
+  /* Papercraft panels with borders and shadows */
+  .panel-papercraft {
+    @apply bg-card border-2 border-border rounded-2xl shadow-md;
+    box-shadow: var(--shadow-md), inset 0 1px 0 oklch(from var(--card) calc(l + 0.05) c h / 0.5);
   }
   
-  .squircle-sm {
-    filter: url(#SkiperSquiCircleFilterLayout);
-    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
-      border-radius: var(--radius-sm);
-    }
+  .panel-papercraft-lg {
+    @apply bg-card border-3 border-border rounded-3xl shadow-lg;
+    box-shadow: var(--shadow-lg), inset 0 1px 0 oklch(from var(--card) calc(l + 0.05) c h / 0.5);
   }
   
-  .squircle-md {
-    filter: url(#SkiperSquiCircleFilterLayout);
-    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
-      border-radius: var(--radius-md);
-    }
+  /* Sticker overlays */
+  .sticker {
+    @apply relative;
+    border: 2px solid oklch(from var(--primary) calc(l - 0.05) c h);
+    box-shadow: var(--shadow-sm), inset 0 -1px 2px rgba(0, 0, 0, 0.1);
   }
   
-  .squircle-lg {
-    filter: url(#SkiperSquiCircleFilterLayout);
-    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
-      border-radius: var(--radius-lg);
-    }
+  .sticker-success {
+    @apply bg-success text-success-foreground;
+    border-color: oklch(from var(--success) calc(l - 0.1) c h);
   }
   
-  .squircle-xl {
-    filter: url(#SkiperSquiCircleFilterLayout);
-    @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
-      border-radius: var(--radius-xl);
-    }
+  .sticker-warning {
+    @apply bg-warning text-warning-foreground;
+    border-color: oklch(from var(--warning) calc(l - 0.1) c h);
   }
   
-  /* Apple HIG Label Hierarchy Utilities */
-  /* Use these for semantic text styling instead of arbitrary colors */
+  .sticker-error {
+    @apply bg-destructive text-destructive-foreground;
+    border-color: oklch(from var(--destructive) calc(l - 0.1) c h);
+  }
+  
+  .sticker-info {
+    @apply bg-info text-info-foreground;
+    border-color: oklch(from var(--info) calc(l - 0.1) c h);
+  }
+  
+  /* Pattern backgrounds */
+  .bg-pattern-checker {
+    background: var(--pattern-checker);
+  }
+  
+  .bg-pattern-dots {
+    background: var(--pattern-dots);
+  }
+  
+  .bg-pattern-lines {
+    background: var(--pattern-lines);
+  }
+  
+  /* Paper texture overlay */
+  .paper-texture {
+    position: relative;
+  }
+  
+  .paper-texture::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  
+  /* Typography utilities */
+  .text-heading {
+    font-family: 'Belleza', sans-serif;
+  }
+  
+  .text-body {
+    font-family: 'Fredoka', sans-serif;
+  }
+  
+  /* Papercraft text hierarchy */
   .text-label {
     color: var(--color-text-primary);
   }
@@ -344,16 +435,52 @@
     color: var(--color-text-quaternary);
   }
   
-  /* Icon styling for dark mode - Add subtle borders for better contrast */
+  /* Animation utilities */
+  .animate-bounce-in {
+    animation: bounceIn var(--motion-duration-medium) var(--motion-ease-bounce);
+  }
+  
+  .animate-slide-in {
+    animation: slideIn var(--motion-duration-medium) var(--motion-ease-out);
+  }
+  
+  .animate-pop {
+    animation: pop var(--motion-duration-fast) var(--motion-ease-pop);
+  }
+  
+  .animate-confetti {
+    animation: confetti var(--motion-duration-slow) var(--motion-ease-out);
+  }
+  
+  /* Hover effects */
+  .hover-lift {
+    transition: transform var(--motion-duration-fast) var(--motion-ease-out), 
+                box-shadow var(--motion-duration-fast) var(--motion-ease-out);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .hover-pop {
+    transition: transform var(--motion-duration-fast) var(--motion-ease-elastic);
+  }
+  
+  .hover-pop:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Icon styling for dark mode */
   .icon-dark-mode {
     @media (prefers-color-scheme: dark) {
-      filter: drop-shadow(0 0 1px oklch(0.98 0.002 286.375 / 0.3));
+      filter: drop-shadow(0 0 1px oklch(0.95 0.01 60 / 0.3));
     }
   }
   
   :is(.dark *) {
     .icon-dark-mode {
-      filter: drop-shadow(0 0 1px oklch(0.98 0.002 286.375 / 0.3));
+      filter: drop-shadow(0 0 1px oklch(0.95 0.01 60 / 0.3));
     }
   }
   
@@ -722,6 +849,58 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Papercraft animation keyframes */
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(20px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(720deg);
+    opacity: 0;
   }
 }
 
