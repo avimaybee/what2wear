@@ -35,7 +35,7 @@
   --color-surface-2: hsl(40 40% 95%);
   --color-surface-3: hsl(40 45% 92%);
   
-  /* Shadow system – chunky papercraft drop shadows */
+  /* Shadow system – chunky papercraft drop shadows (used sparingly) */
   --shadow-xs: 0 1px 0 0 rgba(15, 23, 42, 0.10);
   --shadow-sm: 2px 2px 0 0 rgba(15, 23, 42, 0.18);
   --shadow-md: 3px 3px 0 0 rgba(15, 23, 42, 0.22);
@@ -70,8 +70,8 @@
   --destructive-foreground: hsl(40 50% 98%);
   
   /* Borders – bold, papercraft outlines */
-  --border: hsl(220 13% 70%);
-  --input: hsl(220 13% 82%);
+  --border: hsl(220 13% 88%);
+  --input: hsl(0 0% 100%);
   --ring: var(--primary);
   
   /* Chart colors for data visualization - derived from primary hue */
@@ -95,56 +95,63 @@
   --sidebar-ring: oklch(0.65 0.19 35);
 }
 
-/* No dark theme – app is light-mode only for papercraft feel */
+/* Dark theme */
 .dark {
-  /* Lock dark mode to mirror light so theme toggles remain safe */
-  --background: hsl(40 50% 98%);
-  --foreground: hsl(224 71% 4%);
-  --card: hsl(40 33% 97%);
+  --background: hsl(224 71% 4%);
+  --foreground: hsl(60 9.1% 97.8%);
+  
+  --card: hsl(222 47% 11%);
   --card-foreground: var(--foreground);
-  --popover: hsl(40 33% 97%);
+  
+  --popover: hsl(222 47% 11%);
   --popover-foreground: var(--foreground);
+  
+  /* Semantic text in dark */
   --color-text-primary: var(--foreground);
-  --color-text-secondary: hsl(224 10% 40%);
-  --color-text-tertiary: hsl(224 10% 55%);
-  --color-text-quaternary: hsl(224 10% 70%);
-  --color-text-muted: hsl(224 10% 55%);
-  --color-surface: hsl(40 50% 98%);
-  --color-surface-1: hsl(40 33% 97%);
-  --color-surface-2: hsl(40 40% 95%);
-  --color-surface-3: hsl(40 45% 92%);
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
-  --shadow-xl: var(--shadow-xl);
-  --shadow-2xl: var(--shadow-2xl);
+  --color-text-secondary: hsl(214 32% 80%);
+  --color-text-tertiary: hsl(214 20% 70%);
+  --color-text-quaternary: hsl(214 15% 55%);
+  --color-text-muted: hsl(214 20% 70%);
+  
+  --color-surface: hsl(224 71% 4%);
+  --color-surface-1: hsl(222 47% 11%);
+  --color-surface-2: hsl(217 33% 17%);
+  --color-surface-3: hsl(215 27.9% 16.9%);
+  
+  /* Keep brand hues consistent */
   --primary: hsl(6 100% 68%);
-  --primary-foreground: hsl(40 50% 98%);
-  --secondary: hsl(177 20% 90%);
+  --primary-foreground: hsl(224 71% 4%);
+  --secondary: hsl(217 33% 12%);
   --secondary-foreground: hsl(177 79% 26%);
-  --muted: hsl(38 15% 90%);
-  --muted-foreground: hsl(224 15% 35%);
+  --muted: hsl(217 33% 14%);
+  --muted-foreground: hsl(214 32% 80%);
   --accent: hsl(177 79% 26%);
   --accent-foreground: hsl(40 50% 98%);
   --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(40 50% 98%);
-  --border: hsl(220 13% 70%);
-  --input: hsl(220 13% 82%);
+  --destructive-foreground: hsl(60 9.1% 97.8%);
+  --border: hsl(215 27.9% 16.9%);
+  --input: hsl(222 47% 11%);
   --ring: var(--primary);
+  
   --chart-1: hsl(6 100% 68%);
   --chart-2: hsl(26 100% 65%);
   --chart-3: hsl(45 100% 60%);
   --chart-4: hsl(177 79% 40%);
   --chart-5: hsl(331 85% 65%);
-  --sidebar: hsl(40 50% 98%);
+  
+  --sidebar: hsl(224 71% 4%);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: hsl(6 100% 68%);
-  --sidebar-primary-foreground: hsl(40 50% 98%);
+  --sidebar-primary-foreground: hsl(224 71% 4%);
   --sidebar-accent: hsl(177 79% 26%);
   --sidebar-accent-foreground: hsl(40 50% 98%);
-  --sidebar-border: hsl(220 13% 70%);
+  --sidebar-border: hsl(215 27.9% 16.9%);
   --sidebar-ring: hsl(6 100% 68%);
+}
+
+/* Heading font variable (Stack Sans Text) */
+:root {
+  --font-heading: "Stack Sans Text", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
 }
 
 /* Map CSS variables to Tailwind utilities using @theme inline */
@@ -241,9 +248,39 @@
   }
 }
 
-/* Papercraft background: subtle grid / checker pattern */
+/* Papercraft background: subtle diagonal checkered pattern */
 @layer base {
   .papercraft-bg {
+    background-color: hsl(40 50% 98%);
+    background-image:
+      linear-gradient(
+        135deg,
+        hsl(40 20% 94%) 12.5%,
+        transparent 12.5%,
+        transparent 50%,
+        hsl(40 20% 94%) 50%,
+        hsl(40 20% 94%) 62.5%,
+        transparent 62.5%,
+        transparent 100%
+      ),
+      linear-gradient(
+        315deg,
+        hsl(40 20% 94%) 12.5%,
+        transparent 12.5%,
+        transparent 50%,
+        hsl(40 20% 94%) 50%,
+        hsl(40 20% 94%) 62.5%,
+        transparent 62.5%,
+        transparent 100%
+      );
+    background-size: 24px 24px;
+    background-position: 0 0, 12px 12px;
+  }
+}
+
+/* Legacy grid helper (if needed elsewhere) */
+@layer base {
+  .papercraft-grid-bg {
     background-color: hsl(40 50% 98%);
     background-image:
       linear-gradient(

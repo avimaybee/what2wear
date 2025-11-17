@@ -148,7 +148,7 @@ export default function OnboardingPage() {
       return;
     }
     if (currentStep === 3 && selectedStyles.length === 0) {
-      toast("Please select at least one style preference", { icon: "🎨" });
+      toast("Pick at least one vibe so our AI stylist knows your lane.", { icon: "🎨" });
       return;
     }
     setCurrentStep(prev => Math.min(prev + 1, steps.length));
@@ -225,7 +225,7 @@ export default function OnboardingPage() {
         <div className="flex justify-between mb-4 relative">
           {steps.map((step, index) => (
             <div key={step.id} className="flex flex-col items-center gap-2 flex-1">
-              <div className={`h-12 w-12 rounded-[1.2rem] border-2 flex items-center justify-center shadow-md transition-all ${
+              <div className={`h-12 w-12 rounded-[1.2rem] border-2 flex items-center justify-center transition-all ${
                 currentStep > step.id
                   ? "bg-primary text-primary-foreground border-primary"
                   : currentStep === step.id
@@ -246,7 +246,7 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        <Card className="border-2 border-border shadow-lg bg-card relative overflow-hidden">
+        <Card className="border-2 border-border bg-card relative overflow-hidden">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(6_100%_88%)/35%,transparent_55%),radial-gradient(circle_at_bottom_right,hsl(177_79%_80%)/30%,transparent_60%)]" />
           <AnimatePresence mode="wait">
             {/* Step 1: Welcome */}
@@ -262,9 +262,9 @@ export default function OnboardingPage() {
                       <Sparkles className="h-10 w-10 text-primary-foreground" />
                     </div>
                   </div>
-                  <CardTitle className="text-3xl">Welcome to setmyfit!</CardTitle>
+                  <CardTitle className="text-3xl">Meet your AI stylist.</CardTitle>
                   <CardDescription className="text-base">
-                    Your smart outfit recommendation app that knows the weather and your style
+                    Our AI stylist checks the weather, learns your vibe, and serves up fits that actually feel like you.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

@@ -197,7 +197,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
             <motion.div variants={itemVariants} className="space-y-4">
               <motion.h1
                 variants={itemVariants}
-                className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-tight max-w-[90%] md:max-w-[85%]"
+                className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-tight max-w-[90%] md:max-w-[85%] font-[family-name:var(--font-heading)]"
               >
                 <span className="block text-foreground">setmyfit</span>
                 <motion.span 
@@ -220,12 +220,12 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
             {/* Real-time indicator chip - removed pulse animation */}
             <motion.div
               variants={itemVariants}
-              className="inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-card to-card/80 border border-border/50 backdrop-blur-sm shadow-sm"
+              className="inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-card to-card/80 border border-border/50 backdrop-blur-sm"
               aria-live="polite"
               aria-label="Weather-based recommendation indicator"
             >
               <div
-                className="w-2.5 h-2.5 rounded-full bg-primary shadow-sm"
+                className="w-2.5 h-2.5 rounded-full bg-primary"
                 aria-hidden="true"
               />
               <span className="text-sm font-semibold text-foreground">
@@ -247,7 +247,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                   <Button
                     size="lg"
                     onClick={primaryCTA.onClick}
-                    className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                    className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
                     aria-label={`${primaryCTA.label} - Get started with setmyfit`}
                   >
                     <motion.span
@@ -267,7 +267,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                   >
                     <Button
                       size="lg"
-                      className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                      className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
                       aria-label={`${primaryCTA.label} - Get started with setmyfit`}
                     >
                       <motion.span
@@ -330,7 +330,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                 key={feature.label}
                 variants={itemVariants}
                 whileHover={{ y: -6, scale: 1.02 }}
-                className="flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/40 hover:from-card hover:to-card/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 w-full"
+                className="flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/40 hover:from-card hover:to-card/60 backdrop-blur-sm transition-all duration-300 w-full"
               >
                 <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex-shrink-0 border border-primary/10">
                   {feature.icon}

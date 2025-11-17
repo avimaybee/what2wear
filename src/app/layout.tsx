@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Belleza } from "next/font/google";
 import { Fredoka } from "next/font/google";
 import { Header } from "@/components/ui/header";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -12,7 +11,6 @@ export const metadata: Metadata = {
   description: "Get personalized outfit recommendations based on weather and your wardrobe",
 };
 
-const headingFont = Belleza({ subsets: ["latin"], weight: "400", variable: "--font-heading" });
 const bodyFont = Fredoka({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-body" });
 
 export default function RootLayout({
@@ -25,13 +23,13 @@ export default function RootLayout({
     <html 
       lang="en" 
       suppressHydrationWarning
-      className={`${headingFont.variable} ${bodyFont.variable}`}
+      className={`${bodyFont.variable}`}
     >
       <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-body)]">
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
+          defaultTheme="system"
+          enableSystem={true}
           disableTransitionOnChange
         >
           <AccentColorLoader />

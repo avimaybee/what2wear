@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OnboardingWizard } from "@/components/onboarding";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { RecommendationApiPayload, RecommendationDiagnostics } from "@/lib/types";
 
 // Lazy load heavy components
@@ -249,13 +250,13 @@ export default function HomePage() {
       
       // Handle timeout separately
       if (isTimeout) {
-        setError("Recommendation request timed out. Please try again.");
-        toast.error("Request took too long. Please try again.");
+        setError("Our AI stylist took too long to answer. Try again in a sec.");
+        toast.error("Stylist on a coffee break—give it another try.");
       } else {
         setError(errorMsg);
         // Only show error toast for actual errors, not empty wardrobe
         if (!errorMsg.toLowerCase().includes("wardrobe")) {
-          toast.error("Failed to generate outfit. Please try again.");
+          toast.error("AI stylist got stuck dressing you. Try again.");
         }
       }
       setRecommendationDiagnostics(null);
@@ -331,10 +332,39 @@ export default function HomePage() {
   // Loading state
   if (loading || !location) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-sm text-muted-foreground">Loading your outfit...</p>
+      <div className="min-h-screen papercraft-bg flex items-center justify-center px-4">
+        <div className="w-full max-w-5xl space-y-6">
+          {/* Weather + hero skeleton */}
+          <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)] items-start">
+            <Skeleton variant="panel" className="h-52 md:h-56 rounded-[1.6rem]" />
+            <div className="space-y-4">
+              <Skeleton variant="text" className="w-3/4" />
+              <Skeleton variant="text" className="w-2/3" />
+              <div className="flex flex-wrap gap-3">
+                <Skeleton variant="panel" className="h-10 w-32" />
+                <Skeleton variant="panel" className="h-10 w-28" />
+              </div>
+            </div>
+          </div>
+
+          {/* Outfit card skeleton */}
+          <div className="grid gap-6 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.2fr)] items-start">
+            <Skeleton variant="panel" className="h-80 rounded-[1.6rem]" />
+            <div className="space-y-4">
+              <Skeleton variant="text" className="w-1/2" />
+              <Skeleton variant="text" className="w-2/3" />
+              <div className="grid grid-cols-2 gap-3">
+                <Skeleton variant="panel" className="h-16" />
+                <Skeleton variant="panel" className="h-16" />
+                <Skeleton variant="panel" className="h-16" />
+                <Skeleton variant="panel" className="h-16" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Skeleton variant="panel" className="h-10 w-32" />
+                <Skeleton variant="panel" className="h-10 w-28" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -484,10 +514,19 @@ export default function HomePage() {
         );
   })()}
       <Suspense fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+        <div className="min-h-[50vh] flex items-center justify-center px-4">
+          <div className="w-full max-w-5xl space-y-6">
+            <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)] items-start">
+              <Skeleton variant="panel" className="h-48 md:h-52 rounded-[1.6rem]" />
+              <div className="space-y-3">
+                <Skeleton variant="text" className="w-3/4" />
+                <Skeleton variant="text" className="w-2/3" />
+                <div className="flex flex-wrap gap-3">
+                  <Skeleton variant="panel" className="h-9 w-28" />
+                  <Skeleton variant="panel" className="h-9 w-24" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       }>

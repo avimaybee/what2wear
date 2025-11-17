@@ -30,37 +30,31 @@ export function Toaster() {
                 {({ icon, message }) => (
                   <div
                     className={`
-                      flex items-start gap-3 p-4 rounded-xl
-                      backdrop-blur-xl border shadow-2xl
-                      min-w-[320px] max-w-md
-                      ${
-                        t.type === "success"
-                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-900 dark:text-emerald-100"
-                          : t.type === "error"
-                          ? "bg-red-500/10 border-red-500/20 text-red-900 dark:text-red-100"
-                          : "bg-card/95 border-border/50 text-card-foreground"
-                      }
+                      relative flex items-start gap-3 px-4 py-3
+                      min-w-[260px] max-w-md
+                      rounded-[1.25rem] border-2 shadow-md
+                      bg-destructive text-destructive-foreground
                     `}
                   >
-                    {/* Custom icon based on type */}
+                    {/* Left accent pill for status */}
                     <div className="flex-shrink-0 mt-0.5">
                       {t.type === "success" && (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle2 className="h-5 w-5 text-destructive-foreground/90" />
                       )}
                       {t.type === "error" && (
-                        <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        <AlertCircle className="h-5 w-5 text-destructive-foreground/90" />
                       )}
                       {t.type === "loading" && (
-                        <div className="h-5 w-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                        <div className="h-5 w-5 border-2 border-destructive-foreground/40 border-t-destructive-foreground rounded-full animate-spin" />
                       )}
-                      {!t.type && <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
+                      {!t.type && <Info className="h-5 w-5 text-destructive-foreground/90" />}
                       {t.icon && !["success", "error", "loading"].includes(t.type || "") && (
                         <span className="text-xl">{icon}</span>
                       )}
                     </div>
 
                     {/* Message */}
-                    <div className="flex-1 text-sm font-medium leading-relaxed pt-0.5">
+                    <div className="flex-1 text-sm leading-relaxed text-left">
                       {message}
                     </div>
 
@@ -68,10 +62,10 @@ export function Toaster() {
                     {t.type !== "loading" && (
                       <button
                         onClick={() => hotToast.dismiss(t.id)}
-                        className="flex-shrink-0 p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                        className="flex-shrink-0 mt-0.5 p-1 rounded-full hover:bg-destructive-foreground/10 transition-colors"
                         aria-label="Dismiss notification"
                       >
-                        <X className="h-4 w-4 opacity-50 hover:opacity-100" />
+                        <X className="h-4 w-4 text-destructive-foreground/80" />
                       </button>
                     )}
                   </div>

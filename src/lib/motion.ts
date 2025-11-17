@@ -238,6 +238,28 @@ export const motionPresets = {
   },
 } as const;
 
+// Reusable interaction helpers
+export const motionInteractions = {
+  // Hover lift for cards and clickable tiles
+  hoverLift: {
+    y: -3,
+    scale: 1.01,
+    transition: {
+      duration: motionDurations.medium / 1000,
+      ease: motionEasing.medium,
+    },
+  },
+  // Press pop for buttons and chips
+  pressPop: {
+    scale: 0.96,
+    y: 1,
+    transition: {
+      duration: motionDurations.fast / 1000,
+      ease: motionEasing.fast,
+    },
+  },
+} as const;
+
 // Check if user prefers reduced motion
 export const prefersReducedMotion = () => {
   if (typeof window === 'undefined') return false;

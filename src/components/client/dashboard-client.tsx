@@ -88,7 +88,7 @@ export const DashboardClient = ({
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        toast.error("Please sign in to log outfits");
+        toast.error("Sign in so our AI stylist can remember today’s fit.");
         setIsLogging(false);
         return;
       }
@@ -135,7 +135,7 @@ export const DashboardClient = ({
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        toast.error("Please sign in to provide feedback");
+        toast.error("Sign in so your stylist can learn from your ratings.");
         return;
       }
 
@@ -148,7 +148,7 @@ export const DashboardClient = ({
       const recommendationId = recommendation?.id;
       
       if (!recommendationId) {
-        toast.error("Cannot provide feedback: recommendation ID missing");
+        toast.error("Your stylist lost track of this look. Try refreshing.");
         return;
       }
 
@@ -181,12 +181,12 @@ export const DashboardClient = ({
       setFeedback(type);
       toast.success(
         type === "up" 
-          ? "Thanks! We'll suggest similar outfits." 
-          : "Got it! We'll adjust future recommendations.",
+          ? "Our AI stylist is noting that vibe—more like this coming up."
+          : "Got it, we’ll steer your stylist away from looks like this.",
         { icon: type === "up" ? "👍" : "👎" }
       );
     } catch (_error) {
-      toast.error("Failed to submit feedback. Please try again.");
+      toast.error("Stylist couldn’t save that note. Try again in a moment.");
     }
   };
 
@@ -197,11 +197,11 @@ export const DashboardClient = ({
       // Call the refresh function passed from parent
       await onRefresh();
       
-      toast.success("New outfit generated! 🎨", {
+      toast.success("Fresh fit unlocked! Our AI stylist just pulled a new look. 🎨", {
         duration: 3000,
       });
     } catch (_error) {
-      toast.error("Failed to regenerate outfit. Please try again.");
+      toast.error("Stylist couldn’t pull a new look. Try again in a sec.");
     } finally {
       setIsRegenerating(false);
     }
@@ -215,7 +215,7 @@ export const DashboardClient = ({
 
   const handleSwapItem = async (selectedItem: IClothingItem) => {
     if (!swapItemInFocus || !recommendation?.outfit) {
-      toast.error("Unable to swap item. Please try again.");
+      toast.error("Stylist couldn’t swap that piece just now. Try again.");
       return;
     }
 
@@ -227,14 +227,14 @@ export const DashboardClient = ({
 
       setSwappedOutfit(newOutfit);
 
-      toast.success("Item swapped! Full-resolution outfit is being generated...", {
+      toast.success("Item swapped! Our AI stylist is reworking your full look...", {
         duration: 3000,
       });
 
       // Refresh to show updated outfit
       await onRefresh();
     } catch (_error) {
-      toast.error("Failed to swap item. Please try again.");
+      toast.error("Swap didn’t go through. Your stylist hit a snag.");
     }
   };
 
@@ -261,7 +261,7 @@ export const DashboardClient = ({
   if (!recommendation || !weather) {
     return (
       <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-6 md:py-10">
-        <Card className="relative overflow-hidden border-2 border-border bg-card shadow-lg rounded-[1.25rem] text-center">
+        <Card className="relative overflow-hidden border-2 border-border bg-card rounded-[1.25rem] text-center">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(6_100%_88%)/40%,transparent_55%),radial-gradient(circle_at_bottom_right,hsl(177_79%_80%)/35%,transparent_55%)] opacity-70 mix-blend-multiply" />
           <div className="space-y-4">
             <div className="flex justify-center">
@@ -349,14 +349,14 @@ export const DashboardClient = ({
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            {/* Weather Card - Minimal & Compact */}
-            <Card className="border-none shadow-sm">
+            {/* Weather Card - Papercraft style with border */}
+            <Card className="border-2">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <CardTitle className="text-base font-medium">
-                      {weather.location}
+                      {locationName || weather.location || "Location"}
                     </CardTitle>
                   </div>
                   {onAutoDetectLocation && (

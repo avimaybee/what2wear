@@ -100,7 +100,7 @@ export default function SettingsPage() {
         }
       } catch (error) {
         console.error('Error loading data:', error);
-        toast.error("Failed to load your data. Please refresh the page.");
+        toast.error("Our AI stylist couldn’t load your details. Give the page a quick refresh.");
       } finally {
         setIsLoading(false);
       }
@@ -143,7 +143,7 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Error saving settings:', error);
-      toast.error("Failed to save settings. Please try again.");
+      toast.error("Your tweaks didn’t stick. Try saving your settings again.");
     } finally {
       setIsSaving(false);
     }

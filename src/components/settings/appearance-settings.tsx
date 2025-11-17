@@ -115,7 +115,7 @@ export function AppearanceSettings() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        toast.error("Please sign in to save preferences");
+        toast.error("Sign in so our AI stylist can remember your look.");
         setIsSaving(false);
         return;
       }
@@ -145,7 +145,7 @@ export function AppearanceSettings() {
       toast.success("Accent color saved! 🎨");
     } catch (error) {
       console.error('Failed to save preferences:', error);
-      toast.error("Failed to save accent color");
+      toast.error("Your new accent color didn’t save—your stylist hit a snag.");
     } finally {
       setIsSaving(false);
     }

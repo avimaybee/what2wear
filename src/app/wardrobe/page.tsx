@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit } from "lucide-react";
-import { getRelativeTime } from "@/lib/utils";
+import { getRelativeTime, cn } from "@/lib/utils";
 import { motionVariants, motionDurations } from "@/lib/motion";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
@@ -54,6 +54,7 @@ export default function WardrobePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   // Fetch wardrobe items from API
   const fetchWardrobe = async () => {
@@ -190,7 +191,7 @@ export default function WardrobePage() {
       setModalSource(null);
     } catch (err) {
       console.error("Error deleting item:", err);
-      toast.error("Failed to delete item. Please try again.");
+      toast.error("Your stylist couldn’t delete that piece. Try again in a sec.");
     } finally {
       setDeleting(false);
     }
@@ -208,31 +209,48 @@ export default function WardrobePage() {
     setTimeout(() => setModalSource(null), 300);
   };
 
+  const processSelectedFile = (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Grab a photo of your piece so our stylist can see it.");
+      return;
+    }
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error("That photo’s a bit chunky. Try one under 5MB.");
+      return;
+    }
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    processSelectedFile(file);
+  };
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!uploading) setDragActive(true);
+  };
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error('Image must be smaller than 5MB');
-      return;
-    }
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
 
-    setSelectedFile(file);
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (uploading) return;
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) processSelectedFile(file);
   };
 
   const handleUploadAndCreate = async () => {
@@ -417,7 +435,7 @@ export default function WardrobePage() {
       handleCloseEditModal();
     } catch (err) {
       console.error("Error updating item:", err);
-      toast.error("Failed to update item. Please try again.");
+      toast.error("Your stylist couldn’t save those changes. Try again.");
     } finally {
       setSaving(false);
     }
@@ -516,7 +534,16 @@ export default function WardrobePage() {
                 <div className="space-y-4 py-4">
                   {!imagePreview ? (
                     // File upload area
-                    <div className="flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-[1.25rem] hover:border-primary/50 transition-colors cursor-pointer">
+                    <div
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-[1.25rem] transition-colors cursor-pointer",
+                        dragActive && "border-primary bg-primary/5"
+                      )}
+                      onDragEnter={handleDragOver}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
                       <input
                         type="file"
                         accept="image/*"
@@ -611,7 +638,7 @@ export default function WardrobePage() {
   }
 
   return (
-    <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6 pb-20 md:pb-6">
+    <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 pt-3 pb-20 md:pt-4 md:pb-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -816,23 +843,12 @@ export default function WardrobePage() {
           </SheetContent>
         </Sheet>
         
-        {/* Sort Quick Selector */}
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className="h-10 rounded-[0.875rem] border-2 border-border bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none"
-          aria-label="Sort wardrobe items"
-        >
-          <option value="recent">Recently Added</option>
-          <option value="lastWorn">Last Worn</option>
-          <option value="name">Name (A-Z)</option>
-          <option value="type">By Type</option>
-        </select>
+        {/* Sort Quick Selector removed – use Filter & Sort sheet only */}
       </div>
       
       {/* Active Filters Display */}
       {hasActiveFilters && (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap border-2 border-dashed border-border rounded-[1rem] px-3 py-2 bg-card/50">
           <span className="text-xs text-muted-foreground">Active filters:</span>
           {filterType !== "All" && (
             <Badge variant="sticker" tone="muted" className="gap-1">
@@ -911,7 +927,7 @@ export default function WardrobePage() {
                   
                   {/* Type Badge */}
                   <div className="absolute top-2 right-2 z-10">
-                    <Badge variant="sticker" tone="teal" className="shadow-sm">
+                    <Badge variant="sticker" tone="teal">
                       {item.type}
                     </Badge>
                   </div>
@@ -1033,7 +1049,16 @@ export default function WardrobePage() {
               <div className="space-y-4 py-4">
                 {!imagePreview ? (
                   // File upload area
-                  <div className="flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-[1.25rem] hover:border-primary/50 transition-colors cursor-pointer">
+                  <div
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-[1.25rem] transition-colors cursor-pointer",
+                      dragActive && "border-primary bg-primary/5"
+                    )}
+                    onDragEnter={handleDragOver}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
                     <input
                       type="file"
                       accept="image/*"

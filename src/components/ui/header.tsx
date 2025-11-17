@@ -92,7 +92,7 @@ export const Header = () => {
   return (
     <>
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 w-full border-b-2 border-border bg-background/90 backdrop-blur-sm shadow-sm" role="banner">
+      <header className="sticky top-0 z-50 w-full border-b-2 border-border bg-background/90 backdrop-blur-sm" role="banner">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             {/* Show back button on non-home pages */}
@@ -102,10 +102,10 @@ export const Header = () => {
             
             <Link 
               href="/" 
-              className="flex items-center transition-transform hover:-translate-y-0.5"
+              className="flex items-center"
               aria-label="setmyfit home"
             >
-              <span className="rounded-[0.9rem] border-2 border-border bg-card px-3 py-1.5 text-lg md:text-xl font-semibold tracking-[0.22em] uppercase shadow-md font-[family-name:var(--font-heading)]">
+              <span className="rounded-[0.9rem] border border-border/70 bg-card px-3 py-1.5 text-lg md:text-xl font-semibold tracking-[0.22em] uppercase font-[family-name:var(--font-heading)]">
                 SetMyFit
               </span>
             </Link>
@@ -122,7 +122,7 @@ export const Header = () => {
                   key={route.href}
                   href={route.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-semibold rounded-[0.9rem] border-2 transition-colors shadow-sm",
+                    "flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-semibold rounded-[0.9rem] border transition-colors",
                     "hover:bg-secondary hover:text-accent-foreground",
                     isActive
                       ? "border-accent bg-secondary/60 text-accent-foreground"
@@ -229,8 +229,8 @@ export const Header = () => {
       </header>
 
       {/* Mobile Bottom Navigation - Only Home, Wardrobe, History */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-regular border-t border-border/40 pb-safe" role="navigation" aria-label="Mobile navigation">
-        <div className="grid h-14 grid-cols-3 gap-1 px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t border-border/60" role="navigation" aria-label="Mobile navigation">
+        <div className="grid h-12 grid-cols-3 gap-1 px-4 pb-2 pt-1">
           {mobileBottomRoutes.map((route) => {
             const Icon = route.icon;
             const isActive = pathname === route.href;
