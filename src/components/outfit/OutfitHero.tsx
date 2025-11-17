@@ -14,7 +14,6 @@ import type { IClothingItem } from "@/lib/types";
 const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%23f3f4f6' width='400' height='400'/%3E%3Cpath fill='%239ca3af' d='M150 100h100v200h-100z'/%3E%3Ccircle fill='%239ca3af' cx='200' cy='100' r='40'/%3E%3Ctext x='200' y='350' font-family='system-ui' font-size='20' fill='%236b7280' text-anchor='middle'%3EOutfit%3C/text%3E%3C/svg%3E";
 
 interface OutfitHeroProps {
-  visualUrl?: string | null;
   outfitItems?: IClothingItem[];
   detailedReasoning?: string;
   className?: string;
@@ -32,9 +31,8 @@ interface OutfitHeroProps {
 /**
  * OutfitHero Component
  * 
- * Displays the main outfit visual with hero layout, thumbnail stack, and color chips.
+ * Displays the outfit items with thumbnail stack and color chips.
  * Features:
- * - Large visual display with fallback placeholder
  * - Thumbnail stack of outfit items (horizontally scrollable)
  * - Dominant color chips extracted from outfit
  * - Expandable reasoning section
@@ -42,7 +40,6 @@ interface OutfitHeroProps {
  * - Mobile-optimized layout
  */
 export function OutfitHero({
-  visualUrl,
   outfitItems = [],
   detailedReasoning,
   className,
@@ -57,7 +54,6 @@ export function OutfitHero({
   isRegenerating = false,
 }: OutfitHeroProps) {
   const [showFullReason, setShowFullReason] = useState(false);
-  const [imageError, setImageError] = useState(false);
 
   // Extract dominant colors from outfit items (up to 5 unique colors)
   const dominantColors = outfitItems
@@ -88,46 +84,6 @@ export function OutfitHero({
           </div>
         </div>
       </CardHeader>
-
-      {/* Main Visual Display */}
-      <div className="px-4 sm:px-6 pb-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative"
-        >
-          {/* Main Image */}
-          <div className="relative aspect-[3/4] w-full max-w-md mx-auto overflow-hidden rounded-2xl bg-gradient-to-br from-muted/50 to-muted shadow-lg hover:shadow-xl transition-all duration-300">
-            <Image
-              src={imageError ? PLACEHOLDER_IMAGE : (visualUrl || PLACEHOLDER_IMAGE)}
-              alt="Your curated outfit for today"
-              fill
-              sizes="(max-width: 768px) 100vw, 500px"
-              className="object-cover"
-              priority
-              unoptimized={visualUrl?.startsWith('data:') || imageError}
-              onError={() => setImageError(true)}
-            />
-            
-            {/* Subtle overlay gradient for better text contrast if needed */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/10 to-transparent pointer-events-none" />
-          </div>
-
-          {/* Visual Label */}
-          {visualUrl && !imageError && (
-            <motion.p
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              className="text-xs text-center text-muted-foreground mt-3 flex items-center justify-center gap-1.5"
-            >
-              <Sparkles className="h-3 w-3" />
-              AI-generated outfit preview
-            </motion.p>
-          )}
-        </motion.div>
-      </div>
 
       {/* Thumbnail Stack - Outfit Items */}
       {outfitItems.length > 0 && (

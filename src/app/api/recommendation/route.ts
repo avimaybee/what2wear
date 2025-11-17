@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, ClothingType, RecommendationDiagnostics, RecommendationApiPayload } from '@/lib/types';
 import { filterByLastWorn, getRecommendation, RecommendationDebugCollector, resolveInsulationValue } from '@/lib/helpers/recommendationEngine';
-import { generateOutfitVisualForRecommendation } from '../../../lib/helpers/outfitVisualGenerator';
 
 interface InsufficientItemsError extends Error {
   customMessage?: string;
@@ -533,128 +532,7 @@ async function generateRecommendation(
     })
   );
 
-  // Generate outfit visual preview immediately
-  // Generate outfit visual preview using Gemini 2.5 Flash Image (Nano Banana)
-  let outfitVisualUrls: string[] = [];
-  
-  try {
-    if (savedRecommendation?.id && outfitWithSignedUrls.length >= 3) {
-      // Build the request payload with proper field names
-      // Determine silhouette from user profile preferences (default to neutral)
-      const rawSilhouette = (((profile?.preferences as unknown) as { preferred_silhouette?: string })?.preferred_silhouette) || 'neutral';
-      const silhouetteValue: 'male' | 'female' | 'neutral' = (rawSilhouette === 'male' || rawSilhouette === 'female') ? (rawSilhouette as 'male' | 'female') : 'neutral';
-
-      const requestPayload = {
-        recommendationId: String(savedRecommendation.id),
-        items: outfitWithSignedUrls.filter(item => item.image_url).map((item) => ({
-          id: String(item.id),
-          imageUrl: item.image_url || '',
-          type: item.type,
-          colors: item.color ? [item.color] : [],
-          material: item.material || null,
-          styleTags: item.style_tags || [],
-        })),
-        silhouette: silhouetteValue,
-        stylePreset: 'photorealistic',
-        previewCount: 1,
-        previewQuality: 'medium' as const,
-      };
-
-      // Validate we have enough items
-      if (requestPayload.items.length < 3) {
-        if (process.env.NODE_ENV !== 'production') {
-          logger.warn('Not enough outfit items with images for visual generation', {
-            itemsWithImages: requestPayload.items.length,
-            totalItems: outfitWithSignedUrls.length,
-          });
-        }
-        diagnostics.warnings.push('Skipped outfit preview generation: not enough items with images.');
-        pushEvent('visuals:skipped', {
-          reason: 'not_enough_items',
-          itemsWithImages: requestPayload.items.length,
-        });
-      } else {
-        // Directly call the visual generation logic
-        if (process.env.NODE_ENV !== 'production') {
-          logger.info('Generating outfit visual with Gemini 2.5 Flash Image:', {
-            recommendationId: requestPayload.recommendationId,
-            itemCount: requestPayload.items.length,
-            itemIds: requestPayload.items.map(i => i.id),
-          });
-        }
-
-        try {
-          pushEvent('visuals:requested', {
-            recommendationId: requestPayload.recommendationId,
-            itemCount: requestPayload.items.length,
-          });
-          // Call the visual generation directly
-          const visualResult = await generateOutfitVisualForRecommendation(
-            requestPayload.recommendationId,
-            requestPayload.items,
-            requestPayload.silhouette,
-            requestPayload.stylePreset,
-            requestPayload.previewCount,
-            requestPayload.previewQuality
-          );
-
-          if (visualResult.success && visualResult.previewUrls) {
-            outfitVisualUrls = visualResult.previewUrls;
-            if (process.env.NODE_ENV !== 'production') {
-              logger.info('Outfit visual generated successfully', {
-                recommendationId: savedRecommendation.id,
-                urlCount: outfitVisualUrls.length,
-              });
-            }
-            pushEvent('visuals:completed', {
-              urlCount: outfitVisualUrls.length,
-            });
-          } else {
-            if (process.env.NODE_ENV !== 'production') {
-              logger.warn('Failed to generate outfit visual preview', {
-                recommendationId: savedRecommendation.id,
-                error: visualResult.error,
-              });
-            }
-            const errorCode = visualResult.error?.code ?? 'unknown';
-            if (errorCode === 'QUOTA_EXCEEDED' || errorCode === 'QUOTA_COOLDOWN') {
-              diagnostics.warnings.push('Outfit previews paused due to Gemini API quota limits.');
-            } else if (errorCode === 'SERVICE_UNAVAILABLE') {
-              diagnostics.warnings.push('Outfit preview service temporarily unavailable.');
-            } else {
-              diagnostics.warnings.push('Outfit preview service did not return an image.');
-            }
-            pushEvent('visuals:error', {
-              reason: errorCode,
-              message: visualResult.error?.message ?? 'unknown',
-              retryAfterMs: visualResult.error?.retryAfterMs ?? null,
-            });
-          }
-        } catch (generateError) {
-          if (process.env.NODE_ENV !== 'production') {
-            logger.warn('Error calling visual generation:', {
-              error: generateError instanceof Error ? generateError.message : String(generateError),
-            });
-          }
-          diagnostics.warnings.push('Unexpected error during outfit preview generation.');
-          pushEvent('visuals:error', {
-            reason: generateError instanceof Error ? generateError.message : String(generateError),
-          });
-        }
-      }
-    }
-  } catch (visualError) {
-    if (process.env.NODE_ENV !== 'production') {
-      logger.warn('Error generating outfit visual:', {
-        error: visualError instanceof Error ? visualError.message : String(visualError),
-      });
-    }
-    diagnostics.warnings.push('Visual generation threw an exception.');
-    pushEvent('visuals:error', {
-      reason: visualError instanceof Error ? visualError.message : String(visualError),
-    });
-    // Don't fail the recommendation if visual generation fails
-  }
+  // AI image generation feature removed - focusing on core outfit recommendation
 
   const transformedData: RecommendationApiPayload = {
     recommendation: {
@@ -665,14 +543,14 @@ async function generateRecommendation(
       dress_code: 'Casual', // Default, could be enhanced from context
       weather_alerts: recommendation.alerts || [],
       id: savedRecommendation?.id,
-      outfit_visual_urls: outfitVisualUrls,
+      outfit_visual_urls: [],
     },
     weather: weather,
     alerts: recommendation.alerts || [],
   };
 
   pushEvent('response:ready', {
-    outfitVisualCount: outfitVisualUrls.length,
+    outfitVisualCount: 0,
   });
 
   return { payload: transformedData, diagnostics };

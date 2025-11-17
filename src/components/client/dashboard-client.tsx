@@ -19,7 +19,7 @@ import { HourlyForecast } from "@/components/client/hourly-forecast";
 import { createClient } from "@/lib/supabase/client";
 import { WeatherAlertBanner, generateWeatherAlerts } from "@/components/ui/weather-alert-banner";
 import { SwapModal } from "@/components/generate/SwapModal";
-import { OutfitHero, OutfitGallery } from "@/components/outfit";
+import { OutfitHero } from "@/components/outfit";
 import { NaturalLanguageHandler } from "@/components/assistant/NaturalLanguageHandler";
 import LocationSelector from "@/components/LocationSelector";
 import TemplateDisplay from "@/components/TemplateDisplay";
@@ -380,7 +380,6 @@ export const DashboardClient = ({
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <OutfitHero
-              visualUrl={recommendation.outfit_visual_urls?.[0]}
               outfitItems={recommendation.outfit || []}
               detailedReasoning={recommendation.detailed_reasoning || recommendation.reasoning}
               onItemClick={(item) => {
@@ -398,23 +397,7 @@ export const DashboardClient = ({
             />
           </motion.div>
 
-          {/* Outfit Gallery - If multiple visuals exist */}
-          {recommendation.outfit_visual_urls && recommendation.outfit_visual_urls.length > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <OutfitGallery
-                variants={recommendation.outfit_visual_urls.map((url: string, idx: number) => ({
-                  id: `variant-${idx}`,
-                  imageUrl: url,
-                  style: recommendation.style_preset,
-                  seed: recommendation.seed,
-                }))}
-              />
-            </motion.div>
-          )}
+          {/* Outfit Gallery removed - AI visual generation disabled */}
 
           {/* Unified Natural Language Handler - Outfit Modifier Mode */}
           <motion.div
