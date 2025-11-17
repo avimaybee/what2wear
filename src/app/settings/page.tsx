@@ -7,15 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toaster";
-import { User, Thermometer, Shuffle, Settings as SettingsIcon, Lock, Info, Palette, Tag, Droplets, Scissors } from "lucide-react";
+import { User, Thermometer, Shuffle, Settings as SettingsIcon, Lock, Info, Tag, Droplets, Scissors } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppearanceSettings } from "@/components/settings/appearance-settings";
 
-type SettingsSection = "profile" | "preferences" | "appearance" | "privacy" | "about";
+type SettingsSection = "profile" | "preferences" | "privacy" | "about";
 type FitPreference = 'Slim' | 'Regular' | 'Oversized';
 
 // Helper component for the preference selectors
@@ -191,7 +190,6 @@ export default function SettingsPage() {
   const sections = useMemo(() => [
     { id: "profile" as const, label: "Profile", icon: User },
     { id: "preferences" as const, label: "Preferences", icon: Thermometer },
-    { id: "appearance" as const, label: "Appearance", icon: Palette },
     { id: "privacy" as const, label: "Privacy", icon: Lock },
     { id: "about" as const, label: "About", icon: Info },
   ], []);
@@ -362,7 +360,6 @@ export default function SettingsPage() {
             </Card>
           )}
           {activeSection === "preferences" && renderPreferences()}
-          {activeSection === "appearance" && <AppearanceSettings />}
           {activeSection === "privacy" && <Card><CardHeader><CardTitle>Privacy</CardTitle></CardHeader><CardContent><p>Privacy settings coming soon.</p></CardContent></Card>}
           {activeSection === "about" && <Card><CardHeader><CardTitle>About</CardTitle></CardHeader><CardContent><p>what2wear v1.0</p></CardContent></Card>}
 

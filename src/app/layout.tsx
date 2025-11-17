@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { Fredoka } from "next/font/google";
+import { Fredoka, Space_Grotesk } from "next/font/google";
 import { Header } from "@/components/ui/header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
-import { AccentColorLoader } from "@/components/client/accent-color-loader";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 const bodyFont = Fredoka({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-body" });
+const headingFont = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-heading" });
 
 export default function RootLayout({
   children,
@@ -23,7 +23,7 @@ export default function RootLayout({
     <html 
       lang="en" 
       suppressHydrationWarning
-      className={`${bodyFont.variable}`}
+      className={`${bodyFont.variable} ${headingFont.variable}`}
     >
       <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-body)]">
         <ThemeProvider
@@ -32,7 +32,6 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <AccentColorLoader />
           <div className="relative flex min-h-screen flex-col papercraft-bg">
             <Header />
             <main id="main-content" className="flex-1" role="main">

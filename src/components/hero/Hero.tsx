@@ -177,29 +177,14 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
       <div className="relative z-10 container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left column: headline, description and CTAs */}
-          <motion.div className="space-y-10">
-            {/* Badge */}
-            <motion.div variants={itemVariants} className="space-y-0">
-              <motion.div
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-primary/15 to-primary/10 text-primary border border-primary/30 backdrop-blur-sm"
-                variants={itemVariants}
-                role="img"
-                aria-label="AI-powered feature indicator"
-              >
-                <motion.div variants={sparkleVariants}>
-                  <Sparkles className="h-4 w-4" />
-                </motion.div>
-                <span className="text-sm font-semibold">Smart Recommendations</span>
-              </motion.div>
-            </motion.div>
-
+          <motion.div className="space-y-8">
             {/* Main headline with enhanced typography */}
             <motion.div variants={itemVariants} className="space-y-4">
               <motion.h1
                 variants={itemVariants}
                 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-tight max-w-[90%] md:max-w-[85%] font-[family-name:var(--font-heading)]"
               >
-                <span className="block text-foreground">setmyfit</span>
+                <span className="block text-foreground">SetMyFit</span>
                 <motion.span 
                   className="block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent"
                   animate={{ backgroundPosition: ["0%", "100%", "0%"] }}
@@ -217,20 +202,36 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
               </motion.p>
             </motion.div>
 
-            {/* Real-time indicator chip - removed pulse animation */}
+            {/* Status badge row */}
             <motion.div
               variants={itemVariants}
-              className="inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-card to-card/80 border border-border/50 backdrop-blur-sm"
-              aria-live="polite"
-              aria-label="Weather-based recommendation indicator"
+              className="flex flex-wrap items-center gap-3"
             >
+              <motion.div
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/15 to-primary/10 text-primary border border-primary/30 backdrop-blur-sm"
+                variants={itemVariants}
+                role="img"
+                aria-label="AI-powered feature indicator"
+              >
+                <motion.div variants={sparkleVariants}>
+                  <Sparkles className="h-4 w-4" />
+                </motion.div>
+                <span className="text-sm font-semibold">Smart Recommendations</span>
+              </motion.div>
+
               <div
-                className="w-2.5 h-2.5 rounded-full bg-primary"
-                aria-hidden="true"
-              />
-              <span className="text-sm font-semibold text-foreground">
-                Real-time recommendations based on weather and location
-              </span>
+                className="inline-flex flex-1 min-w-[260px] items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-card to-card/80 border border-border/50 backdrop-blur-sm"
+                aria-live="polite"
+                aria-label="Weather-based recommendation indicator"
+              >
+                <div
+                  className="w-2.5 h-2.5 rounded-full bg-primary"
+                  aria-hidden="true"
+                />
+                <span className="text-sm font-semibold text-foreground">
+                  Real-time recommendations based on weather and location
+                </span>
+              </div>
             </motion.div>
 
             {/* Enhanced CTA Buttons */}

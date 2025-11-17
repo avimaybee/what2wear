@@ -104,7 +104,7 @@ export const Header = () => {
               className="flex items-center"
               aria-label="setmyfit home"
             >
-              <span className="rounded-[0.9rem] border border-border/70 bg-card px-3 py-1.5 text-lg md:text-xl font-semibold tracking-[0.22em] uppercase font-[family-name:var(--font-heading)]">
+              <span className="rounded-[0.9rem] bg-card/90 px-3.5 py-1.5 text-lg md:text-xl font-semibold tracking-[0.28em] uppercase font-[family-name:var(--font-heading)] text-foreground shadow-sm">
                 SetMyFit
               </span>
             </Link>
@@ -121,10 +121,10 @@ export const Header = () => {
                   key={route.href}
                   href={route.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-semibold rounded-[0.9rem] border transition-colors",
-                    "hover:bg-secondary hover:text-accent-foreground",
+                    "flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-semibold rounded-[0.9rem] border transition-all",
+                    "hover:bg-secondary hover:text-accent",
                     isActive
-                      ? "border-accent bg-secondary/60 text-accent-foreground"
+                      ? "border-accent bg-secondary text-accent shadow-sm"
                       : "border-border bg-card text-muted-foreground"
                   )}
                   aria-current={isActive ? 'page' : undefined}
