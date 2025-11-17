@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Shirt, ArrowRight, Camera, Sun, Zap, Star } from "lucide-react";
+import { Sparkles, Shirt, ArrowRight, Camera, Sun, Zap } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motionDurations, motionEasing, motionStagger } from "@/lib/motion";
@@ -100,34 +100,6 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
     },
   };
 
-  // Subtle pulse animation for accent elements
-  const pulseVariants = {
-    initial: { scale: 1, opacity: 0.7 },
-    animate: {
-      scale: [1, 1.08, 1],
-      opacity: [0.7, 1, 0.7],
-      transition: {
-        duration: 3.5,
-        repeat: Infinity,
-        ease: "easeInOut" as const,
-      },
-    },
-  };
-
-  // Floating animation for decorative elements
-  const floatVariants = {
-    initial: { y: 0, rotateZ: 0 },
-    animate: {
-      y: [0, -25, 0],
-      rotateZ: [0, 5, 0],
-      transition: {
-        duration: 6,
-        repeat: Infinity,
-        ease: "easeInOut" as const,
-      },
-    },
-  };
-
   // Determine primary CTA based on user state
   const primaryCTA = {
     label: isAuthenticated && hasWardrobe ? "Get Outfit" : "Add Wardrobe",
@@ -186,48 +158,19 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
           }}
         />
 
-        {/* Animated accent blob (top right) */}
-        <motion.div
+        {/* Animated accent blob (top right) - removed float animation */}
+        <div
           className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
-          variants={floatVariants}
-          initial="initial"
-          animate="animate"
           aria-hidden="true"
         />
         
-        {/* Animated accent blob (bottom left) */}
-        <motion.div
+        {/* Animated accent blob (bottom left) - removed float animation */}
+        <div
           className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/8 rounded-full blur-3xl"
-          variants={floatVariants}
-          initial="initial"
-          animate={shouldReduceMotion ? "initial" : "animate"}
-          transition={{
-            duration: 7,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
           aria-hidden="true"
         />
 
-        {/* Floating star elements */}
-        <motion.div
-          className="absolute top-20 right-32 text-primary/30"
-          animate={{ y: [0, -20, 0], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-          aria-hidden="true"
-        >
-          <Star className="w-8 h-8" />
-        </motion.div>
-        
-        <motion.div
-          className="absolute top-1/3 left-20 text-accent/20"
-          animate={{ y: [0, 25, 0], opacity: [0.2, 0.5, 0.2] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          aria-hidden="true"
-        >
-          <Sparkles className="w-6 h-6" />
-        </motion.div>
+        {/* Removed floating star elements for minimal design */}
       </div>
 
       {/* Content container */}
@@ -274,18 +217,15 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
               </motion.p>
             </motion.div>
 
-            {/* Real-time indicator chip with improved styling */}
+            {/* Real-time indicator chip - removed pulse animation */}
             <motion.div
               variants={itemVariants}
               className="inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-card to-card/80 border border-border/50 backdrop-blur-sm shadow-sm"
               aria-live="polite"
               aria-label="Weather-based recommendation indicator"
             >
-              <motion.div
-                variants={pulseVariants}
-                initial="initial"
-                animate="animate"
-                className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-primary to-accent shadow-lg shadow-primary/50"
+              <div
+                className="w-2.5 h-2.5 rounded-full bg-primary shadow-sm"
                 aria-hidden="true"
               />
               <span className="text-sm font-semibold text-foreground">

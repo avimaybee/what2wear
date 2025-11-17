@@ -76,7 +76,7 @@ export default function SignInPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="glass-effect border-2">
+        <Card className="border-2">
           <CardHeader className="text-center space-y-3 pb-6">
             <motion.div
               initial={{ scale: 0.8 }}

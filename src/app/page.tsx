@@ -2,8 +2,6 @@
 
 import { useState, useEffect, Suspense, lazy, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MapPin, AlertCircle, LogIn, Shirt } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
@@ -333,40 +331,10 @@ export default function HomePage() {
   // Loading state
   if (loading || !location) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-6">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-96" />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              <Card>
-                <CardHeader>
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-4 w-full" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-4 gap-4">
-                    {[1, 2, 3, 4].map((i) => (
-                      <Skeleton key={i} className="aspect-square" />
-                    ))}
-                  </div>
-                  <Skeleton className="h-12 w-full" />
-                </CardContent>
-              </Card>
-            </div>
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <Skeleton className="h-6 w-32" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-32 w-full" />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Loading your outfit...</p>
         </div>
       </div>
     );
@@ -516,18 +484,19 @@ export default function HomePage() {
         );
   })()}
       <Suspense fallback={
-        <div className="container mx-auto p-4 space-y-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-48 w-full" />
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+          </div>
         </div>
       }>
         <div id="dashboard">
           <DashboardClient 
             recommendationData={recommendationData}
             location={location}
-            onLocationChange={() => setShowLocationDialog(true)}
             onRefresh={() => location && fetchRecommendation(location)}
+            onAutoDetectLocation={requestLocation}
           />
         </div>
       </Suspense>

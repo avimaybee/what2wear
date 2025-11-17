@@ -257,7 +257,7 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        <Card className="glass-effect">
+        <Card>
           <AnimatePresence mode="wait">
             {/* Step 1: Welcome */}
             {currentStep === 1 && (

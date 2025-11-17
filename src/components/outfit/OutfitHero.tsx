@@ -4,9 +4,8 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, RefreshCw, Shirt } from "lucide-react";
+import { Sparkles, ChevronDown, ChevronUp, RefreshCw, Shirt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatReasoningForUser } from "@/lib/helpers/reasoningFormatter";
 import type { IClothingItem } from "@/lib/types";
@@ -44,23 +43,12 @@ export function OutfitHero({
   detailedReasoning,
   className,
   onItemClick,
-  onLikeClick,
-  onDislikeClick,
   onLogOutfit,
   onRegenerate,
-  isLiked = false,
-  isDisliked = false,
   isLoggingOutfit = false,
   isRegenerating = false,
 }: OutfitHeroProps) {
   const [showFullReason, setShowFullReason] = useState(false);
-
-  // Extract dominant colors from outfit items (up to 5 unique colors)
-  const dominantColors = outfitItems
-    .map((item) => item.color)
-    .filter((color): color is string => color !== null && color !== undefined)
-    .filter((color, index, self) => self.indexOf(color) === index)
-    .slice(0, 5);
 
   // Format reasoning to be more conversational and user-friendly
   const formattedReasoning = useMemo(() => {
@@ -73,7 +61,7 @@ export function OutfitHero({
   const hasMoreContent = reasoningParagraphs.length > 1;
 
   return (
-    <Card className={cn("overflow-hidden glass-effect", className)}>
+    <Card className={cn("overflow-hidden", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
@@ -130,53 +118,48 @@ export function OutfitHero({
         </div>
       )}
 
-      {/* Color Chips */}
-      {dominantColors.length > 0 && (
-        <div className="px-4 sm:px-6 pb-4">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-              Color Palette
-            </p>
-            <div className="flex gap-2 flex-wrap">
-              {dominantColors.map((color, index) => (
-                <motion.div
-                  key={`${color}-${index}`}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3, delay: 0.25 + index * 0.05 }}
-                  whileHover={{ scale: 1.1 }}
-                  className="group relative"
-                >
-                  <div
-                    className="w-10 h-10 rounded-full border-2 border-border/50 shadow-sm group-hover:shadow-md transition-all cursor-pointer"
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  />
-                  <Badge 
-                    variant="secondary" 
-                    className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"
-                  >
-                    {color}
-                  </Badge>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      )}
+      {/* Action Buttons */}
+      <div className="px-4 sm:px-6 pb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex flex-col sm:flex-row gap-3"
+        >
+          {/* Primary Actions */}
+          <div className="flex gap-2 flex-1">
+            <Button
+              onClick={onLogOutfit}
+              disabled={isLoggingOutfit || isRegenerating}
+              className="flex-1 gap-2"
+              variant="default"
+              aria-label="Log this outfit to history"
+            >
+              <Shirt className="h-4 w-4" aria-hidden="true" />
+              {isLoggingOutfit ? "Logging..." : "Log Outfit"}
+            </Button>
+            <Button
+              onClick={onRegenerate}
+              disabled={isRegenerating || isLoggingOutfit}
+              className="flex-1 gap-2"
+              variant="outline"
+              aria-label="Generate a new outfit"
+            >
+              <RefreshCw className={cn("h-4 w-4", isRegenerating && "animate-spin")} aria-hidden="true" />
+              {isRegenerating ? "Generating..." : "Regenerate"}
+            </Button>
+          </div>
+        </motion.div>
+      </div>
 
-      {/* Detailed Reasoning Section */}
+      {/* Detailed Reasoning Section - Now below buttons */}
       {detailedReasoning && (
-        <div className="px-4 sm:px-6 pb-4">
+        <div className="px-4 sm:px-6 pb-6">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.3 }}
-            className="rounded-xl border border-border/50 bg-gradient-to-br from-background/40 to-muted/20 p-4 backdrop-blur-sm"
+            className="rounded-lg border border-border bg-card p-4"
           >
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -186,11 +169,11 @@ export function OutfitHero({
             <AnimatePresence mode="wait">
               <motion.div
                 key={showFullReason ? 'full' : 'preview'}
-                initial={{ opacity: 0, height: 'auto' }}
+                initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-sm text-muted-foreground leading-relaxed space-y-2"
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="text-sm text-muted-foreground leading-relaxed space-y-2 overflow-hidden"
               >
                 {showFullReason ? (
                   reasoningParagraphs.map((para, i) => (
@@ -227,72 +210,6 @@ export function OutfitHero({
           </motion.div>
         </div>
       )}
-
-      {/* Action Buttons */}
-      <div className="px-4 sm:px-6 pb-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.35 }}
-          className="flex flex-col sm:flex-row gap-3"
-        >
-          {/* Primary Actions */}
-          <div className="flex gap-2 flex-1">
-            <Button
-              onClick={onLogOutfit}
-              disabled={isLoggingOutfit || isRegenerating}
-              className="flex-1 gap-2"
-              variant="default"
-              aria-label="Log this outfit to history"
-            >
-              <Shirt className="h-4 w-4" aria-hidden="true" />
-              {isLoggingOutfit ? "Logging..." : "Log Outfit"}
-            </Button>
-            <Button
-              onClick={onRegenerate}
-              disabled={isRegenerating || isLoggingOutfit}
-              className="flex-1 gap-2"
-              variant="outline"
-              aria-label="Generate a new outfit"
-            >
-              <RefreshCw className={cn("h-4 w-4", isRegenerating && "animate-spin")} aria-hidden="true" />
-              {isRegenerating ? "Generating..." : "Regenerate"}
-            </Button>
-          </div>
-
-          {/* Feedback Actions */}
-          <div className="flex gap-2">
-            <Button
-              onClick={onLikeClick}
-              disabled={isLoggingOutfit || isRegenerating}
-              size="icon"
-              variant={isLiked ? "default" : "outline"}
-              className={cn(
-                "transition-colors",
-                isLiked && "bg-green-500 hover:bg-green-600 text-white border-green-500"
-              )}
-              aria-label="I like this outfit"
-              aria-pressed={isLiked}
-            >
-              <ThumbsUp className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <Button
-              onClick={onDislikeClick}
-              disabled={isLoggingOutfit || isRegenerating}
-              size="icon"
-              variant={isDisliked ? "default" : "outline"}
-              className={cn(
-                "transition-colors",
-                isDisliked && "bg-red-500 hover:bg-red-600 text-white border-red-500"
-              )}
-              aria-label="I don't like this outfit"
-              aria-pressed={isDisliked}
-            >
-              <ThumbsDown className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
-        </motion.div>
-      </div>
     </Card>
   );
 }

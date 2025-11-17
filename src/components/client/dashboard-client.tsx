@@ -5,55 +5,42 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MetricCard } from "@/components/ui/metric-card";
 import { toast } from "@/components/ui/toaster";
 import {
-  Wind,
   Sun,
-  Droplets,
   Sparkles,
   RefreshCw,
+  MapPin,
 } from "lucide-react";
 import { formatTemp } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { WeatherAlertBanner, generateWeatherAlerts } from "@/components/ui/weather-alert-banner";
 import { SwapModal } from "@/components/generate/SwapModal";
 import { OutfitHero } from "@/components/outfit";
-import LocationSelector from "@/components/LocationSelector";
 import type { IClothingItem } from "@/lib/types";
 
 interface DashboardClientProps {
   recommendationData: any; // Data from /api/recommendation - dynamic structure
   location: { lat: number; lon: number };
-  onLocationChange: () => void;
   onRefresh: () => void;
+  onAutoDetectLocation?: () => void;
 }
 
 export const DashboardClient = ({ 
   recommendationData,
   location,
-  onLocationChange,
   onRefresh,
+  onAutoDetectLocation,
 }: DashboardClientProps) => {
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const [isLogging, setIsLogging] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [locationName, setLocationName] = useState<string | null>(null);
-  const [_showLocationSelector, setShowLocationSelector] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState(location);
 
   // Swap modal state
   const [swapModalOpen, setSwapModalOpen] = useState(false);
   const [swapItemInFocus, setSwapItemInFocus] = useState<IClothingItem | null>(null);
   const [_swappedOutfit, setSwappedOutfit] = useState<IClothingItem[] | null>(null);
-
-  // Handle location selection
-  const handleLocationSelect = (newLocation: { lat: number; lon: number; name: string }) => {
-    setCurrentLocation(newLocation);
-    setLocationName(newLocation.name);
-    setShowLocationSelector(false);
-    onLocationChange?.();
-  };
 
   // Safely destructure with fallbacks
   const { recommendation = null, weather = null } = recommendationData || {};
@@ -248,26 +235,8 @@ export const DashboardClient = ({
     }
   };
 
-  // Style Assistant handlers
-
-
-  const getAQIStatus = (aqi: number) => {
-    if (aqi <= 50) return { label: "Good", variant: "success" as const };
-    if (aqi <= 100) return { label: "Moderate", variant: "warning" as const };
-    return { label: "Unhealthy", variant: "destructive" as const };
-  };  const getUVStatus = (uv: number) => {
-    if (uv <= 2) return { label: "Low", variant: "success" as const };
-    if (uv <= 5) return { label: "Moderate", variant: "warning" as const };
-    if (uv <= 7) return { label: "High", variant: "warning" as const };
-    return { label: "Very High", variant: "destructive" as const };
-  };
-
-  // Safely get status with null checks
-  const aqiStatus = weather ? getAQIStatus(weather.air_quality_index || 0) : { label: "Unknown", variant: "default" as const };
-  const uvStatus = weather ? getUVStatus(weather.uv_index || 0) : { label: "Unknown", variant: "default" as const };
-
-  // Generate weather alerts only if weather data exists
-  const weatherAlerts = weather ? generateWeatherAlerts(weather) : [];
+  // Generate weather alerts - only show critical severity
+  const weatherAlerts = weather ? generateWeatherAlerts(weather).filter(alert => alert.severity === 'critical') : [];
   
   // If no recommendation data, show empty state
   if (!recommendation || !weather) {
@@ -352,84 +321,49 @@ export const DashboardClient = ({
 
         {/* Sidebar */}
         <div className="space-y-6 md:space-y-8">
-          {/* Location Selector */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.25 }}
-          >
-            <LocationSelector
-              onLocationSelect={handleLocationSelect}
-              currentLocation={currentLocation}
-              currentLocationName={locationName || undefined}
-            />
-          </motion.div>
-
           {/* Current Weather */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Card className="overflow-hidden glass-effect">
+            <Card className="overflow-hidden">
               <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Sun className="h-4 w-4 text-primary" />
-                    {locationName || 'Weather Now'}
-                  </CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Sun className="h-4 w-4 text-primary" />
+                      {locationName || 'Weather Now'}
+                    </CardTitle>
+                  </div>
+                  {onAutoDetectLocation && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onAutoDetectLocation}
+                      className="h-8 px-2 text-xs"
+                    >
+                      <MapPin className="h-3 w-3 mr-1" />
+                      Auto-detect
+                    </Button>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {weather.weather_condition || "Current conditions"}
                 </p>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Feels Like - Prominent */}
-                <div className="text-center py-4 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-lg" />
-                  <div className="relative">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                      Feels Like
-                    </p>
-                    <p className="text-6xl font-bold text-primary tracking-tight">
-                      {formatTemp(weather.feels_like)}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Actual: {formatTemp(weather.temperature)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-1 gap-3">
-                  <MetricCard
-                    icon={Wind}
-                    label="Air Quality"
-                    value={weather.air_quality_index || 0}
-                    status={aqiStatus.label}
-                    statusVariant={aqiStatus.variant}
-                    description="Current air quality index"
-                  />
-                  <MetricCard
-                    icon={Sun}
-                    label="UV Index"
-                    value={weather.uv_index || 0}
-                    status={uvStatus.label}
-                    statusVariant={uvStatus.variant}
-                    description={
-                      (weather.uv_index || 0) > 5
-                        ? "Consider sun protection"
-                        : "UV protection optional"
-                    }
-                  />
-                  <MetricCard
-                    icon={Droplets}
-                    label="Pollen"
-                    value={(weather.pollen_count || 0).toFixed(1)}
-                    status="Low"
-                    statusVariant="success"
-                    description="Pollen count today"
-                  />
+              <CardContent className="space-y-4">
+                {/* Temperature Display - Simplified */}
+                <div className="text-center py-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    Feels Like
+                  </p>
+                  <p className="text-5xl font-bold text-primary">
+                    {formatTemp(weather.feels_like)}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Actual: {formatTemp(weather.temperature)}
+                  </p>
                 </div>
               </CardContent>
             </Card>

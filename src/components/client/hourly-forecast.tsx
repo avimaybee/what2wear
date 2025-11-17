@@ -112,7 +112,7 @@ export function HourlyForecast({ location }: HourlyForecastProps) {
 
   if (loading || hourlyData.length === 0) {
     return (
-      <Card className="glass-effect">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />

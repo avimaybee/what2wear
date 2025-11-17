@@ -140,7 +140,7 @@ export function OutfitGallery({
   }
 
   return (
-    <Card className={cn("overflow-hidden glass-effect", className)}>
+    <Card className={cn("overflow-hidden", className)}>
       {/* Screen reader announcement for variant changes */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         Viewing outfit variant {currentIndex + 1} of {totalVariants}
