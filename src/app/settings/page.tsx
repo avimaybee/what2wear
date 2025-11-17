@@ -325,8 +325,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-6">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-1 mb-6">
+    <div className="paper-rip container max-w-screen-xl rounded-[1.5rem] px-4 sm:px-6 lg:px-8 py-6 md:py-10 pb-24 md:pb-10">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-2 mb-6">
+        <span className="paper-tape text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground/80">Control Center</span>
         <div className="flex items-center gap-2">
           <SettingsIcon className="h-5 w-5 text-primary" />
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>

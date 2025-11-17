@@ -640,7 +640,7 @@ export default function WardrobePage() {
   return (
     <div 
       className={cn(
-        "papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 pt-3 pb-24 md:pt-4 md:pb-8 space-y-6",
+        "paper-rip container max-w-screen-2xl rounded-[1.6rem] px-4 sm:px-6 lg:px-8 pt-6 pb-24 md:pt-8 md:pb-10 space-y-6",
         dragActive && "ring-2 ring-primary ring-offset-4 ring-offset-background rounded-[1.5rem]"
       )}
       onDragEnter={handleDragOver}
@@ -653,7 +653,8 @@ export default function WardrobePage() {
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="space-y-2">
+          <span className="paper-tape text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground/80">Virtual Closet</span>
           <h1 className="text-3xl md:text-4xl font-[family-name:var(--font-heading)] tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
           <p className="text-sm text-muted-foreground">
             {filteredItems.length} of {wardrobeItems.length} items

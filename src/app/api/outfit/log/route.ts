@@ -34,7 +34,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const itemIds = body.item_ids as number[];
     const outfitDate = body.outfit_date || new Date().toISOString().split('T')[0];
     const feedback = body.feedback || null;
-    const currentDate = new Date().toISOString();
 
     // Log for debugging
     if (process.env.NODE_ENV !== 'production') {

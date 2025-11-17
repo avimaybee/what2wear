@@ -25,10 +25,13 @@ export default async function HistoryPage() {
   }
   
   return (
-    <div className="min-h-screen papercraft-bg">
-      <main className="container mx-auto px-4 py-8 max-w-7xl space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-[0.08em] uppercase font-[family-name:var(--font-heading)]">Outfit History</h1>
+    <div className="min-h-screen">
+      <main className="paper-rip container mx-auto rounded-[1.5rem] px-4 py-8 max-w-7xl space-y-6">
+        <div className="space-y-2">
+          <span className="paper-tape text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground/80">Timeline</span>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-[0.08em] uppercase font-[family-name:var(--font-heading)]">Outfit History</h1>
+          </div>
         </div>
         <Suspense fallback={<HistoryLoadingSkeleton />}>
           <HistoryClient userId={user.id} />

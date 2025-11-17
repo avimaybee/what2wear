@@ -25,14 +25,14 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${bodyFont.variable} ${headingFont.variable}`}
     >
-      <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-body)]">
+      <body className="papercraft-bg min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-body)]">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >
-          <div className="relative flex min-h-screen flex-col papercraft-bg">
+          <div className="relative flex min-h-screen flex-col">
             <Header />
             <main id="main-content" className="flex-1" role="main">
               {children}

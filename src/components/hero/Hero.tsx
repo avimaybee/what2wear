@@ -119,7 +119,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
       initial={shouldReduceMotion ? "visible" : "hidden"}
       animate="visible"
       className={cn(
-        "relative min-h-screen flex items-center justify-center overflow-hidden",
+        "relative min-h-screen flex items-center justify-center overflow-hidden papercraft-bg",
         "bg-gradient-to-b from-background via-background to-background",
         className
       )}
@@ -184,7 +184,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                 variants={itemVariants}
                 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-tight max-w-[90%] md:max-w-[85%] font-[family-name:var(--font-heading)]"
               >
-                <span className="block text-foreground">SetMyFit</span>
+                <span className="block text-foreground tracking-[0.08em] uppercase">SetMyFit</span>
                 <motion.span 
                   className="block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent"
                   animate={{ backgroundPosition: ["0%", "100%", "0%"] }}
@@ -208,7 +208,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
               className="flex flex-wrap items-center gap-3"
             >
               <motion.div
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/15 to-primary/10 text-primary border border-primary/30 backdrop-blur-sm"
+                className="paper-tape text-primary"
                 variants={itemVariants}
                 role="img"
                 aria-label="AI-powered feature indicator"
@@ -237,48 +237,69 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
             {/* Enhanced CTA Buttons */}
             <motion.div
               variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-4 pt-6"
+              className="paper-rip flex flex-col sm:flex-row gap-4 pt-6"
             >
               {primaryCTA.onClick ? (
                 <motion.div
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex-1 sm:flex-initial"
+                  className="cta-layer flex-1 sm:flex-initial"
                 >
-                  <Button
-                    size="lg"
-                    onClick={primaryCTA.onClick}
-                    className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
-                    aria-label={`${primaryCTA.label} - Get started with setmyfit`}
-                  >
-                    <motion.span
-                      className="flex items-center justify-center gap-2"
-                      whileHover={{ x: 4 }}
-                    >
-                      {primaryCTA.label}
-                      <primaryCTA.icon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                    </motion.span>
-                  </Button>
+                  <div className="paper-note rounded-2xl border border-border/40 p-5 sm:p-6">
+                    <span className="paper-tape text-[11px] font-semibold uppercase tracking-widest">
+                      Instant Outfit
+                    </span>
+                    <div className="mt-4 space-y-3">
+                      <Button
+                        size="lg"
+                        onClick={primaryCTA.onClick}
+                        className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
+                        aria-label={`${primaryCTA.label} - Get started with setmyfit`}
+                      >
+                        <motion.span
+                          className="flex items-center justify-center gap-2"
+                          whileHover={{ x: 4 }}
+                        >
+                          {primaryCTA.label}
+                          <primaryCTA.icon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                        </motion.span>
+                      </Button>
+                      <p className="flex items-center gap-2 text-xs text-muted-foreground/80">
+                        <Zap className="h-3.5 w-3.5 text-amber-500" />
+                        Outfit drafted in under 3 seconds
+                      </p>
+                    </div>
+                  </div>
                 </motion.div>
               ) : (
-                <Link href={primaryCTA.href} className="flex-1 sm:flex-initial">
+                <Link href={primaryCTA.href} className="cta-layer flex-1 sm:flex-initial">
                   <motion.div
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.98 }}
+                    className="paper-note rounded-2xl border border-border/40 p-5 sm:p-6"
                   >
-                    <Button
-                      size="lg"
-                      className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
-                      aria-label={`${primaryCTA.label} - Get started with setmyfit`}
-                    >
-                      <motion.span
-                        className="flex items-center justify-center gap-2"
-                        whileHover={{ x: 4 }}
+                    <span className="paper-tape text-[11px] font-semibold uppercase tracking-widest">
+                      Instant Outfit
+                    </span>
+                    <div className="mt-4 space-y-3">
+                      <Button
+                        size="lg"
+                        className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
+                        aria-label={`${primaryCTA.label} - Get started with setmyfit`}
                       >
-                        {primaryCTA.label}
-                        <primaryCTA.icon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                      </motion.span>
-                    </Button>
+                        <motion.span
+                          className="flex items-center justify-center gap-2"
+                          whileHover={{ x: 4 }}
+                        >
+                          {primaryCTA.label}
+                          <primaryCTA.icon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                        </motion.span>
+                      </Button>
+                      <p className="flex items-center gap-2 text-xs text-muted-foreground/80">
+                        <Zap className="h-3.5 w-3.5 text-amber-500" />
+                        Outfit drafted in under 3 seconds
+                      </p>
+                    </div>
                   </motion.div>
                 </Link>
               )}
@@ -288,10 +309,13 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
+                  <div className="paper-tape mb-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/80">
+                    Daily Flow
+                  </div>
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full sm:w-auto px-8 border-border/50 hover:border-border/80 hover:bg-muted/50 transition-all duration-300"
+                    className="w-full sm:w-auto px-8 border-dashed border-border/60 hover:border-border/80 hover:bg-muted/60 transition-all duration-300"
                     aria-label={secondaryCTA.label}
                   >
                     {secondaryCTA.label}
@@ -331,7 +355,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                 key={feature.label}
                 variants={itemVariants}
                 whileHover={{ y: -6, scale: 1.02 }}
-                className="flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-gradient-to-br from-card/80 to-card/40 hover:from-card hover:to-card/60 backdrop-blur-sm transition-all duration-300 w-full"
+                className="paper-note flex items-center gap-4 p-4 rounded-xl border border-border/40 hover:translate-y-[-4px] transition-all duration-300 w-full"
               >
                 <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex-shrink-0 border border-primary/10">
                   {feature.icon}

@@ -15,7 +15,6 @@ import {
   MapPin,
   AlertCircle,
 } from "lucide-react";
-import { formatTemp } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { WeatherAlertBanner, generateWeatherAlerts } from "@/components/ui/weather-alert-banner";
 import { SwapModal } from "@/components/generate/SwapModal";

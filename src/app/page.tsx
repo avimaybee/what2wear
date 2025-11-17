@@ -379,8 +379,9 @@ export default function HomePage() {
                            error.toLowerCase().includes("shoes");
     
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="paper-rip max-w-2xl w-full space-y-4">
+          <span className="paper-tape text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground/80">Need Attention</span>
           {isAuthError ? (
             <EmptyState
               icon={LogIn}
@@ -474,7 +475,7 @@ export default function HomePage() {
 
   // Success - show dashboard with real data
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Hero Section - Brand moment */}
       <Hero 
         isAuthenticated={isAuthenticated}
