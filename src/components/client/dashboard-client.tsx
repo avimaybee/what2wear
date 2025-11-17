@@ -260,17 +260,20 @@ export const DashboardClient = ({
   // If no recommendation data, show empty state
   if (!recommendation || !weather) {
     return (
-      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
-        <Card className="p-12 text-center">
+      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+        <Card className="relative overflow-hidden border-2 border-border bg-card shadow-lg rounded-[1.25rem] text-center">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(6_100%_88%)/40%,transparent_55%),radial-gradient(circle_at_bottom_right,hsl(177_79%_80%)/35%,transparent_55%)] opacity-70 mix-blend-multiply" />
           <div className="space-y-4">
             <div className="flex justify-center">
-              <Sparkles className="h-16 w-16 text-muted-foreground" />
+              <Sparkles className="relative z-10 h-16 w-16 text-accent" />
             </div>
-            <h2 className="text-2xl font-bold">Building Your First Outfit</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
+            <h2 className="relative z-10 text-3xl font-semibold tracking-[0.08em] uppercase font-[family-name:var(--font-heading)]">
+              Building Your First Outfit
+            </h2>
+            <p className="relative z-10 text-muted-foreground max-w-md mx-auto text-sm md:text-base">
               We need a few more clothing items in your wardrobe to create personalized outfit recommendations. Add at least 5-7 items to get started!
             </p>
-            <div className="flex gap-3 justify-center pt-4">
+            <div className="relative z-10 flex gap-3 justify-center pt-4">
               <Button onClick={() => window.location.href = '/wardrobe'}>
                 Add Clothing Items
               </Button>

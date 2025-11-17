@@ -426,17 +426,17 @@ export default function WardrobePage() {
   // Loading state
   if (loading) {
     return (
-      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6">
+      <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton variant="text" className="h-8 w-56 mb-2" />
+            <Skeleton variant="text" className="h-4 w-64" />
           </div>
-          <Skeleton className="h-9 w-28" />
+          <Skeleton variant="panel" className="h-10 w-32" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
           {Array.from({ length: 12 }).map((_, idx) => (
-            <Skeleton key={idx} className="aspect-square rounded-lg" />
+            <Skeleton key={idx} variant="panel" className="aspect-square" />
           ))}
         </div>
       </div>
@@ -446,7 +446,7 @@ export default function WardrobePage() {
   // Error state
   if (error) {
     return (
-      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+      <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
         <div className="max-w-2xl mx-auto">
           <EmptyState
             icon={AlertCircle}
@@ -470,10 +470,10 @@ export default function WardrobePage() {
   if (wardrobeItems.length === 0) {
     return (
       <>
-        <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+        <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Virtual Wardrobe</h1>
+              <h1 className="text-3xl md:text-4xl font-[family-name:var(--font-heading)] tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
               <p className="text-sm text-muted-foreground">
                 Manage your clothing collection
               </p>
@@ -516,7 +516,7 @@ export default function WardrobePage() {
                 <div className="space-y-4 py-4">
                   {!imagePreview ? (
                     // File upload area
-                    <div className="flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-lg hover:border-primary/50 transition-colors cursor-pointer">
+                    <div className="flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-[1.25rem] hover:border-primary/50 transition-colors cursor-pointer">
                       <input
                         type="file"
                         accept="image/*"
@@ -543,7 +543,7 @@ export default function WardrobePage() {
                   ) : (
                     // Image preview
                     <div className="space-y-4">
-                      <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                      <div className="relative aspect-square rounded-[1.25rem] overflow-hidden bg-muted">
                         <Image
                           src={imagePreview}
                           alt="Preview"
@@ -611,11 +611,11 @@ export default function WardrobePage() {
   }
 
   return (
-    <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6 pb-20 md:pb-6">
+    <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6 pb-20 md:pb-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Virtual Wardrobe</h1>
+          <h1 className="text-3xl md:text-4xl font-[family-name:var(--font-heading)] tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
           <p className="text-sm text-muted-foreground">
             {filteredItems.length} of {wardrobeItems.length} items
             {hasActiveFilters && " (filtered)"}
@@ -638,7 +638,7 @@ export default function WardrobePage() {
             placeholder="Search by name, color, or material..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-10"
+            className="pl-10 pr-10 rounded-[0.875rem] border-2 bg-card"
             aria-label="Search wardrobe items"
           />
           {searchQuery && (
@@ -820,7 +820,7 @@ export default function WardrobePage() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="h-10 rounded-[0.875rem] border-2 border-border bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none"
           aria-label="Sort wardrobe items"
         >
           <option value="recent">Recently Added</option>
@@ -835,7 +835,7 @@ export default function WardrobePage() {
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted-foreground">Active filters:</span>
           {filterType !== "All" && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="sticker" tone="muted" className="gap-1">
               Type: {filterType}
               <button onClick={() => setFilterType("All")} className="ml-1 hover:text-destructive">
                 <X className="h-3 w-3" />
@@ -843,7 +843,7 @@ export default function WardrobePage() {
             </Badge>
           )}
           {filterColor !== "All" && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="sticker" tone="muted" className="gap-1">
               Color: {filterColor}
               <button onClick={() => setFilterColor("All")} className="ml-1 hover:text-destructive">
                 <X className="h-3 w-3" />
@@ -851,7 +851,7 @@ export default function WardrobePage() {
             </Badge>
           )}
           {filterSeason !== "All" && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="sticker" tone="muted" className="gap-1">
               Season: {filterSeason}
               <button onClick={() => setFilterSeason("All")} className="ml-1 hover:text-destructive">
                 <X className="h-3 w-3" />
@@ -859,7 +859,7 @@ export default function WardrobePage() {
             </Badge>
           )}
           {filterDressCode !== "All" && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="sticker" tone="muted" className="gap-1">
               Dress Code: {filterDressCode}
               <button onClick={() => setFilterDressCode("All")} className="ml-1 hover:text-destructive">
                 <X className="h-3 w-3" />
@@ -888,8 +888,8 @@ export default function WardrobePage() {
               }}
               layout
             >
-              <Card 
-                className="group overflow-hidden transition-shadow hover:shadow-md cursor-pointer rounded-lg border"
+              <Card hoverable
+                className="group overflow-hidden cursor-pointer"
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
@@ -911,7 +911,7 @@ export default function WardrobePage() {
                   
                   {/* Type Badge */}
                   <div className="absolute top-2 right-2 z-10">
-                    <Badge variant="secondary" className="backdrop-blur-sm bg-black/50 text-white border-0">
+                    <Badge variant="sticker" tone="teal" className="shadow-sm">
                       {item.type}
                     </Badge>
                   </div>
@@ -926,7 +926,7 @@ export default function WardrobePage() {
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <Badge className="backdrop-blur-sm bg-primary/90 border-0">
+                        <Badge variant="sticker" tone="coral">
                           <Sparkles className="h-3 w-3 mr-1" aria-hidden="true" />
                           New
                         </Badge>
@@ -967,7 +967,7 @@ export default function WardrobePage() {
                     <p className="text-sm text-muted-foreground">{item.material}</p>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="flex items-center justify-between pt-2 border-t-2 border-dashed">
                     <div className="text-xs">
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Calendar className="h-3 w-3" aria-hidden="true" />
@@ -977,7 +977,7 @@ export default function WardrobePage() {
                     </div>
                     {item.color && (
                       <div
-                        className="w-6 h-6 rounded-full border shadow-sm"
+                        className="w-6 h-6 rounded-full border-2 shadow-md"
                         style={{ backgroundColor: item.color.toLowerCase() }}
                         title={item.color}
                       />
@@ -1033,7 +1033,7 @@ export default function WardrobePage() {
               <div className="space-y-4 py-4">
                 {!imagePreview ? (
                   // File upload area
-                  <div className="flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-lg hover:border-primary/50 transition-colors cursor-pointer">
+                  <div className="flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-[1.25rem] hover:border-primary/50 transition-colors cursor-pointer">
                     <input
                       type="file"
                       accept="image/*"
@@ -1060,7 +1060,7 @@ export default function WardrobePage() {
                 ) : (
                   // Image preview
                   <div className="space-y-4">
-                    <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                      <div className="relative aspect-square rounded-[1.25rem] overflow-hidden bg-muted">
                       <Image
                         src={imagePreview}
                         alt="Preview"
@@ -1137,7 +1137,7 @@ export default function WardrobePage() {
           <div className="space-y-4 py-4">
             {/* Image Preview */}
             {editItem && (
-              <div className="relative aspect-square w-32 rounded-lg overflow-hidden bg-muted mx-auto">
+              <div className="relative aspect-square w-32 rounded-[1.25rem] overflow-hidden bg-muted mx-auto">
                 <Image
                   src={editItem.image_url}
                   alt={editItem.name}
@@ -1166,7 +1166,7 @@ export default function WardrobePage() {
                   id="edit-type"
                   value={editFormData.type || ''}
                   onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value as ClothingType })}
-                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="w-full h-10 rounded-[0.875rem] border-2 border-border bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none"
                 >
                   {clothingTypes.map((type) => (
                     <option key={type} value={type}>{type}</option>
@@ -1306,7 +1306,7 @@ export default function WardrobePage() {
                   value={editFormData.description || ''}
                   onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
                   placeholder="Add any additional details about this item..."
-                  className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="w-full min-h-[100px] rounded-[0.875rem] border-2 border-border bg-card px-3 py-2 text-sm shadow-sm focus-visible:outline-none"
                 />
               </div>
             </div>

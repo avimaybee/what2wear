@@ -219,52 +219,41 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl"
-      >
+    <div className="min-h-screen flex items-center justify-center p-6 papercraft-bg">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-2xl space-y-6">
         {/* Progress Steps */}
-        <div className="flex justify-between mb-8">
+        <div className="flex justify-between mb-4 relative">
           {steps.map((step, index) => (
-            <div
-              key={step.id}
-              className="flex flex-col items-center gap-2 flex-1"
-            >
-              <div
-                className={`h-10 w-10 rounded-full flex items-center justify-center transition-all ${
-                  currentStep > step.id
-                    ? "bg-primary text-primary-foreground"
-                    : currentStep === step.id
-                    ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
+            <div key={step.id} className="flex flex-col items-center gap-2 flex-1">
+              <div className={`h-12 w-12 rounded-[1.2rem] border-2 flex items-center justify-center shadow-md transition-all ${
+                currentStep > step.id
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : currentStep === step.id
+                  ? "bg-secondary text-accent-foreground border-accent"
+                  : "bg-card text-muted-foreground border-border"
+              }`}>
                 {currentStep > step.id ? (
                   <Check className="h-5 w-5" />
                 ) : (
                   <step.icon className="h-5 w-5" />
                 )}
               </div>
-              <p className="text-xs font-medium text-muted-foreground hidden sm:block">
-                {step.title}
-              </p>
+              <p className="text-[10px] font-medium text-muted-foreground hidden sm:block uppercase tracking-wide">{step.title}</p>
               {index < steps.length - 1 && (
-                <div className="absolute left-1/2 top-5 w-full h-0.5 bg-muted -z-10" />
+                <div className="absolute left-1/2 top-6 w-full h-1 bg-[repeating-linear-gradient(90deg,hsl(220_13%_70%),hsl(220_13%_70%)_6px,transparent_6px,transparent_12px)] -z-10" />
               )}
             </div>
           ))}
         </div>
 
-        <Card>
+        <Card className="border-2 border-border shadow-lg bg-card relative overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(6_100%_88%)/35%,transparent_55%),radial-gradient(circle_at_bottom_right,hsl(177_79%_80%)/30%,transparent_60%)]" />
           <AnimatePresence mode="wait">
             {/* Step 1: Welcome */}
             {currentStep === 1 && (
               <motion.div
                 key="step1"
                 initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
                 <CardHeader className="text-center space-y-4">
@@ -480,7 +469,6 @@ export default function OnboardingPage() {
               </motion.div>
             )}
           </AnimatePresence>
-
           {/* Navigation */}
           <CardContent className="pt-0">
             <div className="flex justify-between gap-4">

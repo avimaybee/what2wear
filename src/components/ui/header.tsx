@@ -92,7 +92,7 @@ export const Header = () => {
   return (
     <>
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 w-full glass-regular border-border/40" role="banner">
+      <header className="sticky top-0 z-50 w-full border-b-2 border-border bg-background/90 backdrop-blur-sm shadow-sm" role="banner">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             {/* Show back button on non-home pages */}
@@ -102,17 +102,17 @@ export const Header = () => {
             
             <Link 
               href="/" 
-              className="flex items-center transition-opacity hover:opacity-80"
+              className="flex items-center transition-transform hover:-translate-y-0.5"
               aria-label="setmyfit home"
             >
-              <span className="text-xl md:text-2xl font-bold tracking-tight">
-                setmyfit
+              <span className="rounded-[0.9rem] border-2 border-border bg-card px-3 py-1.5 text-lg md:text-xl font-semibold tracking-[0.22em] uppercase shadow-md font-[family-name:var(--font-heading)]">
+                SetMyFit
               </span>
             </Link>
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Main navigation">
+          <nav className="hidden md:flex items-center gap-2" role="navigation" aria-label="Main navigation">
             {routes.map((route) => {
               const Icon = route.icon;
               const isActive = pathname === route.href;
@@ -122,10 +122,11 @@ export const Header = () => {
                   key={route.href}
                   href={route.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-medium rounded-md transition-colors",
-                    "hover:bg-accent/50 hover:text-accent-foreground",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                    isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                    "flex items-center gap-2 px-3 py-1.5 text-xs md:text-sm font-semibold rounded-[0.9rem] border-2 transition-colors shadow-sm",
+                    "hover:bg-secondary hover:text-accent-foreground",
+                    isActive
+                      ? "border-accent bg-secondary/60 text-accent-foreground"
+                      : "border-border bg-card text-muted-foreground"
                   )}
                   aria-current={isActive ? 'page' : undefined}
                 >

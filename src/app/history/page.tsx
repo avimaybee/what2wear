@@ -25,8 +25,11 @@ export default async function HistoryPage() {
   }
   
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="min-h-screen papercraft-bg">
+      <main className="container mx-auto px-4 py-8 max-w-7xl space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-[0.08em] uppercase font-[family-name:var(--font-heading)]">Outfit History</h1>
+        </div>
         <Suspense fallback={<HistoryLoadingSkeleton />}>
           <HistoryClient userId={user.id} />
         </Suspense>
@@ -38,16 +41,13 @@ export default async function HistoryPage() {
 function HistoryLoadingSkeleton() {
   return (
     <div className="space-y-6">
-      {/* Search and filter skeleton */}
       <div className="flex gap-3">
-        <Skeleton className="h-10 flex-1" />
-        <Skeleton className="h-10 w-24" />
+        <Skeleton className="flex-1" variant="text" />
+        <Skeleton className="w-24" variant="text" />
       </div>
-      
-      {/* Grid skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 9 }).map((_, i) => (
-          <Skeleton key={i} className="h-72 rounded-xl" />
+          <Skeleton key={i} className="h-72" variant="panel" />
         ))}
       </div>
     </div>

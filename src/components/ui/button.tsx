@@ -4,24 +4,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] touch-manipulation",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[0.875rem] border-2 border-border text-sm font-semibold shadow-md tracking-wide touch-manipulation transition-transform transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 disabled:cursor-not-allowed active:translate-y-[2px] active:shadow-none",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:bg-primary/95",
+          "bg-primary text-primary-foreground hover:bg-primary/90",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 active:bg-secondary/85",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 active:bg-destructive/95",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground active:bg-accent/90",
+          "border-2 border-border bg-card hover:bg-accent hover:text-accent-foreground",
         ghost: 
-          "hover:bg-accent hover:text-accent-foreground active:bg-accent/90",
+          "border-2 border-transparent bg-transparent hover:bg-secondary hover:text-accent-foreground",
         link: 
           "text-primary underline-offset-4 hover:underline hover:text-primary/80",
         success:
-          "bg-green-500 text-white shadow-sm hover:bg-green-600 active:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700",
+          "bg-green-500 text-white hover:bg-green-600",
       },
       size: {
         default: "h-10 px-4 py-2 md:h-9", // 40px on mobile, 36px on desktop
