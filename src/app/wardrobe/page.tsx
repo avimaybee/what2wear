@@ -638,7 +638,19 @@ export default function WardrobePage() {
   }
 
   return (
-    <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 pt-3 pb-20 md:pt-4 md:pb-6 space-y-6">
+    <div 
+      className={cn(
+        "papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 pt-3 pb-24 md:pt-4 md:pb-8 space-y-6",
+        dragActive && "ring-2 ring-primary ring-offset-4 ring-offset-background rounded-[1.5rem]"
+      )}
+      onDragEnter={handleDragOver}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={(e) => {
+        handleDrop(e);
+        if (!showAddModal) setShowAddModal(true);
+      }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -1005,6 +1017,18 @@ export default function WardrobePage() {
           ))}
         </div>
       </AnimatePresence>
+
+      {/* Floating Add Item FAB */}
+      <Button
+        variant="default"
+        size="lg"
+        onClick={handleOpenAddModal}
+        className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40 shadow-xl border-2 border-accent rounded-full px-6 flex items-center gap-2"
+        aria-label="Add new wardrobe item"
+      >
+        <Plus className="h-5 w-5" aria-hidden="true" />
+        Add Item
+      </Button>
 
       {/* Empty State with Beautiful Illustration */}
       {filteredItems.length === 0 && !loading && wardrobeItems.length > 0 && (

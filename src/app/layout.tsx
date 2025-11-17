@@ -28,8 +28,8 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-body)]">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem={true}
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <AccentColorLoader />

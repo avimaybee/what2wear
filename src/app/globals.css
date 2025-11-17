@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Custom variant for dark mode support */
+/* Custom variant for dark mode support (no-op while dark mode disabled) */
 @custom-variant dark (&:is(.dark *));
 
 /* Light theme (default) - Papercraft collage aesthetic */
@@ -36,12 +36,12 @@
   --color-surface-3: hsl(40 45% 92%);
   
   /* Shadow system – chunky papercraft drop shadows (used sparingly) */
-  --shadow-xs: 0 1px 0 0 rgba(15, 23, 42, 0.10);
-  --shadow-sm: 2px 2px 0 0 rgba(15, 23, 42, 0.18);
-  --shadow-md: 3px 3px 0 0 rgba(15, 23, 42, 0.22);
-  --shadow-lg: 4px 4px 0 0 rgba(15, 23, 42, 0.26);
-  --shadow-xl: 6px 6px 0 0 rgba(15, 23, 42, 0.30);
-  --shadow-2xl: 8px 8px 0 0 rgba(15, 23, 42, 0.36);
+  --shadow-xs: 0 1px 0 0 rgba(15, 23, 42, 0.14);
+  --shadow-sm: 2px 2px 0 0 rgba(15, 23, 42, 0.22);
+  --shadow-md: 3px 3px 0 0 rgba(15, 23, 42, 0.30);
+  --shadow-lg: 4px 4px 0 0 rgba(15, 23, 42, 0.34);
+  --shadow-xl: 6px 6px 0 0 rgba(15, 23, 42, 0.40);
+  --shadow-2xl: 8px 8px 0 0 rgba(15, 23, 42, 0.46);
   
   /* Motion system tokens */
   --motion-duration-fast: 120ms;
@@ -95,61 +95,12 @@
   --sidebar-ring: oklch(0.65 0.19 35);
 }
 
-/* Dark theme */
-.dark {
-  --background: hsl(224 71% 4%);
-  --foreground: hsl(60 9.1% 97.8%);
-  
-  --card: hsl(222 47% 11%);
-  --card-foreground: var(--foreground);
-  
-  --popover: hsl(222 47% 11%);
-  --popover-foreground: var(--foreground);
-  
-  /* Semantic text in dark */
-  --color-text-primary: var(--foreground);
-  --color-text-secondary: hsl(214 32% 80%);
-  --color-text-tertiary: hsl(214 20% 70%);
-  --color-text-quaternary: hsl(214 15% 55%);
-  --color-text-muted: hsl(214 20% 70%);
-  
-  --color-surface: hsl(224 71% 4%);
-  --color-surface-1: hsl(222 47% 11%);
-  --color-surface-2: hsl(217 33% 17%);
-  --color-surface-3: hsl(215 27.9% 16.9%);
-  
-  /* Keep brand hues consistent */
-  --primary: hsl(6 100% 68%);
-  --primary-foreground: hsl(224 71% 4%);
-  --secondary: hsl(217 33% 12%);
-  --secondary-foreground: hsl(177 79% 26%);
-  --muted: hsl(217 33% 14%);
-  --muted-foreground: hsl(214 32% 80%);
-  --accent: hsl(177 79% 26%);
-  --accent-foreground: hsl(40 50% 98%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(60 9.1% 97.8%);
-  --border: hsl(215 27.9% 16.9%);
-  --input: hsl(222 47% 11%);
-  --ring: var(--primary);
-  
-  --chart-1: hsl(6 100% 68%);
-  --chart-2: hsl(26 100% 65%);
-  --chart-3: hsl(45 100% 60%);
-  --chart-4: hsl(177 79% 40%);
-  --chart-5: hsl(331 85% 65%);
-  
-  --sidebar: hsl(224 71% 4%);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: hsl(6 100% 68%);
-  --sidebar-primary-foreground: hsl(224 71% 4%);
-  --sidebar-accent: hsl(177 79% 26%);
-  --sidebar-accent-foreground: hsl(40 50% 98%);
-  --sidebar-border: hsl(215 27.9% 16.9%);
-  --sidebar-ring: hsl(6 100% 68%);
-}
+/* Dark theme variables kept for future use but currently unused
+   since dark mode is disabled at the app level. */
 
-/* Heading font variable (Stack Sans Text) */
+/* Heading font: Stack Sans Text from Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Stack+Sans+Text:wght@200..700&display=swap");
+
 :root {
   --font-heading: "Stack Sans Text", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
 }
@@ -265,16 +216,16 @@
       ),
       linear-gradient(
         315deg,
-        hsl(40 20% 94%) 12.5%,
+        hsl(40 22% 96%) 12.5%,
         transparent 12.5%,
         transparent 50%,
-        hsl(40 20% 94%) 50%,
-        hsl(40 20% 94%) 62.5%,
+        hsl(40 22% 96%) 50%,
+        hsl(40 22% 96%) 62.5%,
         transparent 62.5%,
         transparent 100%
       );
-    background-size: 24px 24px;
-    background-position: 0 0, 12px 12px;
+    background-size: 32px 32px;
+    background-position: 0 0, 16px 16px;
   }
 }
 

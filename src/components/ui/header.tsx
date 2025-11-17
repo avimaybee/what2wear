@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Shirt, Settings, Home, LogOut, User as UserIcon, TrendingUp, History, Menu } from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { BackButton } from '@/components/ui/back-button';
 import { cn } from '@/lib/utils';
@@ -137,7 +136,6 @@ export const Header = () => {
             })}
             
             <div className="ml-2 flex items-center gap-2">
-              <ThemeToggle />
               {!loading && user && (
                 <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent/50 text-xs" aria-label={`Signed in as ${user.email?.split('@')[0]}`}>
                   <UserIcon className="h-3 w-3" aria-hidden="true" />
@@ -148,7 +146,7 @@ export const Header = () => {
                     variant="ghost"
                     size="sm"
                     onClick={handleSignOut}
-                    className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive ml-1"
+                    className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive ml-1 border-0"
                     aria-label="Sign out"
                   >
                     <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
@@ -160,7 +158,6 @@ export const Header = () => {
 
           {/* Mobile Hamburger Menu */}
           <div className="flex md:hidden items-center gap-2">
-            <ThemeToggle />
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button
