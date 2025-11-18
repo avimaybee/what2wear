@@ -548,24 +548,24 @@ export default function WardrobePage() {
                     <div className="p-2 rounded-xl bg-primary/10">
                       <ImageIcon className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-lg">📸 Photography Tips</h3>
+                    <h3 className="font-semibold text-lg text-foreground">📸 Photography Tips</h3>
                   </div>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
+                  <ul className="space-y-2 text-sm text-foreground">
                     <li className="flex items-start gap-2">
                       <span className="text-primary font-bold">•</span>
-                      <span>Use a neutral background (plain wall or bed)</span>
+                      <span className="text-foreground">Use a neutral background (plain wall or bed)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-primary font-bold">•</span>
-                      <span>Capture the full garment clearly</span>
+                      <span className="text-foreground">Capture the full garment clearly</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-primary font-bold">•</span>
-                      <span>Good lighting helps us detect colors better</span>
+                      <span className="text-foreground">Good lighting helps us detect colors better</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-primary font-bold">•</span>
-                      <span>One item per photo works best</span>
+                      <span className="text-foreground">One item per photo works best</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -937,7 +937,7 @@ export default function WardrobePage() {
           variant="default"
           size="lg"
           onClick={handleOpenAddModal}
-          className="shadow-xl rounded-full px-6 flex items-center gap-2"
+          className="rounded-full px-6 flex items-center gap-2 border-[2.5px] border-primary shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] hover:translate-y-[1px] hover:shadow-lg transition-all duration-300"
           aria-label="Add new wardrobe item"
         >
           <Plus className="h-5 w-5" aria-hidden="true" />

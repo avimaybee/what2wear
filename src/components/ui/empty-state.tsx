@@ -172,10 +172,10 @@ export function EmptyState({
               transition={{ delay: 0.4 }}
               className="bg-accent/10 border border-accent/20 rounded-lg p-4 max-w-md mx-auto"
             >
-              <p className="text-xs font-medium text-accent-foreground/80 mb-2">
+              <p className="text-xs font-medium text-foreground mb-2">
                 💡 Quick Tips
               </p>
-              <ul className="text-xs text-muted-foreground space-y-1.5 text-left">
+              <ul className="text-xs text-foreground space-y-1.5 text-left">
                 {tips.map((tip, index) => (
                   <motion.li
                     key={index}
@@ -186,7 +186,7 @@ export function EmptyState({
                     className="flex items-start gap-2"
                   >
                     <span className="text-primary mt-0.5">•</span>
-                    <span>{tip}</span>
+                    <span className="text-foreground">{tip}</span>
                   </motion.li>
                 ))}
               </ul>
