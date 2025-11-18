@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toaster";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { 
   Sparkles, 
   ArrowRight, 

@@ -188,10 +188,15 @@ Provide a JSON response with:
 {
   "style": "describe the overall style (e.g., casual, formal, sporty, vintage)",
   "formality": "rate formality level (casual/business-casual/formal/athletic)",
-  "season_suitability": "which seasons this works for",
+  "season_suitability": "which seasons this is MOST appropriate for (e.g., 'Fall and Winter', 'Spring and Summer', 'All seasons')",
   "color_harmony": ["list of colors that would pair well with this item"],
   "occasion_fit": ["list of occasions this is suitable for"]
-}`;
+}
+
+IMPORTANT: For season_suitability, consider the item's coverage, material warmth, and typical wearing season. For example:
+- Long sleeves, sweaters, boots = Fall/Winter
+- Short sleeves, sandals, light fabrics = Spring/Summer
+- Versatile basics = All seasons`;
 
   const result = await model.generateContent(prompt);
   const response = result.response.text();
@@ -254,11 +259,19 @@ Context:
 - Occasion: ${context.occasion}
 - Season: ${context.season}
 
+CRITICAL INSTRUCTIONS:
+- The SEASON (${context.season}) is the PRIMARY consideration for outfit selection
+- Even if the weather temperature seems warm/cool, prioritize season-appropriate clothing
+- For example, in Fall/Winter, prefer long sleeves, layers, and closed-toe shoes even on mild days
+- In Spring/Summer, lighter fabrics and shorter sleeves are appropriate even on cooler days
+- People dress for the season first, temperature second
+
 Requirements:
 - Each outfit must include: Top, Bottom, Footwear, and optionally Outerwear
 - Items must work well together in terms of style, color, and formality
-- Outfit should be appropriate for the weather and occasion
+- Outfit should be appropriate for the SEASON first, then weather conditions
 - Consider color harmony and style coherence
+- Prioritize seasonal appropriateness over temperature alone
 
 Respond with a JSON array of 3 outfit combinations. Each combination should be an array of item IDs (using the 'id' field from above).
 

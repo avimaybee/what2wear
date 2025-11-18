@@ -8,6 +8,7 @@ interface InsufficientItemsError extends Error {
 }
 import { validateBody, recommendationRequestSchema } from '@/lib/validation';
 import { logger, generateRequestId } from '@/lib/logger';
+import { getCurrentSeason, getSeasonDescription } from '@/lib/helpers/seasonDetector';
  
 // DB row type used for items fetched from Supabase
 type DBClothingRow = Partial<IClothingItem> & {
@@ -388,10 +389,24 @@ async function generateRecommendation(
   const weatherData = await weatherResponse.json();
   const weather: WeatherData = weatherData.data.weather;
   const alerts = weatherData.data.alerts;
+  
+  // Detect current season based on date and latitude
+  const currentSeason = getCurrentSeason(new Date(), lat);
+  const seasonDescription = getSeasonDescription(currentSeason, new Date().getMonth());
+  
+  // Add season context to weather data for AI recommendations
+  const weatherWithSeason = {
+    ...weather,
+    season: currentSeason,
+    season_description: seasonDescription,
+  };
+  
   pushEvent('weather:fetched', {
     provider: 'openWeather',
     alerts: alerts?.length ?? 0,
     feelsLike: weather.feels_like,
+    season: currentSeason,
+    seasonDescription,
   });
 
   // Fetch user preferences
@@ -468,7 +483,7 @@ async function generateRecommendation(
   const recommendation = getRecommendation(
     availableItems,
     {
-      weather,
+      weather: weatherWithSeason,
       user_preferences: userPreferences,
     },
     {

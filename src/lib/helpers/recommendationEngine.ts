@@ -67,6 +67,31 @@ export function resolveInsulationValue(item: Partial<IClothingItem>): number {
 
 
 /**
+ * Filter items by season suitability
+ * Prioritizes items tagged for the current season, but doesn't completely exclude others
+ */
+export function filterBySeason<T extends IClothingItem>(
+  items: T[],
+  currentSeason: string
+): { seasonal: T[], allItems: T[] } {
+  const normalizedSeason = currentSeason.toLowerCase();
+  
+  // Find items explicitly tagged for this season
+  const seasonalItems = items.filter(item => {
+    if (!item.season_tags || item.season_tags.length === 0) {
+      // Items without season tags are considered all-season
+      return false;
+    }
+    return item.season_tags.some(tag => tag.toLowerCase() === normalizedSeason);
+  });
+  
+  return {
+    seasonal: seasonalItems,
+    allItems: items
+  };
+}
+
+/**
  * Task 1.4: Filter items by last_worn to ensure variety
  */
 export function filterByLastWorn<T extends IClothingItem>(
@@ -555,6 +580,23 @@ export function getRecommendation(
   emitDebug('filter:lastWorn', { remaining: availableItems.length, minDaysSinceWorn });
   // Skip verbose filtering debug text
 
+  // Filter by season if season information is available
+  if (context.weather.season) {
+    const { seasonal, allItems } = filterBySeason(availableItems, context.weather.season);
+    
+    // Prefer seasonal items but keep all items as fallback
+    if (seasonal.length >= 10) {
+      // If we have enough seasonal items, use them
+      availableItems = seasonal;
+      reasoning.push(`Selected ${context.weather.season.toLowerCase()}-appropriate clothing`);
+      emitDebug('filter:season', { season: context.weather.season, remaining: availableItems.length, seasonal: true });
+    } else {
+      // Not enough seasonal items, use all items but note the season
+      availableItems = allItems;
+      emitDebug('filter:season', { season: context.weather.season, remaining: availableItems.length, seasonal: false });
+    }
+  }
+
   // Task 2.4: Apply dress code constraint
   let dressCode = constraints?.dress_code;
   if (!dressCode && context.calendar_events) {
@@ -736,7 +778,10 @@ export function getRecommendation(
       }
 
       // Practical/weather reasoning
-      detailedParts.push(`Temperature & protection: Selected to match a feels-like temperature of ${context.weather.feels_like}°C with an estimated insulation level of ${baseOutfitInsulation} (target ${requiredInsulation}).`);
+      const seasonContext = context.weather.season_description 
+        ? `Currently ${context.weather.season_description}.` 
+        : '';
+      detailedParts.push(`Temperature & protection: ${seasonContext} Selected to match a feels-like temperature of ${context.weather.feels_like}°C with an estimated insulation level of ${baseOutfitInsulation} (target ${requiredInsulation}). Season appropriateness takes priority over temperature alone.`);
 
       if (alerts && alerts.length > 0) {
         detailedParts.push(`Safety & alerts: The recommendation considered active alerts (${alerts.map(a => a.type).join(', ')}), adding protection where appropriate.`);

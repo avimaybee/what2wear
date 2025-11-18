@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { ApiResponse, IClothingItem, WeatherData } from '@/lib/types';
 import { generateAIOutfitRecommendation } from '@/lib/helpers/aiOutfitAnalyzer';
 import { filterByLastWorn } from '@/lib/helpers/recommendationEngine';
+import { getCurrentSeason, getSeasonDescription } from '@/lib/helpers/seasonDetector';
 
 /**
  * Fetch weather data from OpenWeatherMap API
@@ -125,8 +126,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       );
     }
 
-    // Format weather for AI
+    // Detect current season based on date and latitude if not provided
+    const currentSeason = season || getCurrentSeason(new Date(), lat);
+    const seasonDescription = getSeasonDescription(currentSeason, new Date().getMonth());
+
+    // Format weather for AI with season context
     const weatherDescription = formatWeatherForAI(weatherData);
+    const weatherWithSeasonContext = `${weatherDescription}. IMPORTANT: It is currently ${seasonDescription}. Even though the temperature is ${Math.round(weatherData.temperature)}°C, consider the calendar season when selecting clothing - people typically dress for the season, not just the temperature.`;
 
     // Fetch user's wardrobe
     const { data: wardrobeItems, error: wardrobeError } = await supabase
@@ -158,13 +164,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       );
     }
 
-    // Generate AI recommendation with real weather data
+    // Generate AI recommendation with real weather data and season context
     const aiResult = await generateAIOutfitRecommendation(
       availableItems,
       {
-        weather: weatherDescription,
+        weather: weatherWithSeasonContext,
         occasion: occasion,
-        season: season || 'current',
+        season: currentSeason,
       }
     );
 

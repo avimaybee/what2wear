@@ -131,6 +131,13 @@ export async function POST(req: NextRequest) {
     }
 
   // Use Gemini 2.5 Flash to analyze the clothing item (project requirement)
+  if (!genAI) {
+    return NextResponse.json(
+      { success: false, error: 'AI service unavailable. Please configure GEMINI_API_KEY.' },
+      { status: 503 }
+    );
+  }
+  
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `You are an expert fashion stylist analyzing clothing items for an AI wardrobe system. 

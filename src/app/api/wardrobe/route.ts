@@ -130,7 +130,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
-      const validation_errors = parsed.error.errors.map(e => ({ field: e.path.join('.') || 'body', message: e.message }));
+      const validation_errors = parsed.error.issues.map(e => ({ field: e.path.join('.') || 'body', message: e.message }));
       logger.warn('Validation failed for wardrobe POST', { requestId, validation_errors });
       return NextResponse.json({ success: false, error: 'Validation failed', validation_errors }, { status: 400 });
     }

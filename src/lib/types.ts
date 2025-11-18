@@ -125,6 +125,8 @@ export interface WeatherData {
   pollen_count: number; // Task 3.1
   weather_condition: string;
   timestamp: Date;
+  season?: string; // Current season based on date and location
+  season_description?: string; // Detailed season description
 }
 
 export interface WeatherAlert {
