@@ -220,35 +220,44 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-2xl space-y-6">
+    <div className="min-h-screen papercraft-grid-bg flex items-center justify-center px-4 py-10">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-4xl space-y-8"
+      >
         {/* Progress Steps */}
-        <div className="flex justify-between mb-4 relative">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex flex-col items-center gap-2 flex-1">
-              <div className={`h-12 w-12 rounded-[1.2rem] border-2 flex items-center justify-center transition-all ${
+        <div className="relative mb-2">
+          <div className="absolute inset-x-[10%] top-6 h-[3px] bg-[repeating-linear-gradient(90deg,hsl(220_13%_70%),hsl(220_13%_70%)_8px,transparent_8px,transparent_16px)] pointer-events-none" />
+          <div className="relative flex justify-between gap-4">
+            {steps.map((step) => (
+              <div key={step.id} className="flex flex-col items-center gap-2 flex-1">
+                <div
+                  className={`h-12 w-12 rounded-[1.2rem] border-[3px] flex items-center justify-center bg-card shadow-md transition-all duration-200 ${
                 currentStep > step.id
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? "border-primary bg-primary text-primary-foreground translate-y-[2px] shadow-lg"
                   : currentStep === step.id
-                  ? "bg-secondary text-accent-foreground border-accent"
-                  : "bg-card text-muted-foreground border-border"
-              }`}>
-                {currentStep > step.id ? (
-                  <Check className="h-5 w-5" />
-                ) : (
-                  <step.icon className="h-5 w-5" />
-                )}
+                  ? "border-accent bg-secondary text-accent-foreground -translate-y-[1px] shadow-lg"
+                  : "border-border text-muted-foreground"}
+                `}
+                >
+                  {currentStep > step.id ? (
+                    <Check className="h-5 w-5" />
+                  ) : (
+                    <step.icon className="h-5 w-5" />
+                  )}
+                </div>
+                <p className="text-[10px] font-medium text-muted-foreground hidden sm:block tracking-wide">
+                  {step.title}
+                </p>
               </div>
-              <p className="text-[10px] font-medium text-muted-foreground hidden sm:block uppercase tracking-wide">{step.title}</p>
-              {index < steps.length - 1 && (
-                <div className="absolute left-1/2 top-6 w-full h-1 bg-[repeating-linear-gradient(90deg,hsl(220_13%_70%),hsl(220_13%_70%)_6px,transparent_6px,transparent_12px)] -z-10" />
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        <Card className="border-2 border-border bg-card relative overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(6_100%_88%)/35%,transparent_55%),radial-gradient(circle_at_bottom_right,hsl(177_79%_80%)/30%,transparent_60%)]" />
+        <Card className="relative overflow-hidden border-[2.5px] border-[hsl(210_10%_85%)] shadow-[0_10px_30px_rgba(15,23,42,0.10)] bg-[hsl(40_50%_99%)] rounded-[26px]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(6_100%_88%)/40%,transparent_60%),radial-gradient(circle_at_bottom_right,hsl(177_79%_80%)/35%,transparent_65%)]" />
+          <div className="pointer-events-none absolute inset-[10px] border border-dashed border-[hsl(210_14%_82%)/80%] rounded-[20px]" />
           <AnimatePresence mode="wait">
             {/* Step 1: Welcome */}
             {currentStep === 1 && (
@@ -257,40 +266,48 @@ export default function OnboardingPage() {
                 initial={{ opacity: 0, x: 20 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <CardHeader className="text-center space-y-4">
+                <CardHeader className="relative z-10 text-center space-y-4 pb-2">
                   <div className="flex justify-center">
-                    <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                    <motion.div
+                      className="h-20 w-20 rounded-3xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg"
+                      animate={{ y: [0, -4, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    >
                       <Sparkles className="h-10 w-10 text-primary-foreground" />
-                    </div>
+                    </motion.div>
                   </div>
-                  <CardTitle className="text-3xl">Meet your AI stylist.</CardTitle>
-                  <CardDescription className="text-base">
+                  <CardTitle className="text-3xl tracking-tight">Meet your AI stylist.</CardTitle>
+                  <CardDescription className="text-base max-w-xl mx-auto">
                     Our AI stylist checks the weather, learns your vibe, and serves up fits that actually feel like you.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="relative z-10 pb-8">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 rounded-lg bg-primary/5">
-                      <Cloud className="h-8 w-8 mx-auto mb-2 text-primary" />
-                      <h3 className="font-semibold mb-1">Weather Smart</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Real-time weather integration
-                      </p>
-                    </div>
-                    <div className="text-center p-4 rounded-lg bg-primary/5">
-                      <Shirt className="h-8 w-8 mx-auto mb-2 text-primary" />
-                      <h3 className="font-semibold mb-1">AI Powered</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Gemini AI recommendations
-                      </p>
-                    </div>
-                    <div className="text-center p-4 rounded-lg bg-primary/5">
-                      <Sparkles className="h-8 w-8 mx-auto mb-2 text-primary" />
-                      <h3 className="font-semibold mb-1">Personalized</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Learns your preferences
-                      </p>
-                    </div>
+                    {[{
+                      icon: Cloud,
+                      title: "Weather Smart",
+                      body: "Real-time local forecasts",
+                    }, {
+                      icon: Shirt,
+                      title: "AI Powered",
+                      body: "Smart outfit generation",
+                    }, {
+                      icon: Sparkles,
+                      title: "Personalized",
+                      body: "Learns your preferences",
+                    }].map(({ icon: Icon, title, body }, index) => (
+                      <motion.div
+                        key={title}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 * index }}
+                        className="text-center p-4 rounded-2xl bg-[hsl(40_50%_99%)] border border-[hsl(210_14%_82%)] shadow-sm"
+                      >
+                        <Icon className="h-8 w-8 mx-auto mb-2 text-primary" />
+                        <h3 className="font-semibold mb-1 text-sm">{title}</h3>
+                        <p className="text-xs text-muted-foreground">{body}</p>
+                      </motion.div>
+                    ))}
                   </div>
                 </CardContent>
               </motion.div>
@@ -304,13 +321,11 @@ export default function OnboardingPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <CardHeader>
+                <CardHeader className="relative z-10">
                   <CardTitle>Tell us about yourself</CardTitle>
-                  <CardDescription>
-                    This helps us personalize your experience
-                  </CardDescription>
+                  <CardDescription>This helps us personalize your experience.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="relative z-10 space-y-6 pb-8">
                   <div className="space-y-2">
                     <Label htmlFor="name">What should we call you?</Label>
                     <Input
@@ -318,15 +333,26 @@ export default function OnboardingPage() {
                       placeholder="Your name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="text-lg h-12"
+                      className={cn(
+                        "text-lg h-12 rounded-2xl border-[2.5px] border-[hsl(210_10%_85%)] bg-[hsl(40_50%_99%)] shadow-inner placeholder:text-muted-foreground/70",
+                        !name.trim() && currentStep === 2
+                          ? "border-primary/80 focus-visible:ring-primary"
+                          : "focus-visible:ring-accent"
+                      )}
                       autoFocus
                     />
+                    {!name.trim() && currentStep === 2 && (
+                      <p className="text-[11px] text-primary font-medium flex items-center gap-1">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+                        A name helps us label outfits and recommendations.
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-3">
                     <Label>How do you feel about temperature?</Label>
                     <div className="flex items-center gap-4">
-                      <span className="text-sm text-muted-foreground w-24">
+                      <span className="text-xs md:text-sm text-muted-foreground w-24">
                         Always Cold
                       </span>
                       <input
@@ -335,19 +361,22 @@ export default function OnboardingPage() {
                         max="2"
                         value={temperatureSensitivity}
                         onChange={(e) => setTemperatureSensitivity(Number(e.target.value))}
-                        className="flex-1 h-2 rounded-full appearance-none bg-muted cursor-pointer"
+                        className="flex-1 h-2 rounded-full appearance-none bg-muted cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary"
                       />
-                      <span className="text-sm text-muted-foreground w-24 text-right">
+                      <span className="text-xs md:text-sm text-muted-foreground w-24 text-right">
                         Always Warm
                       </span>
                     </div>
-                    <p className="text-xs text-center text-muted-foreground">
-                      {temperatureSensitivity === -2 && "I'm always freezing!"}
-                      {temperatureSensitivity === -1 && "I tend to feel cold"}
-                      {temperatureSensitivity === 0 && "I'm just right"}
-                      {temperatureSensitivity === 1 && "I tend to feel warm"}
-                      {temperatureSensitivity === 2 && "I'm always hot!"}
-                    </p>
+                    <div className="flex justify-center">
+                      <p className="inline-flex items-center gap-2 rounded-full bg-muted/60 px-3 py-1 text-[11px] text-muted-foreground">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        {temperatureSensitivity === -2 && "I'm always freezing"}
+                        {temperatureSensitivity === -1 && "I tend to feel cold"}
+                        {temperatureSensitivity === 0 && "I'm pretty neutral"}
+                        {temperatureSensitivity === 1 && "I tend to run warm"}
+                        {temperatureSensitivity === 2 && "I'm always overheating"}
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </motion.div>
@@ -361,13 +390,13 @@ export default function OnboardingPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <CardHeader>
+                <CardHeader className="relative z-10">
                   <CardTitle>What&apos;s your style?</CardTitle>
                   <CardDescription>
                     Select your favorite styles and colors (choose as many as you like)
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="relative z-10 space-y-6 pb-8">
                   <div className="space-y-3">
                     <Label>Preferred Styles</Label>
                     <div className="flex flex-wrap gap-2">
@@ -375,7 +404,11 @@ export default function OnboardingPage() {
                         <Badge
                           key={style}
                           variant={selectedStyles.includes(style) ? "default" : "outline"}
-                          className={cn("cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105", selectedStyles.includes(style) && "text-foreground")}
+                          className={cn(
+                            "cursor-pointer rounded-2xl px-4 py-2 text-sm transition-all border-[2px] border-[hsl(210_12%_82%)] bg-[hsl(40_50%_99%)] shadow-sm hover:-translate-y-[1px] hover:shadow-md",
+                            selectedStyles.includes(style) &&
+                              "bg-primary text-primary-foreground border-primary shadow-md hover:shadow-lg"
+                          )}
                           onClick={() => handleStyleToggle(style)}
                         >
                           {style}
@@ -391,7 +424,11 @@ export default function OnboardingPage() {
                         <Badge
                           key={color}
                           variant={selectedColors.includes(color) ? "default" : "outline"}
-                          className={cn("cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105", selectedColors.includes(color) && "text-foreground")}
+                          className={cn(
+                            "cursor-pointer rounded-2xl px-4 py-2 text-sm transition-all border-[2px] border-[hsl(210_12%_82%)] bg-[hsl(40_50%_99%)] shadow-sm hover:-translate-y-[1px] hover:shadow-md",
+                            selectedColors.includes(color) &&
+                              "bg-secondary text-secondary-foreground border-accent shadow-md hover:shadow-lg"
+                          )}
                           onClick={() => handleColorToggle(color)}
                         >
                           {color}
@@ -411,13 +448,13 @@ export default function OnboardingPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <CardHeader>
+                <CardHeader className="relative z-10">
                   <CardTitle>Enable location</CardTitle>
                   <CardDescription>
                     We need your location to provide accurate weather-based outfit recommendations
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="relative z-10 space-y-6 pb-8">
                   <div className="text-center py-8 space-y-4">
                     <div className="flex justify-center">
                       <div className={`h-20 w-20 rounded-3xl flex items-center justify-center transition-all ${
@@ -439,6 +476,9 @@ export default function OnboardingPage() {
                         <p className="text-sm text-muted-foreground">
                           You&apos;re all set! We&apos;ll use your location for weather-based recommendations.
                         </p>
+                        <p className="text-xs text-muted-foreground">
+                          You can always update this later from Settings.
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -457,7 +497,7 @@ export default function OnboardingPage() {
                     )}
                   </div>
 
-                  <div className="p-4 rounded-lg bg-muted/50 space-y-2">
+                  <div className="p-4 rounded-2xl bg-muted/50 border border-[hsl(210_14%_82%)] shadow-sm space-y-2">
                     <p className="text-xs font-medium">Why we need location:</p>
                     <ul className="text-xs text-muted-foreground space-y-1">
                       <li>&bull; Real-time weather data for your area</li>
@@ -471,13 +511,13 @@ export default function OnboardingPage() {
             )}
           </AnimatePresence>
           {/* Navigation */}
-          <CardContent className="pt-0">
+          <CardContent className="relative z-10 pt-4">
             <div className="flex justify-between gap-4">
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={currentStep === 1 || saving}
-                className="min-w-[100px]"
+                className="min-w-[108px] rounded-2xl border-[2.5px] shadow-sm hover:-translate-y-[1px] hover:shadow-md"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
@@ -486,7 +526,7 @@ export default function OnboardingPage() {
               {currentStep < steps.length ? (
                 <Button
                   onClick={handleNext}
-                  className="min-w-[100px]"
+                  className="min-w-[108px] rounded-2xl border-[2.5px] border-primary shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] hover:translate-y-[1px] hover:shadow-md"
                 >
                   Next
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -495,7 +535,7 @@ export default function OnboardingPage() {
                 <Button
                   onClick={handleFinish}
                   disabled={!locationGranted || saving}
-                  className="min-w-[120px]"
+                  className="min-w-[132px] rounded-2xl border-[2.5px] border-primary shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] hover:translate-y-[1px] hover:shadow-md"
                 >
                   {saving ? (
                     <motion.div
