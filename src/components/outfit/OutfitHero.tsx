@@ -132,7 +132,7 @@ export function OutfitHero({
               onClick={onLogOutfit}
               disabled={isLoggingOutfit || isRegenerating}
               className="flex-1 gap-2"
-              variant="cta"
+              variant="default"
               aria-label="Log this outfit to history"
             >
               <Shirt className="h-4 w-4" aria-hidden="true" />

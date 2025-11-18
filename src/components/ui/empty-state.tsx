@@ -107,7 +107,7 @@ export function EmptyState({
                 >
                   <Button
                     onClick={action.onClick}
-                    variant={action.variant || "cta"}
+                    variant={action.variant || "default"}
                     size="sm"
                   >
                     {ActionIcon && <ActionIcon className="h-4 w-4 mr-2" />}

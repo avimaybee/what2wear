@@ -496,7 +496,6 @@ export default function OnboardingPage() {
                   onClick={handleFinish}
                   disabled={!locationGranted || saving}
                   className="min-w-[120px]"
-                  variant="cta"
                 >
                   {saving ? (
                     <motion.div

@@ -4,26 +4,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[0.875rem] text-sm font-semibold tracking-wide touch-manipulation transition-transform transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 disabled:cursor-not-allowed active:translate-y-[2px]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[0.875rem] border-2 border-border text-sm font-semibold tracking-wide touch-manipulation transition-transform transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 disabled:cursor-not-allowed active:translate-y-[2px]",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground border-2 border-border hover:bg-primary/90 shadow-[0_6px_0_0_rgba(15,23,42,1),0_16px_24px_-8px_rgba(15,23,42,0.25)] active:shadow-none",
-        cta:
-          "bg-primary text-primary-foreground border-[3px] border-[#1a1a1a] hover:bg-primary/90 shadow-[0_0_0_3px_rgba(26,26,26,1)] active:shadow-[0_0_0_2px_rgba(26,26,26,1)] rounded-[1.25rem] font-bold",
+          "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_6px_0_0_rgba(15,23,42,1),0_16px_24px_-8px_rgba(15,23,42,0.25)] active:shadow-none",
         secondary:
-          "bg-secondary text-secondary-foreground border-2 border-border hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
-          "bg-destructive text-destructive-foreground border-2 border-border hover:bg-destructive/90 shadow-[0_6px_0_0_rgba(15,23,42,1),0_16px_24px_-8px_rgba(15,23,42,0.25)] active:shadow-none",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-[0_6px_0_0_rgba(15,23,42,1),0_16px_24px_-8px_rgba(15,23,42,0.25)] active:shadow-none",
         outline:
           "border-2 border-accent bg-background text-accent hover:bg-accent hover:text-accent-foreground",
         ghost: 
           "border-2 border-border bg-transparent hover:bg-secondary hover:text-foreground",
         link: 
-          "text-primary underline-offset-4 hover:underline hover:text-primary/80 border-0 shadow-none",
+          "text-primary underline-offset-4 hover:underline hover:text-primary/80",
         success:
-          "bg-green-500 text-white border-2 border-border hover:bg-green-600 shadow-md active:shadow-none",
+          "bg-green-500 text-white hover:bg-green-600 shadow-md active:shadow-none",
       },
       size: {
         default: "h-10 px-4 py-2 md:h-9", // 40px on mobile, 36px on desktop
