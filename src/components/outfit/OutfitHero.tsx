@@ -26,6 +26,7 @@ interface OutfitHeroProps {
   isLoggingOutfit?: boolean;
   isRegenerating?: boolean;
   missingItems?: string[];
+  hasLoggedOutfit?: boolean;
 }
 
 /**
@@ -49,6 +50,7 @@ export function OutfitHero({
   isLoggingOutfit = false,
   isRegenerating = false,
   missingItems = [],
+  hasLoggedOutfit = false,
 }: OutfitHeroProps) {
   const [showFullReason, setShowFullReason] = useState(false);
 
@@ -132,13 +134,13 @@ export function OutfitHero({
           <div className="flex gap-2 flex-1">
             <Button
               onClick={onLogOutfit}
-              disabled={isLoggingOutfit || isRegenerating}
+              disabled={isLoggingOutfit || isRegenerating || hasLoggedOutfit}
               className="flex-1 gap-2"
               variant="default"
               aria-label="Log this outfit to history"
             >
               <Shirt className="h-4 w-4" aria-hidden="true" />
-              {isLoggingOutfit ? "Logging..." : "Log Outfit"}
+              {hasLoggedOutfit ? "Logged" : isLoggingOutfit ? "Logging..." : "Log Outfit"}
             </Button>
             <Button
               onClick={onRegenerate}

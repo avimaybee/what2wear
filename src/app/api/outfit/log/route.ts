@@ -34,15 +34,67 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const itemIds = body.item_ids as number[];
     const outfitDate = body.outfit_date || new Date().toISOString().split('T')[0];
     const feedback = body.feedback || null;
+    const normalizedItemIds = Array.from(new Set(itemIds)).sort((a, b) => a - b);
 
     // Log for debugging
     if (process.env.NODE_ENV !== 'production') {
       console.log('Log outfit request:', {
         userId: user.id,
-        itemIds,
+        itemIds: normalizedItemIds,
         outfitDate,
         feedback,
       });
+    }
+
+    // Prevent duplicate outfit entries for the same day
+    const { data: todaysOutfits, error: todaysOutfitsError } = await supabase
+      .from('outfits')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('outfit_date', outfitDate);
+
+    if (todaysOutfitsError) {
+      console.error('Error checking existing outfits:', todaysOutfitsError);
+    }
+
+    if (todaysOutfits && todaysOutfits.length > 0) {
+      const outfitIds = todaysOutfits.map((o) => o.id);
+      const { data: todaysItems, error: todaysItemsError } = await supabase
+        .from('outfit_items')
+        .select('outfit_id, clothing_item_id')
+        .in('outfit_id', outfitIds);
+
+      if (todaysItemsError) {
+        console.error('Error fetching outfit items for duplicate check:', todaysItemsError);
+      } else if (todaysItems) {
+        const itemsByOutfit = todaysItems.reduce<Record<number, number[]>>((acc, item) => {
+          if (typeof item.outfit_id !== 'number' || typeof item.clothing_item_id !== 'number') {
+            return acc;
+          }
+          acc[item.outfit_id] = acc[item.outfit_id] || [];
+          acc[item.outfit_id].push(item.clothing_item_id);
+          return acc;
+        }, {});
+
+        const duplicateOutfitId = Object.entries(itemsByOutfit).find(([, value]) => {
+          const sortedExisting = Array.from(new Set(value)).sort((a, b) => a - b);
+          if (sortedExisting.length !== normalizedItemIds.length) {
+            return false;
+          }
+          return sortedExisting.every((id, index) => id === normalizedItemIds[index]);
+        })?.[0];
+
+        if (duplicateOutfitId) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'DUPLICATE_OUTFIT',
+              message: 'This outfit is already logged for today.',
+            },
+            { status: 409 }
+          );
+        }
+      }
     }
 
     // Create outfit record
@@ -69,7 +121,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     // Create outfit_items relationships
-    const outfitItems = itemIds.map(itemId => ({
+    const outfitItems = normalizedItemIds.map(itemId => ({
       outfit_id: outfit.id,
       clothing_item_id: itemId,
     }));
@@ -96,7 +148,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const { data: updatedItems, error: updateError } = await supabase
       .from('clothing_items')
       .update({ last_worn: outfitDate })
-      .in('id', itemIds)
+      .in('id', normalizedItemIds)
       .eq('user_id', user.id)
       .select('id');
 
@@ -113,7 +165,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         outfit_id: outfit.id,
         updated_count: updatedCount 
       },
-      message: `Successfully logged outfit with ${itemIds.length} items`,
+      message: `Successfully logged outfit with ${normalizedItemIds.length} items`,
     });
   } catch (error) {
     console.error('Unexpected error logging outfit:', error);

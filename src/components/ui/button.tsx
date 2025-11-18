@@ -9,11 +9,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "border-[3px] border-[#000000] bg-primary text-primary-foreground hover:bg-primary/90 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)] active:translate-y-1",
+          "border-[3px] border-[#000000] bg-primary text-primary-foreground hover:bg-primary/90 shadow-[4px_4px_0_0_#000000] active:shadow-none active:translate-y-1",
         secondary:
           "border-[3px] border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-none",
         destructive:
-          "border-[3px] border-[#000000] bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)] active:translate-y-1",
+          "border-[3px] border-[#000000] bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-[4px_4px_0_0_#000000] active:shadow-none active:translate-y-1",
         outline:
           "border-[3px] border-accent bg-background text-accent hover:bg-accent hover:text-accent-foreground shadow-none",
         ghost: 
@@ -21,7 +21,7 @@ const buttonVariants = cva(
         link: 
           "text-primary underline-offset-4 hover:underline hover:text-primary/80 border-0 shadow-none",
         success:
-          "border-[3px] border-[#000000] bg-green-500 text-white hover:bg-green-600 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)] active:translate-y-1",
+          "border-[3px] border-[#000000] bg-green-500 text-white hover:bg-green-600 shadow-[4px_4px_0_0_#000000] active:shadow-none active:translate-y-1",
       },
       size: {
         default: "h-11 px-6 py-2 md:h-10", // Increased height for more visible button

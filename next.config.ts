@@ -19,8 +19,7 @@ const nextConfig: NextConfig = {
     ],
     // Allow data URIs for placeholder images
     dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    contentDispositionType: 'inline',
   },
 };
 

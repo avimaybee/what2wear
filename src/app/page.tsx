@@ -347,14 +347,15 @@ export default function HomePage() {
   }, [emitClientLog, requestLocation]); // Run only once on mount
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setInitialRecommendationResolved(true);
+    setInitialRecommendationResolved(isAuthenticated ? false : true);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || initialRecommendationResolved) {
       return;
     }
 
-    if (!initialRecommendationResolved) {
-      loadLatestRecommendation();
-    }
+    loadLatestRecommendation();
   }, [isAuthenticated, initialRecommendationResolved, loadLatestRecommendation]);
 
   useEffect(() => {

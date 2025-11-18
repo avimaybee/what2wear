@@ -38,6 +38,7 @@ export const DashboardClient = ({
   const [isLogging, setIsLogging] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [locationName, setLocationName] = useState<string | null>(null);
+  const [hasLoggedOutfit, setHasLoggedOutfit] = useState(false);
 
   // Swap modal state
   const [swapModalOpen, setSwapModalOpen] = useState(false);
@@ -93,7 +94,18 @@ export const DashboardClient = ({
     toast(`Add to wardrobe: ${tips.join('; ')}`, { icon: '🧤' });
   }, [recommendation?.missing_items]);
 
+  useEffect(() => {
+    setHasLoggedOutfit(false);
+  }, [recommendation?.id]);
+
   const handleWearOutfit = async () => {
+    if (hasLoggedOutfit) {
+      return;
+    }
+    if (!recommendation?.outfit?.length) {
+      toast.error("There's no outfit to log right now.");
+      return;
+    }
     setIsLogging(true);
     
     try {
@@ -116,6 +128,13 @@ export const DashboardClient = ({
         }),
       });
 
+      if (response.status === 409) {
+        const duplicateData = await response.json();
+        setHasLoggedOutfit(true);
+        toast(duplicateData.message || "This outfit was already logged today.", { icon: "👕" });
+        return;
+      }
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Failed to log outfit:", errorData);
@@ -127,15 +146,13 @@ export const DashboardClient = ({
         throw new Error(result.error || "Failed to log outfit");
       }
 
-      // Show success toast after a brief delay to let UI update
-      setTimeout(() => {
-        setIsLogging(false);
-        toast.success("Outfit logged successfully! 🎉", { duration: 3000 });
-      }, 800);
+      setHasLoggedOutfit(true);
+      toast.success("Outfit logged successfully! 🎉", { duration: 3000 });
     } catch (error) {
       console.error("Error logging outfit:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to log outfit. Please try again.";
       toast.error(errorMessage);
+    } finally {
       setIsLogging(false);
     }
   };
@@ -349,6 +366,7 @@ export const DashboardClient = ({
               isDisliked={feedback === "down"}
               isLoggingOutfit={isLogging}
               isRegenerating={isRegenerating}
+              hasLoggedOutfit={hasLoggedOutfit}
             />
           </motion.div>
 

@@ -657,6 +657,63 @@ export function getRecommendation(
     debug({ stage, timestamp: new Date().toISOString(), meta });
   };
 
+  const ensureCoreCoverage = (
+    pool: ResolvedClothingItem[],
+    fallbackPool: ResolvedClothingItem[],
+    stage: string
+  ): ResolvedClothingItem[] => {
+    if (hasCoreTypeCoverage(pool)) {
+      return pool;
+    }
+
+    const mergedPool = [...pool];
+    const additions: Array<number | null> = [];
+    const predicates = [
+      {
+        label: 'top',
+        matcher: (item: ResolvedClothingItem) =>
+          normalizeClothingType(item) === 'top' || normalizeClothingType(item) === 'outerwear',
+      },
+      {
+        label: 'bottom',
+        matcher: (item: ResolvedClothingItem) => normalizeClothingType(item) === 'bottom',
+      },
+      {
+        label: 'footwear',
+        matcher: (item: ResolvedClothingItem) => normalizeClothingType(item) === 'footwear',
+      },
+    ];
+
+    for (const predicate of predicates) {
+      const hasType = mergedPool.some(predicate.matcher);
+      if (hasType) {
+        continue;
+      }
+
+      const replacement = fallbackPool.find(
+        (item) => predicate.matcher(item) && !mergedPool.some((existing) => existing.id === item.id)
+      );
+
+      if (replacement) {
+        mergedPool.push(replacement);
+        additions.push(typeof replacement.id === 'number' ? replacement.id : null);
+      }
+    }
+
+    if (hasCoreTypeCoverage(mergedPool)) {
+      emitDebug(`${stage}:coverageRestore`, {
+        added: additions.filter((id) => id !== null),
+        finalCount: mergedPool.length,
+      });
+      return mergedPool;
+    }
+
+    emitDebug(`${stage}:coverageFallback`, {
+      fallbackCount: fallbackPool.length,
+    });
+    return fallbackPool;
+  };
+
   const missingSuggestions: string[] = [];
 
   let availableItems: ResolvedClothingItem[] = wardrobe.map(item => ({
@@ -668,7 +725,10 @@ export function getRecommendation(
   // Task 1.4: Filter by last_worn for variety
   const minDaysSinceWorn = constraints?.min_days_since_worn || 
                           config.app.recommendations.minDaysSinceWorn;
-  availableItems = filterByLastWorn(availableItems, minDaysSinceWorn);
+  const beforeLastWornFilter = [...availableItems];
+  let lastWornFiltered = filterByLastWorn(availableItems, minDaysSinceWorn) as ResolvedClothingItem[];
+  lastWornFiltered = ensureCoreCoverage(lastWornFiltered, beforeLastWornFilter, 'filter:lastWorn');
+  availableItems = lastWornFiltered;
   emitDebug('filter:lastWorn', { remaining: availableItems.length, minDaysSinceWorn });
   // Skip verbose filtering debug text
 
@@ -703,9 +763,17 @@ export function getRecommendation(
   }
   
   if (dressCode) {
-    availableItems = filterByDressCode(availableItems, dressCode);
-    reasoning.push(`Selected ${dressCode} attire for your day`);
-    emitDebug('filter:dressCode', { dressCode, remaining: availableItems.length });
+    const beforeDressCodeFilter = [...availableItems];
+    let dressCodeFiltered = filterByDressCode(availableItems, dressCode) as ResolvedClothingItem[];
+
+    if (dressCodeFiltered.length === 0) {
+      emitDebug('filter:dressCode:skipped', { reason: 'no matches', dressCode });
+    } else {
+      dressCodeFiltered = ensureCoreCoverage(dressCodeFiltered, beforeDressCodeFilter, 'filter:dressCode');
+      availableItems = dressCodeFiltered;
+      reasoning.push(`Selected ${dressCode} attire for your day`);
+      emitDebug('filter:dressCode', { dressCode, remaining: availableItems.length });
+    }
   }
 
   // Calculate insulation needs based on weather
