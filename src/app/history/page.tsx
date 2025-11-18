@@ -28,9 +28,9 @@ export default async function HistoryPage() {
     <div className="min-h-screen">
       <main className="container mx-auto px-4 py-4 max-w-7xl space-y-6">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground font-heading">Timeline</p>
+          <p className="text-xs font-semibold uppercase text-muted-foreground font-heading">Timeline</p>
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-[0.08em] uppercase font-heading">Outfit History</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold uppercase font-heading">Outfit History</h1>
           </div>
         </div>
         <Suspense fallback={<HistoryLoadingSkeleton />}>

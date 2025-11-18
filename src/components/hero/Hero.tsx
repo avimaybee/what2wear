@@ -184,7 +184,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                 variants={itemVariants}
                 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-tight max-w-[90%] md:max-w-[85%] font-heading"
               >
-                <span className="block text-foreground tracking-[0.08em] uppercase">SetMyFit</span>
+                <span className="block text-foreground uppercase">SetMyFit</span>
                 <motion.span 
                   className="block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent"
                   animate={{ backgroundPosition: ["0%", "100%", "0%"] }}
@@ -241,7 +241,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
             >
               <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} className="flex-1 sm:flex-initial">
                 <div className="mb-3">
-                  <span className="paper-tape text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground/80 font-heading">
+                  <span className="paper-tape text-[11px] font-semibold uppercase text-muted-foreground/80 font-heading">
                     Instant Outfit
                   </span>
                 </div>
@@ -286,7 +286,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full sm:w-auto px-8 border border-border/70 hover:border-border hover:bg-muted/50 transition-all duration-300"
+                    className="w-full sm:w-auto px-8 border-2 border-accent text-accent hover:bg-accent/10 transition-all duration-300"
                     aria-label={secondaryCTA.label}
                   >
                     {secondaryCTA.label}

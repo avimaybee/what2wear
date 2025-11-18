@@ -91,7 +91,7 @@ export const Header = () => {
   return (
     <>
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 w-full border-b-2 border-border bg-background/90 backdrop-blur-sm" role="banner">
+      <header className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-sm" role="banner">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             {/* Show back button on non-home pages */}
@@ -104,7 +104,7 @@ export const Header = () => {
               className="flex items-center"
               aria-label="setmyfit home"
             >
-              <span className="text-lg md:text-xl font-semibold tracking-[0.28em] uppercase font-[family-name:var(--font-heading)] text-foreground">
+              <span className="text-lg md:text-xl font-semibold uppercase font-[family-name:var(--font-heading)] text-foreground">
                 SetMyFit
               </span>
             </Link>
@@ -163,7 +163,7 @@ export const Header = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-9 w-9 p-0 transition-transform"
+                  className="h-9 w-9 p-0 transition-transform border-0"
                   aria-label="Open menu"
                 >
                   {/* Smooth icon animation */}
@@ -263,7 +263,7 @@ export const Header = () => {
       </nav>
 
       {/* Spacer for mobile bottom nav */}
-      <div className="h-14 md:hidden" aria-hidden="true" />
+      <div className="h-12 md:hidden" aria-hidden="true" />
     </>
   );
 };

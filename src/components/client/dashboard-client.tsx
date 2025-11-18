@@ -266,7 +266,7 @@ export const DashboardClient = ({
             <div className="flex justify-center">
               <Sparkles className="relative z-10 h-16 w-16 text-accent" />
             </div>
-            <h2 className="relative z-10 text-3xl font-semibold tracking-[0.08em] uppercase font-[family-name:var(--font-heading)]">
+            <h2 className="relative z-10 text-3xl font-semibold uppercase font-[family-name:var(--font-heading)]">
               Building Your First Outfit
             </h2>
             <p className="relative z-10 text-muted-foreground max-w-md mx-auto text-sm md:text-base">

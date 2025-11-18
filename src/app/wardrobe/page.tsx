@@ -507,7 +507,7 @@ export default function WardrobePage() {
         <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-heading tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
+              <h1 className="text-3xl md:text-4xl font-heading uppercase text-foreground mb-1">Virtual Wardrobe</h1>
               <p className="text-sm text-muted-foreground">
                 Manage your clothing collection
               </p>
@@ -557,8 +557,8 @@ export default function WardrobePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground font-heading">Virtual Closet</p>
-          <h1 className="text-3xl md:text-4xl font-heading tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
+          <p className="text-xs font-semibold uppercase text-muted-foreground font-heading">Virtual Closet</p>
+          <h1 className="text-3xl md:text-4xl font-heading uppercase text-foreground mb-1">Virtual Wardrobe</h1>
           <p className="text-sm text-muted-foreground">
             {filteredItems.length} of {wardrobeItems.length} items
             {hasActiveFilters && " (filtered)"}

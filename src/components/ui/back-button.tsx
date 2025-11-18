@@ -40,7 +40,7 @@ export function BackButton({
       variant="ghost"
       size="sm"
       onClick={handleBack}
-      className={cn("gap-2", className)}
+      className={cn("gap-2 border-0", className)}
     >
       <ArrowLeft className="h-4 w-4" />
       {label}

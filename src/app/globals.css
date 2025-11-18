@@ -171,7 +171,12 @@
 /* Base styles */
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border/40;
+  }
+  
+  .border-border,
+  .border-border\/40 {
+    border-color: #000000;
   }
   
   body {
@@ -201,6 +206,10 @@
 }
 
 @layer base {
+  .uppercase {
+    /* Removed: text-transform: uppercase; */
+  }
+  
   .paper-tape {
     position: relative;
     display: inline-flex;

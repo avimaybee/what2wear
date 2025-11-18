@@ -172,7 +172,7 @@ export function OutfitHero({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
                 className="text-sm text-muted-foreground leading-relaxed space-y-2 overflow-hidden"
               >
                 {showFullReason ? (
