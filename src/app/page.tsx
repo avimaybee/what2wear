@@ -17,7 +17,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { OnboardingWizard } from "@/components/onboarding";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RecommendationApiPayload, RecommendationDiagnostics } from "@/lib/types";
 
@@ -47,8 +46,6 @@ export default function HomePage() {
   const [manualLon, setManualLon] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasWardrobe, setHasWardrobe] = useState(false);
-  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [recommendationDiagnostics, setRecommendationDiagnostics] = useState<RecommendationDiagnostics | null>(null);
   const [initialRecommendationResolved, setInitialRecommendationResolved] = useState(false);
 
@@ -452,49 +449,31 @@ export default function HomePage() {
               variant="illustrated"
             />
           ) : isWardrobeError ? (
-            <>
-              <EmptyState
-                icon={Shirt}
-                title="Missing Essential Clothing"
-                description={error}
-                actions={[
-                  {
-                    label: "Add Clothing Items",
-                    onClick: () => setShowOnboardingWizard(true),
-                    icon: Shirt,
-                    variant: "default"
-                  },
-                  {
-                    label: "Try Again",
-                    onClick: () => location && fetchRecommendation(location),
-                    variant: "outline"
-                  }
-                ]}
-                tips={[
-                  "Snap photos of your favorite clothes",
-                  "AI will detect colors, materials, and styles",
-                  "Get weather-based outfit suggestions",
-                  "Track what you wear and when"
-                ]}
-                variant="illustrated"
-              />
-              
-              {/* Onboarding Wizard Modal */}
-              {userId && (
-                <OnboardingWizard
-                  open={showOnboardingWizard}
-                  onComplete={() => {
-                    setShowOnboardingWizard(false);
-                    // Refresh the recommendation
-                    if (location) {
-                      fetchRecommendation(location);
-                    }
-                  }}
-                  onSkip={() => setShowOnboardingWizard(false)}
-                  userId={userId}
-                />
-              )}
-            </>
+            <EmptyState
+              icon={Shirt}
+              title="Missing Essential Clothing"
+              description={error}
+              actions={[
+                {
+                  label: "Add Clothing Items",
+                  onClick: () => router.push('/wardrobe'),
+                  icon: Shirt,
+                  variant: "default"
+                },
+                {
+                  label: "Try Again",
+                  onClick: () => location && fetchRecommendation(location),
+                  variant: "outline"
+                }
+              ]}
+              tips={[
+                "Snap photos of your favorite clothes",
+                "AI will detect colors, materials, and styles",
+                "Get weather-based outfit suggestions",
+                "Track what you wear and when"
+              ]}
+              variant="illustrated"
+            />
           ) : (
             <EmptyState
               icon={AlertCircle}

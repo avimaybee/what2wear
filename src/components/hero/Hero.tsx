@@ -237,9 +237,10 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
             {/* Enhanced CTA Buttons */}
             <motion.div
               variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-4 pt-6"
+              className="space-y-4 pt-6"
             >
-              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} className="flex-1 sm:flex-initial">
+              {/* Primary CTA Section */}
+              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
                 <div className="mb-3">
                   <span className="paper-tape text-[11px] font-semibold text-muted-foreground/80 font-heading">
                     Instant Outfit
@@ -249,7 +250,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                   <Button
                     size="lg"
                     onClick={primaryCTA.onClick}
-                    className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
+                    className="w-full px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
                     aria-label={`${primaryCTA.label} - Get started with setmyfit`}
                   >
                     <motion.span
@@ -264,7 +265,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                   <Button
                     size="lg"
                     asChild
-                    className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
+                    className="w-full px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
                   >
                     <Link href={primaryCTA.href} aria-label={`${primaryCTA.label} - Get started with setmyfit`} className="flex items-center justify-center gap-2">
                       {primaryCTA.label}
@@ -278,7 +279,8 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                 </p>
               </motion.div>
 
-              <Link href={secondaryCTA.href} className="flex-1 sm:flex-initial">
+              {/* Secondary CTA */}
+              <Link href={secondaryCTA.href}>
                 <motion.div
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
@@ -286,7 +288,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full sm:w-auto px-8 border-2 border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300"
+                    className="w-full px-8 border-2 border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300"
                     aria-label={secondaryCTA.label}
                   >
                     {secondaryCTA.label}

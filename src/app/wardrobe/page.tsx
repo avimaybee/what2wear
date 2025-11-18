@@ -513,26 +513,65 @@ export default function WardrobePage() {
               </p>
             </div>
           </div>
-          <EmptyState
-            icon={PackageOpen}
-            title="Your wardrobe is empty"
-            description="Start building your digital closet! Add your first clothing item and we'll start generating personalized outfit recommendations."
-            actions={[
-              {
-                label: "Add Your First Item",
-                onClick: handleOpenAddModal,
-                icon: Plus,
-                variant: "default"
-              }
-            ]}
-            tips={[
-              "Take a photo or upload from your phone",
-              "Add details like color, season, and style tags",
-              "Track when you last wore each item",
-              "Get AI-powered outfit suggestions based on weather"
-            ]}
-            variant="illustrated"
-          />
+          <div className="space-y-6">
+            <EmptyState
+              icon={PackageOpen}
+              title="Your wardrobe is empty"
+              description="Start building your digital closet! Add your first clothing item and we'll start generating personalized outfit recommendations."
+              actions={[
+                {
+                  label: "Add Your First Item",
+                  onClick: handleOpenAddModal,
+                  icon: Plus,
+                  variant: "default"
+                }
+              ]}
+              tips={[
+                "Take a photo or upload from your phone",
+                "Add details like color, season, and style tags",
+                "Track when you last wore each item",
+                "Get AI-powered outfit suggestions based on weather"
+              ]}
+              variant="illustrated"
+            />
+
+            {/* Photography Tips Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="max-w-2xl mx-auto"
+            >
+              <Card className="border-[2.5px] border-[hsl(210_10%_85%)] shadow-md bg-[hsl(40_50%_99%)]">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-primary/10">
+                      <ImageIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-lg">📸 Photography Tips</h3>
+                  </div>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary font-bold">•</span>
+                      <span>Use a neutral background (plain wall or bed)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary font-bold">•</span>
+                      <span>Capture the full garment clearly</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary font-bold">•</span>
+                      <span>Good lighting helps us detect colors better</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary font-bold">•</span>
+                      <span>One item per photo works best</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
         </div>
 
 
@@ -938,10 +977,10 @@ export default function WardrobePage() {
       <AnimatePresence>
         {showAddModal && (
           <Dialog open={showAddModal} onOpenChange={handleCloseAddModal}>
-            <DialogContent variant="scale" layoutId="add-item-button" className="max-w-md">
+            <DialogContent variant="scale" layoutId="add-item-button" className="max-w-md border-[2.5px] border-[hsl(210_10%_85%)] shadow-lg bg-[hsl(40_50%_99%)] rounded-[26px]">
               <DialogHeader>
-                <DialogTitle>Add New Item</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-xl font-heading">Add New Item</DialogTitle>
+                <DialogDescription className="text-sm">
                   Upload a photo of your clothing item
                 </DialogDescription>
               </DialogHeader>
@@ -951,8 +990,8 @@ export default function WardrobePage() {
                   // File upload area
                   <div
                     className={cn(
-                      "flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-[1.25rem] transition-colors cursor-pointer",
-                      dragActive && "border-primary bg-primary/5"
+                      "flex flex-col items-center justify-center gap-4 py-12 border-[2.5px] border-dashed rounded-[20px] transition-all cursor-pointer bg-card",
+                      dragActive ? "border-primary bg-primary/5 shadow-md" : "border-[hsl(210_14%_82%)] hover:border-primary/50 hover:bg-primary/5"
                     )}
                     onDragEnter={handleDragOver}
                     onDragOver={handleDragOver}
@@ -972,11 +1011,11 @@ export default function WardrobePage() {
                       htmlFor="wardrobe-file-input"
                       className="flex flex-col items-center gap-3 cursor-pointer w-full"
                     >
-                      <div className="p-4 rounded-full bg-primary/10 text-primary">
+                      <div className="p-4 rounded-full bg-primary/15 text-primary shadow-sm border-2 border-primary/20">
                         <Upload className="h-8 w-8" />
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-medium mb-1">Tap to upload photo</p>
+                        <p className="text-sm font-semibold mb-1">Tap to upload photo</p>
                         <p className="text-xs text-muted-foreground">Camera or Gallery</p>
                         <p className="text-xs text-muted-foreground mt-2">Max 5MB • JPG, PNG, WEBP</p>
                       </div>
@@ -985,7 +1024,7 @@ export default function WardrobePage() {
                 ) : (
                   // Image preview
                   <div className="space-y-4">
-                      <div className="relative aspect-square rounded-[1.25rem] overflow-hidden bg-muted">
+                      <div className="relative aspect-square rounded-[20px] overflow-hidden bg-muted border-[2.5px] border-[hsl(210_10%_85%)] shadow-md">
                       <Image
                         src={imagePreview}
                         alt="Preview"
@@ -1017,11 +1056,12 @@ export default function WardrobePage() {
                 )}
               </div>
               
-              <DialogFooter>
+              <DialogFooter className="gap-3">
                 <Button 
                   onClick={handleCloseAddModal} 
                   variant="outline"
                   disabled={uploading}
+                  className="rounded-2xl border-[2.5px] shadow-sm hover:-translate-y-[1px] hover:shadow-md"
                 >
                   Cancel
                 </Button>
@@ -1029,6 +1069,7 @@ export default function WardrobePage() {
                   <Button 
                     onClick={handleUploadAndCreate}
                     disabled={uploading || !selectedFile}
+                    className="rounded-2xl border-[2.5px] border-primary shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] hover:translate-y-[1px] hover:shadow-md"
                   >
                     {uploading ? (
                       <>
