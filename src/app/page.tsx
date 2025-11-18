@@ -45,6 +45,7 @@ export default function HomePage() {
   const [manualLat, setManualLat] = useState("");
   const [manualLon, setManualLon] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [hasWardrobe, setHasWardrobe] = useState(false);
   const [recommendationDiagnostics, setRecommendationDiagnostics] = useState<RecommendationDiagnostics | null>(null);
   const [initialRecommendationResolved, setInitialRecommendationResolved] = useState(false);
