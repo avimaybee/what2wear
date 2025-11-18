@@ -7,6 +7,7 @@ import {
   WeatherAlert,
   CalendarEvent,
   RecommendationDebugEvent,
+  ClothingType,
 } from '@/lib/types';
 import { config } from '@/lib/config';
 import chroma from 'chroma-js';
@@ -1104,6 +1105,44 @@ function getLegacyRecommendation(
   constraints?: RecommendationConstraints,
   debug?: RecommendationDebugCollector
 ): OutfitRecommendation {
+    const ensureCoreCoverage = (items: IClothingItem[]): IClothingItem[] => {
+      const augmented = [...items];
+      const usedIds = new Set(augmented.map(item => item.id));
+      const coreTypes: ClothingType[] = ['Top', 'Bottom', 'Footwear'];
+
+      const satisfiesType = (collection: IClothingItem[], targetType: ClothingType) => {
+        if (targetType === 'Top') {
+          return collection.some(item => item.type === 'Top' || item.type === 'Outerwear');
+        }
+        return collection.some(item => item.type === targetType);
+      };
+
+      for (const type of coreTypes) {
+        if (satisfiesType(augmented, type)) {
+          continue;
+        }
+
+        const candidate = wardrobe.find(item => {
+          if (usedIds.has(item.id)) return false;
+          if (type === 'Top') {
+            return item.type === 'Top' || item.type === 'Outerwear';
+          }
+          return item.type === type;
+        });
+
+        if (candidate) {
+          augmented.push(candidate);
+          usedIds.add(candidate.id);
+        }
+      }
+
+      if (!coreTypes.every(type => satisfiesType(augmented, type))) {
+        throw new Error('INSUFFICIENT_ITEMS');
+      }
+
+      return augmented;
+    };
+
     // This is the original simple selection logic
     let availableItems = [...wardrobe];
     // Apply filters again for this self-contained fallback
@@ -1141,8 +1180,10 @@ function getLegacyRecommendation(
       fallbackReasonParts.push(`Missing wardrobe coverage for ${missingTypes.join(', ')}.`);
     }
 
+    const coreGuaranteedItems = ensureCoreCoverage(selectedItems);
+
     const result = {
-        items: selectedItems,
+      items: coreGuaranteedItems,
         confidence_score: 0.5, // Lower confidence for fallback
         reasoning: fallbackReasonParts.join(' '),
         alerts: constraints?.weather_alerts || [],
@@ -1154,7 +1195,7 @@ function getLegacyRecommendation(
         stage: 'selection:legacy',
         timestamp: new Date().toISOString(),
         meta: {
-          itemIds: selectedItems.map(item => item.id),
+          itemIds: coreGuaranteedItems.map(item => item.id),
           remainingItems: availableItems.length,
         },
       });

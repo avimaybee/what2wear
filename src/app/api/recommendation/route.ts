@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { IClothingItem, WeatherData, ClothingType, RecommendationDiagnostics, RecommendationApiPayload } from '@/lib/types';
-import { filterByLastWorn, getRecommendation, RecommendationDebugCollector, resolveInsulationValue } from '@/lib/helpers/recommendationEngine';
+import { getRecommendation, RecommendationDebugCollector, resolveInsulationValue } from '@/lib/helpers/recommendationEngine';
 
 interface InsufficientItemsError extends Error {
   customMessage?: string;
@@ -88,12 +88,44 @@ const TYPE_ALIASES: Record<string, ClothingType> = {
 };
 
 const KEYWORD_TYPE_PRIORITIES: Array<{ type: ClothingType; keywords: string[] }> = [
-  { type: 'Outerwear', keywords: ['jacket', 'coat', 'hoodie', 'cardigan', 'blazer', 'windbreaker', 'parka', 'poncho'] },
-  { type: 'Bottom', keywords: ['pant', 'jean', 'trouser', 'short', 'skirt', 'legging', 'tight', 'chino', 'cargo', 'culotte', 'jogger'] },
-  { type: 'Footwear', keywords: ['shoe', 'sneaker', 'boot', 'loafer', 'heel', 'sandal', 'trainer', 'flip flop', 'slipper'] },
-  { type: 'Top', keywords: ['shirt', 'tee', 't-shirt', 'tank', 'blouse', 'top', 'sweater', 'crewneck', 'polo'] },
-  { type: 'Headwear', keywords: ['hat', 'beanie', 'cap', 'beret', 'visor'] },
-  { type: 'Accessory', keywords: ['belt', 'scarf', 'glove', 'watch', 'bag', 'purse', 'bracelet', 'necklace'] },
+  {
+    type: 'Outerwear',
+    keywords: [
+      'jacket', 'coat', 'hoodie', 'cardigan', 'blazer', 'windbreaker', 'parka', 'poncho', 'shrug', 'gilet',
+      'sweatshirt', 'zip-up', 'anorak', 'raincoat'
+    ],
+  },
+  {
+    type: 'Bottom',
+    keywords: [
+      'pant', 'jean', 'trouser', 'short', 'skirt', 'legging', 'tight', 'tights', 'chino', 'cargo', 'culotte',
+      'jogger', 'sweatpant', 'salwar', 'shalwar', 'churidar', 'palazzo', 'lehenga', 'dhoti', 'lungi', 'ghagra',
+      'skort', 'capri', 'track pant', 'trackpant', 'pyjama', 'pyjama pant'
+    ],
+  },
+  {
+    type: 'Footwear',
+    keywords: [
+      'shoe', 'sneaker', 'boot', 'loafer', 'heel', 'sandal', 'trainer', 'flip flop', 'flip-flop', 'slipper',
+      'moccasin', 'oxford', 'brogu', 'pump', 'stiletto', 'jutti', 'mojari', 'kolhapuri', 'floaters', 'slides',
+      'brogue'
+    ],
+  },
+  {
+    type: 'Top',
+    keywords: [
+      'shirt', 'tee', 't-shirt', 'tank', 'blouse', 'top', 'sweater', 'crewneck', 'polo', 'kurta', 'kurti',
+      'kameez', 'tunic', 'henley', 'camisole', 'vest', 'hooded tee', 'saree blouse', 'peplum'
+    ],
+  },
+  {
+    type: 'Headwear',
+    keywords: ['hat', 'beanie', 'cap', 'beret', 'visor', 'turban', 'pagdi', 'headband', 'headwrap'],
+  },
+  {
+    type: 'Accessory',
+    keywords: ['belt', 'scarf', 'glove', 'watch', 'bag', 'purse', 'bracelet', 'necklace', 'dupatta', 'shawl', 'stole'],
+  },
 ];
 
 const normalizeTypeValue = (value?: string | null): ClothingType | null => {
@@ -104,13 +136,26 @@ const normalizeTypeValue = (value?: string | null): ClothingType | null => {
 
 const guessTypeFromText = (value?: string | null): ClothingType | null => {
   if (!value) return null;
-  const normalized = value.toLowerCase();
+  const normalized = value.toLowerCase().replace(/[_-]/g, ' ');
   for (const { type, keywords } of KEYWORD_TYPE_PRIORITIES) {
     if (keywords.some(keyword => normalized.includes(keyword))) {
       return type;
     }
   }
   return null;
+};
+
+const guessTypeFromImageUrl = (imageUrl?: string | null): ClothingType | null => {
+  if (!imageUrl) return null;
+  try {
+    const url = new URL(imageUrl);
+    const fileName = url.pathname.split('/').pop();
+    if (!fileName) return null;
+    const decoded = decodeURIComponent(fileName);
+    return guessTypeFromText(decoded);
+  } catch (_err) {
+    return guessTypeFromText(imageUrl);
+  }
 };
 
 const deriveClothingType = (item: Partial<IClothingItem>): ClothingType | null => {
@@ -125,6 +170,27 @@ const deriveClothingType = (item: Partial<IClothingItem>): ClothingType | null =
 
   const typeFromDescription = guessTypeFromText((item.description as string | null) ?? null);
   if (typeFromDescription) return typeFromDescription;
+
+  const typeFromStyle = guessTypeFromText(item.style as string | null);
+  if (typeFromStyle) return typeFromStyle;
+
+  const typeFromFit = guessTypeFromText(item.fit as string | null);
+  if (typeFromFit) return typeFromFit;
+
+  if (Array.isArray(item.style_tags)) {
+    for (const tag of item.style_tags) {
+      const typeFromTag = guessTypeFromText(tag);
+      if (typeFromTag) return typeFromTag;
+    }
+  }
+
+  const typeFromOccasion = Array.isArray(item.occasion)
+    ? item.occasion.map(value => guessTypeFromText(value)).find(Boolean)
+    : null;
+  if (typeFromOccasion) return typeFromOccasion;
+
+  const typeFromImage = guessTypeFromImageUrl(item.image_url as string | null);
+  if (typeFromImage) return typeFromImage;
 
   return null;
 };
@@ -477,8 +543,8 @@ async function generateRecommendation(
     }
   }
 
-  // Apply filtering logic
-  let availableItems = normalizedWardrobeItems.map(item => {
+  // Prepare wardrobe payload for recommendation engine
+  const availableItems = normalizedWardrobeItems.map(item => {
     const resolvedType = (item.normalizedType ?? normalizeTypeValue(item.rawType) ?? 'Top') as ClothingType;
     return {
       ...(item as IClothingItem),
@@ -487,10 +553,6 @@ async function generateRecommendation(
       insulation_value: resolveInsulationValue({ ...item, type: resolvedType }),
     };
   }) as IClothingItem[];
-  
-  // Filter by last worn date
-  availableItems = filterByLastWorn(availableItems);
-  pushEvent('filter:preRecommendation', { count: availableItems.length });
 
   // Generate the recommendation
   const filterCounts = summary.filterCounts ?? {};
