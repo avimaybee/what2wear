@@ -1103,10 +1103,21 @@ function getLegacyRecommendation(
         }
     }
 
+    const missingTypes = ['Top', 'Bottom', 'Footwear'].filter(
+      (requiredType) => !availableItems.some(item => item.type === requiredType)
+    );
+
+    const fallbackReasonParts = [
+      'Used fallback logic due to insufficient item variety for advanced recommendations.'
+    ];
+    if (missingTypes.length > 0) {
+      fallbackReasonParts.push(`Missing wardrobe coverage for ${missingTypes.join(', ')}.`);
+    }
+
     const result = {
         items: selectedItems,
         confidence_score: 0.5, // Lower confidence for fallback
-        reasoning: "Used fallback logic due to insufficient item variety for advanced recommendations.",
+        reasoning: fallbackReasonParts.join(' '),
         alerts: constraints?.weather_alerts || [],
         context,
     };

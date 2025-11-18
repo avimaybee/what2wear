@@ -87,10 +87,30 @@ const TYPE_ALIASES: Record<string, ClothingType> = {
   headband: 'Headwear'
 };
 
+const KEYWORD_TYPE_PRIORITIES: Array<{ type: ClothingType; keywords: string[] }> = [
+  { type: 'Outerwear', keywords: ['jacket', 'coat', 'hoodie', 'cardigan', 'blazer', 'windbreaker', 'parka', 'poncho'] },
+  { type: 'Bottom', keywords: ['pant', 'jean', 'trouser', 'short', 'skirt', 'legging', 'tight', 'chino', 'cargo', 'culotte', 'jogger'] },
+  { type: 'Footwear', keywords: ['shoe', 'sneaker', 'boot', 'loafer', 'heel', 'sandal', 'trainer', 'flip flop', 'slipper'] },
+  { type: 'Top', keywords: ['shirt', 'tee', 't-shirt', 'tank', 'blouse', 'top', 'sweater', 'crewneck', 'polo'] },
+  { type: 'Headwear', keywords: ['hat', 'beanie', 'cap', 'beret', 'visor'] },
+  { type: 'Accessory', keywords: ['belt', 'scarf', 'glove', 'watch', 'bag', 'purse', 'bracelet', 'necklace'] },
+];
+
 const normalizeTypeValue = (value?: string | null): ClothingType | null => {
   if (!value) return null;
   const normalizedKey = value.trim().toLowerCase();
   return TYPE_ALIASES[normalizedKey] || null;
+};
+
+const guessTypeFromText = (value?: string | null): ClothingType | null => {
+  if (!value) return null;
+  const normalized = value.toLowerCase();
+  for (const { type, keywords } of KEYWORD_TYPE_PRIORITIES) {
+    if (keywords.some(keyword => normalized.includes(keyword))) {
+      return type;
+    }
+  }
+  return null;
 };
 
 const deriveClothingType = (item: Partial<IClothingItem>): ClothingType | null => {
@@ -99,6 +119,12 @@ const deriveClothingType = (item: Partial<IClothingItem>): ClothingType | null =
 
   const typeFromCategory = normalizeTypeValue(item.category as string | null);
   if (typeFromCategory) return typeFromCategory;
+
+  const typeFromName = guessTypeFromText(item.name as string | null);
+  if (typeFromName) return typeFromName;
+
+  const typeFromDescription = guessTypeFromText((item.description as string | null) ?? null);
+  if (typeFromDescription) return typeFromDescription;
 
   return null;
 };
