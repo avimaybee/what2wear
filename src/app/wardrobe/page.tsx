@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Filter, Trash2, Calendar, Sparkles, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit } from "lucide-react";
+import { Plus, Filter, Trash2, Calendar, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit } from "lucide-react";
 import { getRelativeTime, cn } from "@/lib/utils";
 import { motionVariants, motionDurations } from "@/lib/motion";
 import { toast } from "@/components/ui/toaster";
@@ -41,7 +41,7 @@ export default function WardrobePage() {
   // UI state
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteItem, setDeleteItem] = useState<IClothingItem | null>(null);
-  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const [_hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [_modalSource, setModalSource] = useState<"add-button" | "delete" | "edit" | null>(null);
   const [deleting, setDeleting] = useState(false);
   

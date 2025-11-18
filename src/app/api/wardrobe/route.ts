@@ -100,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   }
 
   // generate requestId for correlation
-  const requestId = (globalThis as any).__NEXT_REQUEST_ID || crypto?.randomUUID?.() || String(Date.now());
+  const requestId = ((globalThis as unknown) as { __NEXT_REQUEST_ID?: string }).__NEXT_REQUEST_ID || crypto?.randomUUID?.() || String(Date.now());
 
   try {
     const body = await request.json();
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }, { status: 201 });
   } catch (error) {
     logger.error('Error processing wardrobe POST', { error });
-    const requestId = (globalThis as any).__NEXT_REQUEST_ID || crypto?.randomUUID?.() || String(Date.now());
+    const requestId = ((globalThis as unknown) as { __NEXT_REQUEST_ID?: string }).__NEXT_REQUEST_ID || crypto?.randomUUID?.() || String(Date.now());
     return NextResponse.json(
       { success: false, error: 'Internal server error', message: `Server error (requestId: ${requestId})` },
       { status: 500 }
