@@ -325,9 +325,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-6 md:py-10 pb-24 md:pb-10">
+    <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 pb-24 md:pb-10">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-2 mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Control Center</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground font-heading">Control Center</p>
         <div className="flex items-center gap-2">
           <SettingsIcon className="h-5 w-5 text-primary" />
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>

@@ -19,7 +19,9 @@ if (process.env.NODE_ENV === 'development') {
   }
 }
 
-const genAI = new GoogleGenerativeAI(apiKey || "");
+// Initialize the client only when an API key is present to avoid creating
+// a client with an empty key which could produce confusing runtime errors.
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 interface AnalysisResult {
   name: string;
@@ -166,22 +168,36 @@ Be specific and detailed. The description field is CRITICAL for AI outfit genera
 
 Return ONLY the JSON object.`;
 
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not configured. Please set it in your environment variables.');
+    if (!apiKey || !genAI) {
+      console.error('GEMINI_API_KEY missing, skipping AI analysis');
+      return NextResponse.json(
+        { success: false, error: 'Gemini API key is not configured on the server' },
+        { status: 503 }
+      );
     }
 
     if (process.env.NODE_ENV === 'development') {
       console.log('🤖 Starting Gemini AI analysis...');
     }
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: mimeType,
+
+    let result;
+    try {
+      result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: base64Image,
+            mimeType: mimeType,
+          },
         },
-      },
-    ]);
+      ]);
+    } catch (aiErr) {
+      console.error('Error calling Gemini AI:', aiErr);
+      return NextResponse.json(
+        { success: false, error: 'AI service error' },
+        { status: 502 }
+      );
+    }
 
     const content = result.response.text();
     if (process.env.NODE_ENV === 'development') {

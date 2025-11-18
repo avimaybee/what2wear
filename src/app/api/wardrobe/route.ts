@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { IClothingItem, ApiResponse } from '@/lib/types';
 import { logger } from '@/lib/logger';
 import { normalizeMaterial } from '@/lib/validation';
+
+// Allowed enums (kept here for runtime validation)
+const ALLOWED_TYPES = ['Outerwear','Top','Bottom','Footwear','Accessory','Headwear'];
+const ALLOWED_DRESS_CODES = ['Casual','Business Casual','Formal','Athletic','Loungewear'];
 
 /**
  * GET /api/wardrobe
@@ -83,10 +88,10 @@ export async function GET(_request: NextRequest): Promise<NextResponse<ApiRespon
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<IClothingItem>>> {
   const supabase = await createClient();
-  
+
   // Get authenticated user
   const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
+
   if (authError || !user) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
@@ -94,53 +99,92 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     );
   }
 
+  // generate requestId for correlation
+  const requestId = (globalThis as any).__NEXT_REQUEST_ID || crypto?.randomUUID?.() || String(Date.now());
+
   try {
     const body = await request.json();
-    
+
     if (process.env.NODE_ENV === 'development') {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Received wardrobe POST request with body:', JSON.stringify(body, null, 2));
-      }
+      console.log(`[${requestId}] Received wardrobe POST request with body:`, JSON.stringify(body, null, 2));
     }
 
+    // Validate shape with zod
+    const schema = z.object({
+      name: z.string().min(1),
+      type: z.enum(ALLOWED_TYPES).optional(),
+      category: z.string().nullable().optional(),
+      color: z.string().nullable().optional(),
+      material: z.string().nullable().optional(),
+      insulation_value: z.number().min(0).max(10).optional(),
+      image_url: z.string().url().optional(),
+      season_tags: z.array(z.string()).nullable().optional(),
+      style_tags: z.array(z.string()).nullable().optional(),
+      dress_code: z.array(z.string()).optional(),
+      pattern: z.string().nullable().optional(),
+      fit: z.string().nullable().optional(),
+      style: z.string().nullable().optional(),
+      occasion: z.array(z.string()).nullable().optional(),
+      description: z.string().nullable().optional(),
+    });
+
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      const validation_errors = parsed.error.errors.map(e => ({ field: e.path.join('.') || 'body', message: e.message }));
+      logger.warn('Validation failed for wardrobe POST', { requestId, validation_errors });
+      return NextResponse.json({ success: false, error: 'Validation failed', validation_errors }, { status: 400 });
+    }
+
+    const validBody = parsed.data;
+
     // Normalize season_tags to lowercase to match database enum
-    const normalizedSeasonTags = body.season_tags 
-      ? body.season_tags.map((season: string) => season.toLowerCase())
+    const normalizedSeasonTags = validBody.season_tags
+      ? validBody.season_tags.map((season: string) => season.toLowerCase())
       : null;
 
     // Normalize material to match database enum
-    const normalizedMaterial = normalizeMaterial(body.material);
+    const normalizedMaterial = normalizeMaterial(validBody.material);
 
-    // Normalize type to be capitalized
-    const normalizedType = body.type 
-      ? body.type.charAt(0).toUpperCase() + body.type.slice(1).toLowerCase()
+    // Normalize type casing
+    const normalizedType = validBody.type
+      ? String(validBody.type)
       : null;
 
-    // Create new clothing item
+    // Validate dress_code items
+    let dressCode = ['Casual'];
+    if (Array.isArray(validBody.dress_code) && validBody.dress_code.length > 0) {
+      const invalid = validBody.dress_code.filter((d: string) => !ALLOWED_DRESS_CODES.includes(d));
+      if (invalid.length) {
+        const validation_errors = invalid.map(i => ({ field: 'dress_code', message: `Unsupported dress code: ${i}` }));
+        logger.warn('Invalid dress_code values', { requestId, invalid });
+        return NextResponse.json({ success: false, error: 'Invalid dress_code', validation_errors }, { status: 400 });
+      }
+      dressCode = validBody.dress_code as string[];
+    }
+
+    // Build new item
     const newItem = {
       user_id: user.id,
-      name: body.name,
+      name: validBody.name,
       type: normalizedType,
-      category: body.category || null,
-      color: body.color || null,
+      category: validBody.category || null,
+      color: validBody.color || null,
       material: normalizedMaterial,
-      insulation_value: body.insulation_value || 5,
-      image_url: body.image_url || null,
+      insulation_value: validBody.insulation_value ?? 5,
+      image_url: validBody.image_url || null,
       season_tags: normalizedSeasonTags,
-      style_tags: body.style_tags || null,
-      dress_code: body.dress_code || ['Casual'],
+      style_tags: validBody.style_tags || null,
+      dress_code: dressCode,
       last_worn_date: null,
-      pattern: body.pattern || null,
-      fit: body.fit || null,
-      style: body.style || null,
-      occasion: body.occasion || null,
-      description: body.description || null,
+      pattern: validBody.pattern || null,
+      fit: validBody.fit || null,
+      style: validBody.style || null,
+      occasion: validBody.occasion || null,
+      description: validBody.description || null,
     };
-    
+
     if (process.env.NODE_ENV === 'development') {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Creating database record:', JSON.stringify(newItem, null, 2));
-      }
+      console.log(`[${requestId}] Creating database record:`, JSON.stringify(newItem, null, 2));
     }
 
     const { data, error } = await supabase
@@ -150,9 +194,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .single();
 
     if (error) {
-      logger.error('Error creating wardrobe item', { error });
+      logger.error('Error creating wardrobe item', { requestId, error });
       return NextResponse.json(
-        { success: false, error: error.message },
+        { success: false, error: error.message, message: `Server error (requestId: ${requestId})` },
         { status: 500 }
       );
     }
@@ -164,9 +208,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }, { status: 201 });
   } catch (error) {
     logger.error('Error processing wardrobe POST', { error });
+    const requestId = (globalThis as any).__NEXT_REQUEST_ID || crypto?.randomUUID?.() || String(Date.now());
     return NextResponse.json(
-      { success: false, error: 'Invalid request data' },
-      { status: 400 }
+      { success: false, error: 'Internal server error', message: `Server error (requestId: ${requestId})` },
+      { status: 500 }
     );
   }
 }

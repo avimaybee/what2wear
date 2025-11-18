@@ -182,7 +182,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
             <motion.div variants={itemVariants} className="space-y-4">
               <motion.h1
                 variants={itemVariants}
-                className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-tight max-w-[90%] md:max-w-[85%] font-[family-name:var(--font-heading)]"
+                className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-tight max-w-[90%] md:max-w-[85%] font-heading"
               >
                 <span className="block text-foreground tracking-[0.08em] uppercase">SetMyFit</span>
                 <motion.span 
@@ -216,7 +216,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                 <motion.div variants={sparkleVariants}>
                   <Sparkles className="h-4 w-4" />
                 </motion.div>
-                <span className="text-sm font-semibold">Smart Recommendations</span>
+                <span className="text-sm font-semibold font-heading">Smart Recommendations</span>
               </motion.div>
 
               <div
@@ -241,7 +241,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
             >
               <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} className="flex-1 sm:flex-initial">
                 <div className="mb-3">
-                  <span className="paper-tape text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground/80">
+                  <span className="paper-tape text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground/80 font-heading">
                     Instant Outfit
                   </span>
                 </div>

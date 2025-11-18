@@ -319,12 +319,28 @@ export default function WardrobePage() {
           console.error('❌ AI analysis HTTP error:', analysisResponse.status);
           const errorText = await analysisResponse.text();
           console.error('Error details:', errorText);
+          
+          // If it's a 503 (service unavailable) or 502 (AI error), clean up and ask to retry
+          if (analysisResponse.status === 503 || analysisResponse.status === 502) {
+            toast.error('AI service is temporarily unavailable. Please try again.');
+            await deleteClothingImage(uploadResult.path!);
+            setUploading(false);
+            setSelectedFile(null);
+            setImagePreview(null);
+            return;
+          }
+          
           toast.error('AI analysis failed (HTTP ' + analysisResponse.status + ')');
         }
       } catch (analysisError) {
         console.error('❌ AI analysis exception:', analysisError);
-        toast.error('AI analysis failed, using defaults');
-        // Continue with defaults if AI fails
+        // On exception, clean up and ask user to retry
+        toast.error('Could not analyze the image. Please try uploading again.');
+        await deleteClothingImage(uploadResult.path!);
+        setUploading(false);
+        setSelectedFile(null);
+        setImagePreview(null);
+        return;
       }
 
       // Create wardrobe item with ALL AI-analyzed data or defaults
@@ -491,7 +507,7 @@ export default function WardrobePage() {
         <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-[family-name:var(--font-heading)] tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
+              <h1 className="text-3xl md:text-4xl font-heading tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
               <p className="text-sm text-muted-foreground">
                 Manage your clothing collection
               </p>
@@ -519,120 +535,7 @@ export default function WardrobePage() {
           />
         </div>
 
-        {/* Add Item Dialog - needs to be available even in empty state */}
-        <AnimatePresence>
-          {showAddModal && (
-            <Dialog open={showAddModal} onOpenChange={handleCloseAddModal}>
-              <DialogContent variant="scale" layoutId="add-item-button" className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Add New Item</DialogTitle>
-                  <DialogDescription>
-                    Upload a photo of your clothing item
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-4 py-4">
-                  {!imagePreview ? (
-                    // File upload area
-                    <div
-                      className={cn(
-                        "flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-border rounded-[1.25rem] transition-colors cursor-pointer",
-                        dragActive && "border-primary bg-primary/5"
-                      )}
-                      onDragEnter={handleDragOver}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                    >
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        id="wardrobe-file-input"
-                        className="hidden"
-                        onChange={handleFileSelect}
-                        disabled={uploading}
-                      />
-                      <label
-                        htmlFor="wardrobe-file-input"
-                        className="flex flex-col items-center gap-3 cursor-pointer w-full"
-                      >
-                        <div className="p-4 rounded-full bg-primary/10 text-primary">
-                          <Upload className="h-8 w-8" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-medium mb-1">Tap to upload photo</p>
-                          <p className="text-xs text-muted-foreground">Camera or Gallery</p>
-                          <p className="text-xs text-muted-foreground mt-2">Max 5MB • JPG, PNG, WEBP</p>
-                        </div>
-                      </label>
-                    </div>
-                  ) : (
-                    // Image preview
-                    <div className="space-y-4">
-                      <div className="relative aspect-square rounded-[1.25rem] overflow-hidden bg-muted">
-                        <Image
-                          src={imagePreview}
-                          alt="Preview"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground truncate flex-1">
-                          {selectedFile?.name}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedFile(null);
-                            setImagePreview(null);
-                          }}
-                          disabled={uploading}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground text-center">
-                        After uploading, you&apos;ll be able to edit details like name, type, color, and season tags.
-                      </p>
-                    </div>
-                  )}
-                </div>
-                
-                <DialogFooter>
-                  <Button 
-                    onClick={handleCloseAddModal} 
-                    variant="outline"
-                    disabled={uploading}
-                  >
-                    Cancel
-                  </Button>
-                  {imagePreview && (
-                    <Button 
-                      onClick={handleUploadAndCreate}
-                      disabled={uploading || !selectedFile}
-                    >
-                      {uploading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Add Item
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
-        </AnimatePresence>
+
       </>
     );
   }
@@ -640,7 +543,7 @@ export default function WardrobePage() {
   return (
     <div 
       className={cn(
-        "container max-w-screen-2xl px-4 sm:px-6 lg:px-8 pt-6 pb-24 md:pt-8 md:pb-10 space-y-6",
+        "container max-w-screen-2xl px-4 sm:px-6 lg:px-8 pt-2 pb-24 md:pt-4 md:pb-10 space-y-6",
         dragActive && "ring-2 ring-primary ring-offset-4 ring-offset-background rounded-[1.5rem]"
       )}
       onDragEnter={handleDragOver}
@@ -654,19 +557,14 @@ export default function WardrobePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Virtual Closet</p>
-          <h1 className="text-3xl md:text-4xl font-[family-name:var(--font-heading)] tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground font-heading">Virtual Closet</p>
+          <h1 className="text-3xl md:text-4xl font-heading tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
           <p className="text-sm text-muted-foreground">
             {filteredItems.length} of {wardrobeItems.length} items
             {hasActiveFilters && " (filtered)"}
           </p>
         </div>
-        <motion.div layoutId="add-item-button">
-          <Button onClick={handleOpenAddModal} size="sm" aria-label="Add new clothing item">
-            <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
-            Add Item
-          </Button>
-        </motion.div>
+
       </div>
 
       {/* Search Bar and Filter Row */}
@@ -946,48 +844,23 @@ export default function WardrobePage() {
                   </div>
 
                   {/* "Most Worn" or "Never Worn" Badge */}
-                  <AnimatePresence>
-                    {!item.last_worn && hoveredItem !== item.id && (
-                      <motion.div
-                        className="absolute top-2 left-2"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Badge variant="sticker" tone="coral">
-                          <Sparkles className="h-3 w-3 mr-1" aria-hidden="true" />
-                          New
-                        </Badge>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
 
-                  {/* Delete Button on Hover */}
-                  <AnimatePresence>
-                    {hoveredItem === item.id && (
-                      <motion.div
-                        className="absolute top-2 left-2"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          className="h-8 w-8 shadow-lg"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenDeleteModal(item);
-                          }}
-                          aria-label={`Delete ${item.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden="true" />
-                        </Button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+
+                  {/* Delete Button - visible on mobile, shows on hover desktop */}
+                  <div className="absolute top-2 left-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="h-8 w-8 shadow-lg"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenDeleteModal(item);
+                      }}
+                      aria-label={`Delete ${item.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </Button>
+                  </div>
                 </div>
 
                 <CardContent className="p-3 space-y-2" onClick={() => handleOpenEditModal(item)}>
@@ -1020,16 +893,18 @@ export default function WardrobePage() {
       </AnimatePresence>
 
       {/* Floating Add Item FAB */}
-      <Button
-        variant="default"
-        size="lg"
-        onClick={handleOpenAddModal}
-        className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40 shadow-xl border-2 border-accent rounded-full px-6 flex items-center gap-2"
-        aria-label="Add new wardrobe item"
-      >
-        <Plus className="h-5 w-5" aria-hidden="true" />
-        Add Item
-      </Button>
+      <motion.div layoutId="add-item-button" className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40">
+        <Button
+          variant="default"
+          size="lg"
+          onClick={handleOpenAddModal}
+          className="shadow-xl border-2 border-accent rounded-full px-6 flex items-center gap-2"
+          aria-label="Add new wardrobe item"
+        >
+          <Plus className="h-5 w-5" aria-hidden="true" />
+          Add Item
+        </Button>
+      </motion.div>
 
       {/* Empty State with Beautiful Illustration */}
       {filteredItems.length === 0 && !loading && wardrobeItems.length > 0 && (
@@ -1303,7 +1178,7 @@ export default function WardrobePage() {
                       <Badge
                         key={season}
                         variant={isSelected ? "default" : "outline"}
-                        className="cursor-pointer"
+                        className={cn("cursor-pointer", isSelected && "text-foreground")}
                         onClick={() => {
                           const current = editFormData.season_tags || [];
                           const updated = isSelected
@@ -1332,7 +1207,7 @@ export default function WardrobePage() {
                       <Badge
                         key={code}
                         variant={isSelected ? "default" : "outline"}
-                        className="cursor-pointer"
+                        className={cn("cursor-pointer", isSelected && "text-foreground")}
                         onClick={() => {
                           const current = dressCodeArray;
                           const updated = isSelected

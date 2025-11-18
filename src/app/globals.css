@@ -94,7 +94,7 @@
   --sidebar-ring: oklch(0.65 0.19 35);
 
   /* Heading font */
-  --font-heading: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-heading: "Stack Sans Text", sans-serif;
 }
 
 /* Dark theme variables kept for future use but currently unused
@@ -179,6 +179,12 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Apply Stack Sans Text to all headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-optical-sizing: auto;
   }
   
   /* Focus styles for accessibility */
@@ -281,6 +287,12 @@
     @supports not (filter: url(#SkiperSquiCircleFilterLayout)) {
       border-radius: var(--radius-xl);
     }
+  }
+  
+  /* Font family utilities */
+  .font-heading {
+    font-family: var(--font-heading);
+    font-optical-sizing: auto;
   }
   
   /* Apple HIG Label Hierarchy Utilities */

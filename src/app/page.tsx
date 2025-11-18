@@ -381,7 +381,7 @@ export default function HomePage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-2xl w-full space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Need Attention</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground font-heading">Need Attention</p>
           {isAuthError ? (
             <EmptyState
               icon={LogIn}

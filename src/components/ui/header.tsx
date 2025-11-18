@@ -96,7 +96,7 @@ export const Header = () => {
           <div className="flex items-center gap-4">
             {/* Show back button on non-home pages */}
             {pathname !== '/' && (
-              <BackButton className="hidden md:flex" />
+              <BackButton className="flex" />
             )}
             
             <Link 
@@ -104,7 +104,7 @@ export const Header = () => {
               className="flex items-center"
               aria-label="setmyfit home"
             >
-              <span className="rounded-[0.9rem] bg-card/90 px-3.5 py-1.5 text-lg md:text-xl font-semibold tracking-[0.28em] uppercase font-[family-name:var(--font-heading)] text-foreground">
+              <span className="text-lg md:text-xl font-semibold tracking-[0.28em] uppercase font-[family-name:var(--font-heading)] text-foreground">
                 SetMyFit
               </span>
             </Link>
@@ -163,10 +163,13 @@ export const Header = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-9 w-9 p-0"
+                  className="h-9 w-9 p-0 transition-transform"
                   aria-label="Open menu"
                 >
-                  <Menu className="h-5 w-5" aria-hidden="true" />
+                  {/* Smooth icon animation */}
+                  <span className={cn("inline-block transition-transform duration-200", mobileMenuOpen && "rotate-90 scale-110")}> 
+                    <Menu className="h-5 w-5" aria-hidden="true" />
+                  </span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-72">

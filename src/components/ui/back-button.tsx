@@ -25,11 +25,12 @@ export function BackButton({
   const router = useRouter();
 
   const handleBack = () => {
-    // Check if there's history to go back to
-    if (window.history.length > 1) {
+    // On mobile, check if document.referrer exists and navigate accordingly
+    // This ensures proper back navigation instead of always going to home
+    if (typeof window !== 'undefined' && window.history.length > 2) {
       router.back();
     } else {
-      // Fallback to specified path if no history
+      // Fallback to specified path if no meaningful history
       router.push(fallbackPath);
     }
   };

@@ -65,7 +65,7 @@ export function OutfitHero({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <CardTitle className="text-xl md:text-2xl">Your Perfect Look</CardTitle>
+            <CardTitle className="text-xl md:text-2xl font-heading">Your Perfect Look</CardTitle>
             <CardDescription className="text-sm text-muted-foreground mt-1">
               Curated for today — practical, comfortable, and styled for your plans.
             </CardDescription>

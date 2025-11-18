@@ -11,6 +11,12 @@ export const metadata: Metadata = {
 };
 
 const bodyFont = Fredoka({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-body" });
+const headingFont = {
+  style: {
+    fontFamily: '"Stack Sans Text", sans-serif',
+  },
+  variable: "--font-heading",
+};
 
 export default function RootLayout({
   children,
@@ -23,7 +29,15 @@ export default function RootLayout({
       lang="en" 
       suppressHydrationWarning
       className={`${bodyFont.variable}`}
+      style={{
+        ['--font-heading' as string]: '"Stack Sans Text", sans-serif',
+      }}
     >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Text:wght@200..700&display=swap" rel="stylesheet" />
+      </head>
       <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-body)]">
         <ThemeProvider
           attribute="class"

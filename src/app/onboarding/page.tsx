@@ -374,7 +374,7 @@ export default function OnboardingPage() {
                         <Badge
                           key={style}
                           variant={selectedStyles.includes(style) ? "default" : "outline"}
-                          className="cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105"
+                          className={cn("cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105", selectedStyles.includes(style) && "text-foreground")}
                           onClick={() => handleStyleToggle(style)}
                         >
                           {style}
@@ -390,7 +390,7 @@ export default function OnboardingPage() {
                         <Badge
                           key={color}
                           variant={selectedColors.includes(color) ? "default" : "outline"}
-                          className="cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105"
+                          className={cn("cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105", selectedColors.includes(color) && "text-foreground")}
                           onClick={() => handleColorToggle(color)}
                         >
                           {color}
