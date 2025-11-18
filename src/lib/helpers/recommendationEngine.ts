@@ -714,7 +714,16 @@ export function getRecommendation(
     return fallbackPool;
   };
 
-  const missingSuggestions: string[] = [];
+  const enhancementSuggestions: string[] = [];
+  const wardrobeGapSuggestions: string[] = [];
+
+  const describeItem = (item: IClothingItem) => {
+    const labelParts = [item.color, item.name].filter(Boolean);
+    if (labelParts.length > 0) {
+      return labelParts.join(' ').trim();
+    }
+    return item.type;
+  };
 
   let availableItems: ResolvedClothingItem[] = wardrobe.map(item => ({
     ...item,
@@ -911,10 +920,15 @@ export function getRecommendation(
       bestOutfitItems.push(bestOuterwear);
       reasoning.push(`Added outerwear for warmth and style compatibility.`);
     } else if (insulationDeficit > 1) {
-      missingSuggestions.push('Add a warm outer layer like a jacket or coat for the current weather');
+      const alternateLayer = itemsByType.Outerwear.find(item => !bestOutfitItems.some(existing => existing.id === item.id));
+      if (alternateLayer) {
+        enhancementSuggestions.push(`Layer your ${describeItem(alternateLayer)} if you want extra insulation without committing to the full look.`);
+      } else {
+        wardrobeGapSuggestions.push('A warm outer layer like a jacket or coat would help with today’s weather.');
+      }
     }
   } else if (shouldLayer && itemsByType.Outerwear.length === 0) {
-    missingSuggestions.push('A jacket or cardigan would help balance today’s weather, consider adding one to your wardrobe');
+    wardrobeGapSuggestions.push('A jacket or cardigan would help balance today’s weather; consider adding one to your wardrobe.');
   }
 
   const shouldAddHeadwear = context.weather.feels_like <= 12 || alerts.some(alert => alert.type === 'UV' && alert.severity !== 'low');
@@ -932,9 +946,15 @@ export function getRecommendation(
       if (bestHeadwear) {
         bestOutfitItems.push(bestHeadwear);
         reasoning.push(context.weather.feels_like <= 12 ? 'Included headwear for additional warmth.' : 'Added headwear for sun protection.');
+      } else {
+        const alternateHeadwear = itemsByType.Headwear.find(item => !bestOutfitItems.some(existing => existing.id === item.id));
+        if (alternateHeadwear) {
+          const benefit = context.weather.feels_like <= 12 ? 'warmth' : 'UV protection';
+          enhancementSuggestions.push(`Top it off with your ${describeItem(alternateHeadwear)} for a bit of extra ${benefit}.`);
+        }
       }
     } else {
-      missingSuggestions.push('Headwear (beanie, cap, or hat) would improve comfort for today’s conditions');
+      wardrobeGapSuggestions.push('Headwear like a beanie, cap, or visor would improve comfort for today’s conditions.');
     }
   }
 
@@ -953,17 +973,22 @@ export function getRecommendation(
       if (bestAccessory) {
         bestOutfitItems.push(bestAccessory);
         reasoning.push('Layered in an accessory for extra coziness.');
+      } else {
+        const alternateAccessory = itemsByType.Accessories.find(item => !bestOutfitItems.some(existing => existing.id === item.id));
+        if (alternateAccessory) {
+          enhancementSuggestions.push(`Consider adding your ${describeItem(alternateAccessory)} to tie the textures together.`);
+        }
       }
     } else {
-      missingSuggestions.push('Gloves or a scarf would round out this colder-weather outfit');
+      wardrobeGapSuggestions.push('Cold-weather accessories like gloves or a scarf would round out this outfit.');
     }
   }
 
-  if (missingSuggestions.length > 0) {
-    const summaryText = missingSuggestions.length === 1
-      ? missingSuggestions[0]
-      : `${missingSuggestions.slice(0, -1).join(', ')} and ${missingSuggestions[missingSuggestions.length - 1]}`;
-    reasoning.push(`Style gaps: ${summaryText}`);
+  if (wardrobeGapSuggestions.length > 0) {
+    const summaryText = wardrobeGapSuggestions.length === 1
+      ? wardrobeGapSuggestions[0]
+      : `${wardrobeGapSuggestions.slice(0, -1).join(', ')} and ${wardrobeGapSuggestions[wardrobeGapSuggestions.length - 1]}`;
+    reasoning.push(`Closet gaps noticed: ${summaryText}`);
   }
 
     // --- Compose a more detailed, user-facing explanation ---
@@ -1027,8 +1052,10 @@ export function getRecommendation(
 
       detailedParts.push(`Recommendation confidence: ${(bestScore / 100 * 100).toFixed(0)}% based on color, style, fit and your preferences.`);
 
-      if (missingSuggestions.length > 0) {
-        detailedParts.push(`To complete the look, consider: ${missingSuggestions.join('; ')}.`);
+      if (enhancementSuggestions.length > 0) {
+        detailedParts.push(`Optional finishing touches to elevate this look: ${enhancementSuggestions.join('; ')}.`);
+      } else if (wardrobeGapSuggestions.length > 0) {
+        detailedParts.push(`Consider picking up: ${wardrobeGapSuggestions.join('; ')}.`);
       }
 
       emitDebug('selection:final', {
@@ -1045,7 +1072,7 @@ export function getRecommendation(
         confidence_score: bestScore / 100,
         reasoning: reasoning.join('. '),
         detailed_reasoning: detailedReasoning,
-        missing_items: missingSuggestions,
+        missing_items: enhancementSuggestions.length > 0 ? enhancementSuggestions : wardrobeGapSuggestions,
         alerts,
         context,
       };
@@ -1061,7 +1088,7 @@ export function getRecommendation(
         items: bestOutfitItems,
         confidence_score: bestScore / 100,
         reasoning: reasoning.join('. '),
-        missing_items: missingSuggestions,
+        missing_items: enhancementSuggestions.length > 0 ? enhancementSuggestions : wardrobeGapSuggestions,
         alerts,
         context,
       };
