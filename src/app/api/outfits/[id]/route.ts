@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
-export async function DELETE(_request: NextRequest, { params }: RouteContext) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<Record<string, string>> }) {
   const supabase = await createClient();
+
+  const resolvedParams = await context.params;
+  const { id } = resolvedParams;
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  const outfitId = Number(params.id);
+  const outfitId = Number(id);
   if (!Number.isFinite(outfitId)) {
     return NextResponse.json({ success: false, error: 'Invalid outfit id' }, { status: 400 });
   }
