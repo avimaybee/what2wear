@@ -4,6 +4,18 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
+// Shared onboarding types
+export type UploadedItem = {
+  /** Data URL or object URL preview for the uploaded image */
+  preview: string;
+  /** Optional original filename */
+  name?: string;
+  /** Optional file size in bytes */
+  size?: number;
+  /** Optional MIME type */
+  mimeType?: string;
+};
+
 export interface OnboardingWizardProps {
   open: boolean;
   onComplete: () => void;
