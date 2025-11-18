@@ -43,6 +43,22 @@ const TYPE_INSULATION_BASELINE: Record<IClothingItem['type'], number> = {
 
 const clampInsulation = (value: number) => Math.min(10, Math.max(0, value));
 
+const SEASON_SYNONYMS: Record<string, string> = {
+  fall: 'autumn',
+  autumn: 'autumn',
+  spring: 'spring',
+  summer: 'summer',
+  winter: 'winter',
+};
+
+const normalizeSeasonName = (season?: string | null): string => {
+  if (!season) {
+    return '';
+  }
+  const key = season.trim().toLowerCase();
+  return SEASON_SYNONYMS[key] ?? key;
+};
+
 export function resolveInsulationValue(item: Partial<IClothingItem>): number {
   const raw = item.insulation_value;
   if (typeof raw === 'number' && Number.isFinite(raw)) {
@@ -73,22 +89,39 @@ export function resolveInsulationValue(item: Partial<IClothingItem>): number {
 export function filterBySeason<T extends IClothingItem>(
   items: T[],
   currentSeason: string
-): { seasonal: T[], allItems: T[] } {
-  const normalizedSeason = currentSeason.toLowerCase();
-  
-  // Find items explicitly tagged for this season
-  const seasonalItems = items.filter(item => {
+): { seasonal: T[]; neutral: T[]; offSeason: T[] } {
+  const normalizedSeason = normalizeSeasonName(currentSeason);
+
+  if (!normalizedSeason) {
+    return {
+      seasonal: [],
+      neutral: items,
+      offSeason: [],
+    };
+  }
+
+  const seasonal: T[] = [];
+  const neutral: T[] = [];
+  const offSeason: T[] = [];
+
+  for (const item of items) {
     if (!item.season_tags || item.season_tags.length === 0) {
-      // Items without season tags are considered all-season
-      return false;
+      neutral.push(item);
+      continue;
     }
-    return item.season_tags.some(tag => tag.toLowerCase() === normalizedSeason);
-  });
-  
-  return {
-    seasonal: seasonalItems,
-    allItems: items
-  };
+
+    const normalizedTags = item.season_tags
+      .map(tag => normalizeSeasonName(tag))
+      .filter(Boolean);
+
+    if (normalizedTags.includes(normalizedSeason)) {
+      seasonal.push(item);
+    } else {
+      offSeason.push(item);
+    }
+  }
+
+  return { seasonal, neutral, offSeason };
 }
 
 /**
@@ -117,6 +150,30 @@ export function filterByLastWorn<T extends IClothingItem>(
     
     return timeSinceWorn >= minMilliseconds;
   }) as T[];
+}
+
+const normalizeClothingType = (item: Partial<IClothingItem>): string | null => {
+  const explicitType = item.type?.toString().toLowerCase();
+  if (explicitType) {
+    return explicitType;
+  }
+  const category = item.category?.toString().toLowerCase();
+  return category ?? null;
+};
+
+function hasCoreTypeCoverage(items: IClothingItem[]): boolean {
+  if (!items.length) {
+    return false;
+  }
+
+  const hasTop = items.some(item => {
+    const type = normalizeClothingType(item);
+    return type === 'top' || type === 'outerwear';
+  });
+  const hasBottom = items.some(item => normalizeClothingType(item) === 'bottom');
+  const hasFootwear = items.some(item => normalizeClothingType(item) === 'footwear');
+
+  return hasTop && hasBottom && hasFootwear;
 }
 
 /**
@@ -487,6 +544,37 @@ function scoreMaterialPreference(items: IClothingItem[], preferred?: string[], d
   return 50; // Neutral - no preferences set
 }
 
+function scoreSeasonalSuitability(items: IClothingItem[], currentSeason?: string): number {
+  const normalizedSeason = normalizeSeasonName(currentSeason);
+  if (!normalizedSeason) {
+    return 60; // Slightly above neutral when we do not know the season
+  }
+
+  let taggedCount = 0;
+  let matches = 0;
+
+  for (const item of items) {
+    if (!item.season_tags || item.season_tags.length === 0) {
+      continue;
+    }
+
+    taggedCount++;
+    const normalizedTags = item.season_tags
+      .map(tag => normalizeSeasonName(tag))
+      .filter(Boolean);
+
+    if (normalizedTags.includes(normalizedSeason)) {
+      matches++;
+    }
+  }
+
+  if (taggedCount === 0) {
+    return 55; // Neutral if no items have season metadata
+  }
+
+  return Math.round((matches / taggedCount) * 100);
+}
+
 
 /**
  * Calculates a total score for a given outfit combination.
@@ -504,19 +592,21 @@ function scoreOutfit(items: IClothingItem[], context: RecommendationContext): nu
   const lastWornScore = scoreLastWorn(items);
   const stylePrefScore = scoreStylePreference(items, context.user_preferences?.styles);
   const colorPrefScore = scoreColorPreference(items, context.user_preferences?.colors);
+    const seasonScore = scoreSeasonalSuitability(items, context.weather?.season);
 
   const normalizedStyleScore = Math.min(100, (rawStyleScore / 10) * 100);
 
   // Calculate base score from all positive components
   const baseScore = 
-      (colorScore * 0.20) + 
-      (normalizedStyleScore * 0.15) + 
-      (materialHarmonyScore * 0.10) +
-      (fitScore * 0.10) +
-      (lastWornScore * 0.10) +
-      (stylePrefScore * 0.15) +
-      (colorPrefScore * 0.10) +
-      (Math.max(0, materialPrefScore) * 0.10); // Only positive contribution
+      (colorScore * 0.18) + 
+      (normalizedStyleScore * 0.13) + 
+      (materialHarmonyScore * 0.09) +
+      (fitScore * 0.09) +
+      (lastWornScore * 0.09) +
+      (stylePrefScore * 0.13) +
+      (colorPrefScore * 0.09) +
+      (Math.max(0, materialPrefScore) * 0.10) +
+      (seasonScore * 0.10); // Prioritize seasonally-appropriate pairings
       
   // Apply penalties (these reduce but don't eliminate the score)
   const penalties = Math.min(0, materialPrefScore) + patternPenalty;
@@ -582,19 +672,26 @@ export function getRecommendation(
 
   // Filter by season if season information is available
   if (context.weather.season) {
-    const { seasonal, allItems } = filterBySeason(availableItems, context.weather.season);
-    
-    // Prefer seasonal items but keep all items as fallback
-    if (seasonal.length >= 10) {
-      // If we have enough seasonal items, use them
-      availableItems = seasonal;
-      reasoning.push(`Selected ${context.weather.season.toLowerCase()}-appropriate clothing`);
-      emitDebug('filter:season', { season: context.weather.season, remaining: availableItems.length, seasonal: true });
-    } else {
-      // Not enough seasonal items, use all items but note the season
-      availableItems = allItems;
-      emitDebug('filter:season', { season: context.weather.season, remaining: availableItems.length, seasonal: false });
+    const { seasonal, neutral, offSeason } = filterBySeason(availableItems, context.weather.season);
+    const prioritizedPool = [...seasonal, ...neutral];
+    const appliedSeasonFilter = prioritizedPool.length > 0 && hasCoreTypeCoverage(prioritizedPool);
+
+    if (appliedSeasonFilter) {
+      availableItems = prioritizedPool as ResolvedClothingItem[];
+      const normalizedSeason = normalizeSeasonName(context.weather.season);
+      const message = seasonal.length > 0
+        ? `Prioritized ${normalizedSeason} wardrobe staples`
+        : `Leaning on all-season basics suited for ${normalizedSeason}`;
+      reasoning.push(message);
     }
+
+    emitDebug('filter:season', {
+      season: context.weather.season,
+      seasonalCount: seasonal.length,
+      neutralCount: neutral.length,
+      offSeasonCount: offSeason.length,
+      applied: appliedSeasonFilter,
+    });
   }
 
   // Task 2.4: Apply dress code constraint
