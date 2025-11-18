@@ -21,7 +21,7 @@ const buttonVariants = cva(
         link: 
           "text-primary underline-offset-4 hover:underline hover:text-primary/80 border-0 shadow-none",
         success:
-          "border-border bg-green-500 text-white hover:bg-green-600 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)]","
+          "border-border bg-green-500 text-white hover:bg-green-600 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)]",
       },
       size: {
         default: "h-11 px-6 py-2 md:h-10", // Increased height for more visible button
