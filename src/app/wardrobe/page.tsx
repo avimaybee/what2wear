@@ -895,7 +895,7 @@ export default function WardrobePage() {
       {/* Floating Add Item FAB */}
       <motion.div layoutId="add-item-button" className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40">
         <Button
-          variant="default"
+          variant="cta"
           size="lg"
           onClick={handleOpenAddModal}
           className="shadow-xl border-2 border-accent rounded-full px-6 flex items-center gap-2"
@@ -1029,6 +1029,7 @@ export default function WardrobePage() {
                   <Button 
                     onClick={handleUploadAndCreate}
                     disabled={uploading || !selectedFile}
+                    variant="cta"
                   >
                     {uploading ? (
                       <>
@@ -1248,6 +1249,7 @@ export default function WardrobePage() {
             <Button 
               onClick={handleSaveEdit}
               disabled={saving}
+              variant="cta"
             >
               {saving ? (
                 <>

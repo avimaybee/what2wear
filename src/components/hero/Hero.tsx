@@ -249,6 +249,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                   <Button
                     size="lg"
                     onClick={primaryCTA.onClick}
+                    variant="cta"
                     className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
                     aria-label={`${primaryCTA.label} - Get started with setmyfit`}
                   >
@@ -264,6 +265,7 @@ export const Hero = ({ isAuthenticated, hasWardrobe, className, onGetOutfitClick
                   <Button
                     size="lg"
                     asChild
+                    variant="cta"
                     className="w-full sm:w-auto px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 group"
                   >
                     <Link href={primaryCTA.href} aria-label={`${primaryCTA.label} - Get started with setmyfit`} className="flex items-center justify-center gap-2">

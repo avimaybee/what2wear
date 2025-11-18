@@ -366,7 +366,7 @@ export default function SettingsPage() {
 
           <div className="flex justify-end gap-3">
             <Button variant="outline" asChild><Link href="/">Cancel</Link></Button>
-            <Button onClick={handleSave} disabled={isSaving} className="min-w-[120px]">
+            <Button onClick={handleSave} disabled={isSaving} className="min-w-[120px]" variant="cta">
               {isSaving ? "Saving..." : "Save"}
             </Button>
           </div>

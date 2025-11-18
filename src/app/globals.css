@@ -53,7 +53,7 @@
   --motion-ease-bounce: cubic-bezier(0.22, 1, 0.36, 1);
   
   /* Brand palette */
-  --primary: hsl(6 100% 68%);
+  --primary: hsl(6 95% 67%); /* Coral color matching the attached button image */
   --primary-foreground: hsl(0 0% 100%);
   
   --secondary: hsl(177 20% 90%);
@@ -94,7 +94,7 @@
   --sidebar-ring: oklch(0.65 0.19 35);
 
   /* Heading font */
-  --font-heading: "Stack Sans Text", sans-serif;
+  --font-heading: var(--font-heading);
 }
 
 /* Dark theme variables kept for future use but currently unused
