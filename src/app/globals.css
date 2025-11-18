@@ -3,49 +3,44 @@
 /* Custom variant for dark mode support (no-op while dark mode disabled) */
 @custom-variant dark (&:is(.dark *));
 
-/* Light theme (default) - Papercraft collage aesthetic */
+/* Light theme (default) */
 :root {
-  /* Base canvas – warm cream craft paper */
-  --background: hsl(40 50% 98%);
+  /* Base canvas */
+  --background: hsl(0 0% 100%);
   --foreground: hsl(224 71% 4%);
   
-  /* Card & Surface colors – stacked paper layers */
-  --card: hsl(40 33% 97%);
+  /* Card & Surface colors */
+  --card: hsl(0 0% 100%);
   --card-foreground: var(--foreground);
   
-  /* Popover colors – slightly lifted sticky notes */
-  --popover: hsl(40 33% 97%);
+  /* Popover colors */
+  --popover: hsl(0 0% 100%);
   --popover-foreground: var(--foreground);
   
-  /* Apple HIG Label Hierarchy - Semantic text colors (Light Mode) */
-  /* Primary: Maximum contrast for important content */
-  --color-text-primary: oklch(0.20 0.010 286.375); /* label - primary text */
-  /* Secondary: ~60% opacity for supporting content */
-  --color-text-secondary: oklch(0.45 0.012 286.375); /* secondaryLabel */
-  /* Tertiary: ~40% opacity for de-emphasized content */
-  --color-text-tertiary: oklch(0.60 0.015 286.375); /* tertiaryLabel */
-  /* Quaternary: ~25% opacity for disabled states */
-  --color-text-quaternary: oklch(0.72 0.015 286.375); /* quaternaryLabel */
-  /* Keep muted for backwards compatibility */
+  /* Semantic text colors */
+  --color-text-primary: oklch(0.20 0.010 286.375);
+  --color-text-secondary: oklch(0.45 0.012 286.375);
+  --color-text-tertiary: oklch(0.60 0.015 286.375);
+  --color-text-quaternary: oklch(0.72 0.015 286.375);
   --color-text-muted: oklch(0.60 0.015 286.375);
   
-  /* Surface & elevation layers – tactile stacks */
-  --color-surface: hsl(40 50% 98%);
-  --color-surface-1: hsl(40 33% 97%);
-  --color-surface-2: hsl(40 40% 95%);
-  --color-surface-3: hsl(40 45% 92%);
-  --surface-plaster: hsl(36 40% 96%);
-  --surface-recycled: hsl(28 35% 92%);
-  --surface-shell: hsl(12 28% 95%);
-  --paper-outline: hsl(32 25% 82%);
+  /* Surface & elevation layers */
+  --color-surface: hsl(0 0% 100%);
+  --color-surface-1: hsl(210 20% 98%);
+  --color-surface-2: hsl(210 18% 96%);
+  --color-surface-3: hsl(210 16% 94%);
+  --surface-plaster: hsl(210 20% 97%);
+  --surface-recycled: hsl(210 18% 95%);
+  --surface-shell: hsl(210 16% 93%);
+  --paper-outline: hsl(210 10% 85%);
   
-  /* Shadow system – chunky papercraft drop shadows (used sparingly) */
-  --shadow-xs: 0 1px 0 0 rgba(15, 23, 42, 0.14);
-  --shadow-sm: 2px 2px 0 0 rgba(15, 23, 42, 0.22);
-  --shadow-md: 3px 3px 0 0 rgba(15, 23, 42, 0.30);
-  --shadow-lg: 4px 4px 0 0 rgba(15, 23, 42, 0.34);
-  --shadow-xl: 6px 6px 0 0 rgba(15, 23, 42, 0.40);
-  --shadow-2xl: 8px 8px 0 0 rgba(15, 23, 42, 0.46);
+  /* Shadow system */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.10);
+  --shadow-lg: 0 8px 20px rgba(15, 23, 42, 0.12);
+  --shadow-xl: 0 12px 30px rgba(15, 23, 42, 0.16);
+  --shadow-2xl: 0 18px 40px rgba(15, 23, 42, 0.18);
   
   /* Motion system tokens */
   --motion-duration-fast: 120ms;
@@ -57,35 +52,35 @@
   --motion-ease-elastic: cubic-bezier(0.2, 0.9, 0.2, 1);
   --motion-ease-bounce: cubic-bezier(0.22, 1, 0.36, 1);
   
-  /* Brand palette – coral, teal, sky, orange */
-  --primary: hsl(6 100% 68%); /* Coral */
+  /* Brand palette */
+  --primary: hsl(6 100% 68%);
   --primary-foreground: hsl(0 0% 100%);
   
-  --secondary: hsl(177 20% 90%); /* Light teal */
+  --secondary: hsl(177 20% 90%);
   --secondary-foreground: hsl(177 79% 26%);
   
-  --muted: hsl(38 15% 90%);
+  --muted: hsl(210 20% 96%);
   --muted-foreground: hsl(224 15% 35%);
   
-  --accent: hsl(177 79% 26%); /* Deep teal */
+  --accent: hsl(177 79% 26%);
   --accent-foreground: hsl(0 0% 100%);
   
   --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(40 50% 98%);
+  --destructive-foreground: hsl(0 0% 100%);
   
-  /* Borders – bold, papercraft outlines */
-  --border: hsl(220 13% 88%);
+  /* Borders */
+  --border: hsl(220 13% 90%);
   --input: hsl(0 0% 100%);
   --ring: var(--primary);
   
-  /* Chart colors for data visualization - derived from primary hue */
+  /* Chart colors */
   --chart-1: var(--primary);
   --chart-2: oklch(from var(--primary) l c calc(h + 120));
   --chart-3: oklch(from var(--primary) calc(l - 0.15) c calc(h + 180));
   --chart-4: oklch(from var(--primary) calc(l + 0.15) c calc(h - 60));
   --chart-5: oklch(from var(--primary) calc(l + 0.10) c calc(h + 30));
   
-  /* Border radius scale – chunky rounded corners */
+  /* Border radius scale */
   --radius: 0.875rem;
   
   /* Sidebar colors (for future use) */
@@ -97,6 +92,9 @@
   --sidebar-accent-foreground: oklch(0.15 0.007 286.375);
   --sidebar-border: oklch(0.92 0.006 286.375);
   --sidebar-ring: oklch(0.65 0.19 35);
+
+  /* Heading font */
+  --font-heading: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 /* Dark theme variables kept for future use but currently unused
@@ -196,61 +194,18 @@
   }
 }
 
-/* Papercraft background: subtle diagonal checkered pattern */
 @layer base {
-  .papercraft-bg {
-    position: relative;
-    isolation: isolate;
-    background-color: hsl(40 50% 98%);
-    background-image:
-      linear-gradient(90deg, hsl(40 30% 94% / 0.65) 1px, transparent 1px),
-      linear-gradient(180deg, hsl(40 30% 94% / 0.65) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(40 25% 97% / 0.9) 50%, transparent 50%),
-      linear-gradient(180deg, hsl(40 28% 96% / 0.7) 50%, transparent 50%),
-      radial-gradient(circle at 20% 30%, hsl(40 30% 94% / 0.35) 0 24%, transparent 25%),
-      radial-gradient(circle at 80% 70%, hsl(40 38% 92% / 0.4) 0 22%, transparent 23%),
-      radial-gradient(circle at 10% 80%, hsl(40 20% 96% / 0.25) 0 18%, transparent 19%);
-    background-size:
-      32px 32px,
-      32px 32px,
-      64px 64px,
-      64px 64px,
-      96px 96px,
-      96px 96px,
-      120px 120px;
-    background-position:
-      0 0,
-      0 0,
-      0 0,
-      0 0,
-      -12px -8px,
-      24px 18px,
-      40px 50px;
-    background-blend-mode: soft-light;
-  }
-  .papercraft-bg::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.25;
-    mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23noise)' opacity='0.25'/%3E%3C/svg%3E");
-    background-size: 220px 220px;
-    z-index: -1;
-  }
-
   .paper-tape {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    padding: 0.15rem 1.5rem;
-    color: hsl(45 15% 20%);
-    background: linear-gradient(135deg, hsl(45 20% 86%), hsl(45 25% 90%));
-    box-shadow: inset 0 0 0 1px hsl(40 30% 75% / 0.6), 0 4px 20px hsl(35 30% 40% / 0.15);
-    transform: rotate(var(--tape-rotation, -2deg));
+    padding: 0.15rem 1.2rem;
+    color: hsl(200 15% 20%);
+    background: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 20% 97%));
+    box-shadow: inset 0 0 0 1px hsl(210 15% 85% / 0.6), 0 3px 10px hsl(210 30% 40% / 0.15);
+    transform: rotate(var(--tape-rotation, -1.5deg));
     border-radius: 0.25rem;
   }
   .paper-tape::before,
@@ -262,88 +217,12 @@
     pointer-events: none;
   }
   .paper-tape::before {
-    border: 1px dashed hsl(35 20% 60% / 0.65);
-    mix-blend-mode: multiply;
+    border: 1px dashed hsl(210 12% 70% / 0.8);
   }
   .paper-tape::after {
-    box-shadow: 0 8px 15px hsl(35 30% 40% / 0.25);
-    transform: translateY(6px);
-    opacity: 0.4;
-  }
-
-  .paper-note {
-    position: relative;
-    background: linear-gradient(180deg, hsl(45 60% 97%), hsl(45 50% 94%));
-    border: 1px solid hsl(45 20% 80%);
-    border-radius: inherit;
-    box-shadow: 0 12px 30px hsl(30 20% 40% / 0.25);
-  }
-  .paper-note::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: inset 0 0 35px hsl(45 35% 85% / 0.8);
-    pointer-events: none;
-  }
-
-  .paper-rip {
-    position: relative;
-    isolation: isolate;
-    padding-block-start: 1.25rem;
-  }
-  .paper-rip::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: repeating-linear-gradient(
-      90deg,
-      hsl(40 30% 85%),
-      hsl(40 30% 85%) 12px,
-      hsl(40 35% 92%) 12px,
-      hsl(40 35% 92%) 24px
-    );
-    opacity: 0.65;
-    mix-blend-mode: multiply;
-    z-index: -1;
-  }
-  .paper-rip::after {
-    content: "";
-    position: absolute;
-    inset-block-start: -4px;
-    inset-inline: 0;
-    height: 10px;
-    background-image: radial-gradient(circle at 12px -2px, transparent 8px, hsl(40 20% 88%) 9px);
-    background-size: 24px 12px;
-    z-index: 1;
-  }
-
-  .cta-layer {
-    position: relative;
-    overflow: visible;
-  }
-  .cta-layer::before,
-  .cta-layer::after {
-    content: "";
-    position: absolute;
-    width: 70px;
-    height: 22px;
-    background: linear-gradient(135deg, hsl(35 35% 80%), hsl(35 40% 90%));
-    opacity: 0.75;
-    box-shadow: 0 8px 15px hsl(30 25% 35% / 0.2);
-    border-radius: 0.3rem;
-    top: -14px;
-    pointer-events: none;
-    mix-blend-mode: multiply;
-  }
-  .cta-layer::before {
-    left: 18px;
-    transform: rotate(-6deg);
-  }
-  .cta-layer::after {
-    right: 22px;
-    transform: rotate(8deg);
+    box-shadow: 0 6px 12px hsl(210 25% 35% / 0.2);
+    transform: translateY(4px);
+    opacity: 0.35;
   }
 }
 

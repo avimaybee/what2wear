@@ -332,7 +332,7 @@ export default function HomePage() {
   // Loading state
   if (loading || !location) {
     return (
-      <div className="min-h-screen papercraft-bg flex items-center justify-center px-4">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-5xl space-y-6">
           {/* Weather + hero skeleton */}
           <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)] items-start">
@@ -380,8 +380,8 @@ export default function HomePage() {
     
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="paper-rip max-w-2xl w-full space-y-4">
-          <span className="paper-tape text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground/80">Need Attention</span>
+        <div className="max-w-2xl w-full space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Need Attention</p>
           {isAuthError ? (
             <EmptyState
               icon={LogIn}

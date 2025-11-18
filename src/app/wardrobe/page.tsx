@@ -444,7 +444,7 @@ export default function WardrobePage() {
   // Loading state
   if (loading) {
     return (
-      <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6">
+      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <Skeleton variant="text" className="h-8 w-56 mb-2" />
@@ -464,7 +464,7 @@ export default function WardrobePage() {
   // Error state
   if (error) {
     return (
-      <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
         <div className="max-w-2xl mx-auto">
           <EmptyState
             icon={AlertCircle}
@@ -488,7 +488,7 @@ export default function WardrobePage() {
   if (wardrobeItems.length === 0) {
     return (
       <>
-        <div className="papercraft-bg container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+        <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-[family-name:var(--font-heading)] tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
@@ -640,7 +640,7 @@ export default function WardrobePage() {
   return (
     <div 
       className={cn(
-        "paper-rip container max-w-screen-2xl rounded-[1.6rem] px-4 sm:px-6 lg:px-8 pt-6 pb-24 md:pt-8 md:pb-10 space-y-6",
+        "container max-w-screen-2xl px-4 sm:px-6 lg:px-8 pt-6 pb-24 md:pt-8 md:pb-10 space-y-6",
         dragActive && "ring-2 ring-primary ring-offset-4 ring-offset-background rounded-[1.5rem]"
       )}
       onDragEnter={handleDragOver}
@@ -653,8 +653,8 @@ export default function WardrobePage() {
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <span className="paper-tape text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground/80">Virtual Closet</span>
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Virtual Closet</p>
           <h1 className="text-3xl md:text-4xl font-[family-name:var(--font-heading)] tracking-[0.08em] uppercase text-foreground mb-1">Virtual Wardrobe</h1>
           <p className="text-sm text-muted-foreground">
             {filteredItems.length} of {wardrobeItems.length} items

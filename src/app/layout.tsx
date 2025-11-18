@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fredoka, Space_Grotesk } from "next/font/google";
+import { Fredoka } from "next/font/google";
 import { Header } from "@/components/ui/header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,7 +11,6 @@ export const metadata: Metadata = {
 };
 
 const bodyFont = Fredoka({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-body" });
-const headingFont = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-heading" });
 
 export default function RootLayout({
   children,
@@ -23,9 +22,9 @@ export default function RootLayout({
     <html 
       lang="en" 
       suppressHydrationWarning
-      className={`${bodyFont.variable} ${headingFont.variable}`}
+      className={`${bodyFont.variable}`}
     >
-      <body className="papercraft-bg min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-body)]">
+      <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-body)]">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

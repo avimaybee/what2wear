@@ -104,7 +104,7 @@ export const Header = () => {
               className="flex items-center"
               aria-label="setmyfit home"
             >
-              <span className="rounded-[0.9rem] bg-card/90 px-3.5 py-1.5 text-lg md:text-xl font-semibold tracking-[0.28em] uppercase font-[family-name:var(--font-heading)] text-foreground shadow-sm">
+              <span className="rounded-[0.9rem] bg-card/90 px-3.5 py-1.5 text-lg md:text-xl font-semibold tracking-[0.28em] uppercase font-[family-name:var(--font-heading)] text-foreground">
                 SetMyFit
               </span>
             </Link>

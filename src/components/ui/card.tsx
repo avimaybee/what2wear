@@ -8,10 +8,10 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "paper-note relative text-card-foreground transition-all duration-200",
-      !squircle && "rounded-[1.25rem]",
-      squircle && "squircle-filter rounded-[2rem]",
-      hoverable && "cursor-pointer hover:-translate-y-0.5",
+      "relative bg-card text-card-foreground transition-shadow duration-200",
+      !squircle && "rounded-[1.25rem] border border-border/70 shadow-sm",
+      squircle && "squircle-filter rounded-[2rem] shadow-sm",
+      hoverable && "cursor-pointer hover:shadow-md",
       className
     )}
     {...props}
