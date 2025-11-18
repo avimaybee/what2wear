@@ -50,6 +50,7 @@ export default function HomePage() {
   const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [recommendationDiagnostics, setRecommendationDiagnostics] = useState<RecommendationDiagnostics | null>(null);
+  const [initialRecommendationResolved, setInitialRecommendationResolved] = useState(false);
 
   const emitClientLog = useCallback((message: string, context?: Record<string, unknown>) => {
     if (typeof window === "undefined") return;
@@ -265,6 +266,39 @@ export default function HomePage() {
     }
   }, [emitClientLog, logDiagnosticsToConsole]);
 
+  const loadLatestRecommendation = useCallback(async () => {
+    emitClientLog('recommendation:cache:check');
+    try {
+      const response = await fetch('/api/recommendation');
+      if (!response.ok) {
+        emitClientLog('recommendation:cache:miss', { status: response.status });
+        return false;
+      }
+
+      const payload: RecommendationApiResponse = await response.json();
+      if (payload.success && payload.data) {
+        setRecommendationData(payload.data);
+        setHasWardrobe(true);
+        setError(null);
+        setLoading(false);
+        emitClientLog('recommendation:cache:hit', {
+          outfitItems: payload.data.recommendation.outfit.length,
+        });
+        return true;
+      }
+
+      emitClientLog('recommendation:cache:empty');
+      return false;
+    } catch (error) {
+      emitClientLog('recommendation:cache:error', {
+        message: error instanceof Error ? error.message : 'unknown',
+      });
+      return false;
+    } finally {
+      setInitialRecommendationResolved(true);
+    }
+  }, [emitClientLog]);
+
   // Initialize: Get location and fetch recommendation
   useEffect(() => {
     const init = async () => {
@@ -313,6 +347,17 @@ export default function HomePage() {
   }, [emitClientLog, requestLocation]); // Run only once on mount
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setInitialRecommendationResolved(true);
+      return;
+    }
+
+    if (!initialRecommendationResolved) {
+      loadLatestRecommendation();
+    }
+  }, [isAuthenticated, initialRecommendationResolved, loadLatestRecommendation]);
+
+  useEffect(() => {
     if (!recommendationData) return;
     const outfitCount = recommendationData?.recommendation.outfit.length ?? 0;
     emitClientLog('recommendation:state:update', { outfitCount });
@@ -320,14 +365,16 @@ export default function HomePage() {
 
   // Fetch recommendation when location becomes available
   useEffect(() => {
-    // When we get a location, trigger a recommendation fetch.
-    // Previous check used `!loading` which prevented the first fetch because
-    // `loading` is initially true. Call fetch when we have a location.
-    if (location) {
-      fetchRecommendation(location);
+    if (!location || !initialRecommendationResolved) {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location]); // Only depend on location, not fetchRecommendation to avoid loops
+
+    if (recommendationData) {
+      return;
+    }
+
+    fetchRecommendation(location);
+  }, [location, initialRecommendationResolved, recommendationData, fetchRecommendation]);
 
   // Loading state
   if (loading || !location) {

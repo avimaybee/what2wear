@@ -176,7 +176,7 @@
   
   .border-border,
   .border-border\/40 {
-    border-color: #000000;
+    border-color: hsl(220 13% 90%);
   }
   
   body {

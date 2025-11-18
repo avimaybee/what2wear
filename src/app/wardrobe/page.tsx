@@ -507,7 +507,7 @@ export default function WardrobePage() {
         <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-heading uppercase text-foreground mb-1">Virtual Wardrobe</h1>
+              <h1 className="text-3xl md:text-4xl font-heading text-foreground mb-1">Virtual Wardrobe</h1>
               <p className="text-sm text-muted-foreground">
                 Manage your clothing collection
               </p>
@@ -898,7 +898,7 @@ export default function WardrobePage() {
           variant="default"
           size="lg"
           onClick={handleOpenAddModal}
-          className="shadow-xl border-2 border-accent rounded-full px-6 flex items-center gap-2"
+          className="shadow-xl rounded-full px-6 flex items-center gap-2"
           aria-label="Add new wardrobe item"
         >
           <Plus className="h-5 w-5" aria-hidden="true" />

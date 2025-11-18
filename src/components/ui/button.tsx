@@ -4,24 +4,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border-[3px] text-sm font-bold tracking-wide touch-manipulation transition-transform transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 disabled:cursor-not-allowed active:translate-y-1",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-bold tracking-wide touch-manipulation transition-transform transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 disabled:cursor-not-allowed",
   {
     variants: {
       variant: {
         default:
-          "border-border bg-primary text-primary-foreground hover:bg-primary/90 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)]",
+          "border-[3px] border-[#000000] bg-primary text-primary-foreground hover:bg-primary/90 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)] active:translate-y-1",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 border-border shadow-[4px_4px_0_0_rgba(26,26,26,0.6)]",
+          "border-[3px] border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-none",
         destructive:
-          "border-border bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)]",
+          "border-[3px] border-[#000000] bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)] active:translate-y-1",
         outline:
-          "border-[3px] border-accent bg-background text-accent hover:bg-accent hover:text-accent-foreground shadow-[4px_4px_0_0_rgba(26,26,26,0.4)]",
+          "border-[3px] border-accent bg-background text-accent hover:bg-accent hover:text-accent-foreground shadow-none",
         ghost: 
           "border-0 bg-transparent hover:bg-secondary hover:text-foreground shadow-none",
         link: 
           "text-primary underline-offset-4 hover:underline hover:text-primary/80 border-0 shadow-none",
         success:
-          "border-border bg-green-500 text-white hover:bg-green-600 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)]",
+          "border-[3px] border-[#000000] bg-green-500 text-white hover:bg-green-600 shadow-[4px_4px_0_0_rgba(26,26,26,0.6)] active:translate-y-1",
       },
       size: {
         default: "h-11 px-6 py-2 md:h-10", // Increased height for more visible button

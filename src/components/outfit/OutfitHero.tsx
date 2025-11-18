@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ChevronDown, ChevronUp, RefreshCw, Shirt } from "lucide-react";
+import { Sparkles, ChevronDown, ChevronUp, RefreshCw, Shirt, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatReasoningForUser } from "@/lib/helpers/reasoningFormatter";
 import type { IClothingItem } from "@/lib/types";
@@ -25,6 +25,7 @@ interface OutfitHeroProps {
   isDisliked?: boolean;
   isLoggingOutfit?: boolean;
   isRegenerating?: boolean;
+  missingItems?: string[];
 }
 
 /**
@@ -47,6 +48,7 @@ export function OutfitHero({
   onRegenerate,
   isLoggingOutfit = false,
   isRegenerating = false,
+  missingItems = [],
 }: OutfitHeroProps) {
   const [showFullReason, setShowFullReason] = useState(false);
 
@@ -81,7 +83,7 @@ export function OutfitHero({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
           >
-            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+            <p className="text-xs font-semibold text-muted-foreground mb-2">
               Outfit Items ({outfitItems.length})
             </p>
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
@@ -152,6 +154,32 @@ export function OutfitHero({
         </motion.div>
       </div>
 
+      {missingItems.length > 0 && (
+        <div className="px-4 sm:px-6 pb-4">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.25 }}
+            className="rounded-lg border border-amber-200 bg-amber-50 text-amber-900 p-4"
+          >
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-500" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-semibold">Add these to your closet:</p>
+                <ul className="mt-2 space-y-1 text-sm">
+                  {missingItems.map((tip) => (
+                    <li key={tip} className="flex items-start gap-2">
+                      <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Detailed Reasoning Section - Now below buttons */}
       {detailedReasoning && (
         <div className="px-4 sm:px-6 pb-6">
@@ -191,17 +219,17 @@ export function OutfitHero({
                   size="sm"
                   variant="ghost"
                   onClick={() => setShowFullReason(!showFullReason)}
-                  className="h-8 text-xs font-medium group"
+                  className="h-8 text-xs font-medium group transition-all duration-200 ease-out"
                   aria-expanded={showFullReason}
                   aria-label={showFullReason ? "Show less reasoning" : "Show more reasoning"}
                 >
                   {showFullReason ? (
                     <>
-                      Show less <ChevronUp className="ml-1 h-3 w-3 transition-transform group-hover:-translate-y-0.5" aria-hidden="true" />
+                      Show less <ChevronUp className="ml-1 h-3 w-3" aria-hidden="true" />
                     </>
                   ) : (
                     <>
-                      Show more <ChevronDown className="ml-1 h-3 w-3 transition-transform group-hover:translate-y-0.5" aria-hidden="true" />
+                      Show more <ChevronDown className="ml-1 h-3 w-3" aria-hidden="true" />
                     </>
                   )}
                 </Button>

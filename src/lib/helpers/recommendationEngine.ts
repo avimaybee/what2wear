@@ -657,6 +657,8 @@ export function getRecommendation(
     debug({ stage, timestamp: new Date().toISOString(), meta });
   };
 
+  const missingSuggestions: string[] = [];
+
   let availableItems: ResolvedClothingItem[] = wardrobe.map(item => ({
     ...item,
     insulation_value: resolveInsulationValue(item),
@@ -728,12 +730,27 @@ export function getRecommendation(
 
   // Filter items by insulation (with some tolerance)
   const insulationTolerance = 2;
-  const insulationFilteredItems = availableItems.filter(item => {
+  const tightInsulationPool = availableItems.filter(item => {
     const itemInsulation = resolveInsulationValue(item);
     return Math.abs(itemInsulation - requiredInsulation) <= insulationTolerance;
   });
-  emitDebug('filter:insulation', { remaining: insulationFilteredItems.length, requiredInsulation });
-  // Skip verbose insulation filter debug
+  emitDebug('filter:insulation', { remaining: tightInsulationPool.length, requiredInsulation });
+
+  let insulationFilteredItems = tightInsulationPool;
+  if (!hasCoreTypeCoverage(insulationFilteredItems)) {
+    const relaxedPool = availableItems.filter(item => {
+      const itemInsulation = resolveInsulationValue(item);
+      return Math.abs(itemInsulation - requiredInsulation) <= insulationTolerance + 2;
+    });
+
+    if (hasCoreTypeCoverage(relaxedPool)) {
+      insulationFilteredItems = relaxedPool;
+      emitDebug('filter:insulation:relaxed', { remaining: relaxedPool.length });
+    } else {
+      insulationFilteredItems = availableItems;
+      emitDebug('filter:insulation:fallback', { remaining: availableItems.length });
+    }
+  }
 
   // Task 3.3: Consider weather alerts
   const alerts = constraints?.weather_alerts || [];
@@ -755,6 +772,8 @@ export function getRecommendation(
     Bottoms: insulationFilteredItems.filter(i => i.type === 'Bottom'),
     Footwear: insulationFilteredItems.filter(i => i.type === 'Footwear'),
     Outerwear: insulationFilteredItems.filter(i => i.type === 'Outerwear'),
+    Accessories: insulationFilteredItems.filter(i => i.type === 'Accessory'),
+    Headwear: insulationFilteredItems.filter(i => i.type === 'Headwear'),
   };
 
   // Ensure we have at least one of each core item type
@@ -802,7 +821,8 @@ export function getRecommendation(
   const insulationDeficit = requiredInsulation - baseOutfitInsulation;
 
   // Add outerwear if needed and available
-  if (insulationDeficit > 1 && itemsByType.Outerwear.length > 0) {
+  const shouldLayer = insulationDeficit > 1 || context.weather.feels_like <= 16;
+  if (shouldLayer && itemsByType.Outerwear.length > 0) {
     let bestOuterwear: IClothingItem | null = null;
     let bestOutfitWithOuterwearScore = -1;
 
@@ -822,7 +842,60 @@ export function getRecommendation(
     if (bestOuterwear) {
       bestOutfitItems.push(bestOuterwear);
       reasoning.push(`Added outerwear for warmth and style compatibility.`);
+    } else if (insulationDeficit > 1) {
+      missingSuggestions.push('Add a warm outer layer like a jacket or coat for the current weather');
     }
+  } else if (shouldLayer && itemsByType.Outerwear.length === 0) {
+    missingSuggestions.push('A jacket or cardigan would help balance today’s weather, consider adding one to your wardrobe');
+  }
+
+  const shouldAddHeadwear = context.weather.feels_like <= 12 || alerts.some(alert => alert.type === 'UV' && alert.severity !== 'low');
+  if (shouldAddHeadwear) {
+    if (itemsByType.Headwear.length > 0) {
+      let bestHeadwear: IClothingItem | null = null;
+      let bestScoreWithHeadwear = -1;
+      for (const headwear of itemsByType.Headwear) {
+        const scored = scoreOutfit([...bestOutfitItems, headwear], context);
+        if (scored > bestScoreWithHeadwear) {
+          bestScoreWithHeadwear = scored;
+          bestHeadwear = headwear;
+        }
+      }
+      if (bestHeadwear) {
+        bestOutfitItems.push(bestHeadwear);
+        reasoning.push(context.weather.feels_like <= 12 ? 'Included headwear for additional warmth.' : 'Added headwear for sun protection.');
+      }
+    } else {
+      missingSuggestions.push('Headwear (beanie, cap, or hat) would improve comfort for today’s conditions');
+    }
+  }
+
+  const shouldAddAccessory = context.weather.feels_like <= 14;
+  if (shouldAddAccessory) {
+    if (itemsByType.Accessories.length > 0) {
+      let bestAccessory: IClothingItem | null = null;
+      let bestAccessoryScore = -1;
+      for (const accessory of itemsByType.Accessories) {
+        const scored = scoreOutfit([...bestOutfitItems, accessory], context);
+        if (scored > bestAccessoryScore) {
+          bestAccessoryScore = scored;
+          bestAccessory = accessory;
+        }
+      }
+      if (bestAccessory) {
+        bestOutfitItems.push(bestAccessory);
+        reasoning.push('Layered in an accessory for extra coziness.');
+      }
+    } else {
+      missingSuggestions.push('Gloves or a scarf would round out this colder-weather outfit');
+    }
+  }
+
+  if (missingSuggestions.length > 0) {
+    const summaryText = missingSuggestions.length === 1
+      ? missingSuggestions[0]
+      : `${missingSuggestions.slice(0, -1).join(', ')} and ${missingSuggestions[missingSuggestions.length - 1]}`;
+    reasoning.push(`Style gaps: ${summaryText}`);
   }
 
     // --- Compose a more detailed, user-facing explanation ---
@@ -886,6 +959,10 @@ export function getRecommendation(
 
       detailedParts.push(`Recommendation confidence: ${(bestScore / 100 * 100).toFixed(0)}% based on color, style, fit and your preferences.`);
 
+      if (missingSuggestions.length > 0) {
+        detailedParts.push(`To complete the look, consider: ${missingSuggestions.join('; ')}.`);
+      }
+
       emitDebug('selection:final', {
         itemIds: bestOutfitItems.map(item => item.id),
         score: bestScore,
@@ -900,6 +977,7 @@ export function getRecommendation(
         confidence_score: bestScore / 100,
         reasoning: reasoning.join('. '),
         detailed_reasoning: detailedReasoning,
+        missing_items: missingSuggestions,
         alerts,
         context,
       };
@@ -915,6 +993,7 @@ export function getRecommendation(
         items: bestOutfitItems,
         confidence_score: bestScore / 100,
         reasoning: reasoning.join('. '),
+        missing_items: missingSuggestions,
         alerts,
         context,
       };

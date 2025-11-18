@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ export const DashboardClient = ({
   const [swapModalOpen, setSwapModalOpen] = useState(false);
   const [swapItemInFocus, setSwapItemInFocus] = useState<IClothingItem | null>(null);
   const [_swappedOutfit, setSwappedOutfit] = useState<IClothingItem[] | null>(null);
+  const missingItemsToastKeyRef = useRef<string>("");
 
   // Safely destructure with fallbacks
   const { recommendation = null, weather = null } = recommendationData || {};
@@ -78,6 +79,19 @@ export const DashboardClient = ({
       fetchLocationName();
     }
   }, [location]);
+
+  useEffect(() => {
+    const tips = recommendation?.missing_items;
+    if (!tips || tips.length === 0) {
+      return;
+    }
+    const key = tips.join('|');
+    if (missingItemsToastKeyRef.current === key) {
+      return;
+    }
+    missingItemsToastKeyRef.current = key;
+    toast(`Add to wardrobe: ${tips.join('; ')}`, { icon: '🧤' });
+  }, [recommendation?.missing_items]);
 
   const handleWearOutfit = async () => {
     setIsLogging(true);
@@ -322,6 +336,7 @@ export const DashboardClient = ({
             <OutfitHero
               outfitItems={recommendation.outfit || []}
               detailedReasoning={recommendation.detailed_reasoning || recommendation.reasoning}
+              missingItems={recommendation.missing_items || []}
               onItemClick={(item) => {
                 setSwapItemInFocus(item);
                 setSwapModalOpen(true);

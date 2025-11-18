@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { ApiResponse, OutfitRecommendation, IClothingItem, WeatherData, ClothingType, RecommendationDiagnostics, RecommendationApiPayload } from '@/lib/types';
+import { IClothingItem, WeatherData, ClothingType, RecommendationDiagnostics, RecommendationApiPayload } from '@/lib/types';
 import { filterByLastWorn, getRecommendation, RecommendationDebugCollector, resolveInsulationValue } from '@/lib/helpers/recommendationEngine';
 
 interface InsufficientItemsError extends Error {
@@ -508,6 +508,7 @@ async function generateRecommendation(
       confidence_score: recommendation.confidence_score,
       reasoning: recommendation.reasoning,
       detailed_reasoning: recommendation.detailed_reasoning || null,
+      missing_items: recommendation.missing_items || null,
       created_at: new Date().toISOString(),
     })
     .select()
@@ -555,6 +556,7 @@ async function generateRecommendation(
       confidence_score: recommendation.confidence_score,
       reasoning: recommendation.reasoning,
       detailed_reasoning: recommendation.detailed_reasoning || null,
+      missing_items: recommendation.missing_items || [],
       dress_code: 'Casual', // Default, could be enhanced from context
       weather_alerts: recommendation.alerts || [],
       id: savedRecommendation?.id,
@@ -573,56 +575,80 @@ async function generateRecommendation(
 
 /**
  * GET /api/recommendation
- * Get latest recommendation for the user
- * UPDATED: Recommendation #4 - Added validation middleware
+ * Returns the most recent recommendation payload so refreshes do not auto-regenerate outfits.
  */
-export async function GET(_request: NextRequest): Promise<NextResponse<ApiResponse<OutfitRecommendation>>> {
+export async function GET(_request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
-    
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
 
-    // Get latest recommendation
-    const { data: recommendation, error: recError } = await supabase
-      .from('outfit_recommendations')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
 
-    if (recError || !recommendation) {
-      return NextResponse.json(
-        { success: false, error: 'No recommendations found' },
-        { status: 404 }
-      );
-    }
+  const { data: recommendation, error: recError } = await supabase
+    .from('outfit_recommendations')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
 
-    // Fetch clothing items for the recommendation
-    const { data: items } = await supabase
-      .from('clothing_items')
-      .select('*')
-      .in('id', recommendation.outfit_items);
+  if (recError || !recommendation) {
+    return NextResponse.json(
+      { success: false, error: 'No recommendations found' },
+      { status: 404 }
+    );
+  }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: recommendation.id,
-        items: items || [],
-        confidence_score: recommendation.confidence_score,
-        reasoning: recommendation.reasoning,
-        detailed_reasoning: recommendation.detailed_reasoning || null,
-        alerts: [],
-        context: {
-          weather: recommendation.weather_data,
-        },
-      },
-    });
+  const { data: items } = await supabase
+    .from('clothing_items')
+    .select('*')
+    .in('id', recommendation.outfit_items);
+
+  const SIGNED_URL_TTL = 60 * 60;
+  const outfitWithSignedUrls = await Promise.all(
+    (items || []).map(async (item) => {
+      if (item.image_url) {
+        try {
+          const url = new URL(item.image_url);
+          const pathSegments = url.pathname.split('/clothing_images/');
+          if (pathSegments.length > 1 && pathSegments[1]) {
+            const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+              .from('clothing_images')
+              .createSignedUrl(pathSegments[1], SIGNED_URL_TTL);
+            if (!signedUrlError && signedUrlData?.signedUrl) {
+              return { ...item, image_url: signedUrlData.signedUrl };
+            }
+          }
+        } catch (_err) {
+          // Ignore parsing issues and fall back to raw URL
+        }
+      }
+      return item;
+    })
+  );
+
+  const payload: RecommendationApiPayload = {
+    recommendation: {
+      outfit: outfitWithSignedUrls as IClothingItem[],
+      confidence_score: recommendation.confidence_score,
+      reasoning: recommendation.reasoning,
+      detailed_reasoning: recommendation.detailed_reasoning || null,
+      missing_items: recommendation.missing_items || [],
+      dress_code: 'Casual',
+      weather_alerts: [],
+      id: recommendation.id,
+      outfit_visual_urls: [],
+    },
+    weather: recommendation.weather_data as WeatherData,
+    alerts: [],
+  };
+
+  return NextResponse.json({
+    success: true,
+    data: payload,
+  });
 }

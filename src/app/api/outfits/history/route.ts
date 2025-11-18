@@ -111,9 +111,60 @@ export async function GET(request: NextRequest) {
         .flat()
         .filter((item): item is OutfitHistoryItem['items'][0] => Boolean(item))
     }));
+
+    const signedUrlCache = new Map<string, string>();
+    const SIGNED_URL_TTL = 60 * 60;
+    const getSafeImageUrl = async (imageUrl: string | null): Promise<string | null> => {
+      if (!imageUrl) return null;
+      if (imageUrl.startsWith('data:')) return imageUrl;
+      if (imageUrl.includes('/storage/v1/object/public/')) return imageUrl;
+      if (signedUrlCache.has(imageUrl)) {
+        return signedUrlCache.get(imageUrl)!;
+      }
+
+      let objectPath: string | null = null;
+      if (imageUrl.startsWith('http')) {
+        try {
+          const parsed = new URL(imageUrl);
+          const parts = parsed.pathname.split('/clothing_images/');
+          if (parts.length > 1 && parts[1]) {
+            objectPath = parts[1];
+          }
+        } catch (_error) {
+          // ignore parsing error and fall back to original URL
+        }
+      } else {
+        objectPath = imageUrl.replace(/^clothing_images\//, '');
+      }
+
+      if (!objectPath) {
+        return imageUrl;
+      }
+
+      const { data: signed, error } = await supabase.storage
+        .from('clothing_images')
+        .createSignedUrl(objectPath, SIGNED_URL_TTL);
+
+      if (!error && signed?.signedUrl) {
+        signedUrlCache.set(imageUrl, signed.signedUrl);
+        return signed.signedUrl;
+      }
+
+      return imageUrl;
+    };
+
+    const historyWithImages: OutfitHistoryItem[] = await Promise.all(
+      history.map(async (outfit) => ({
+        ...outfit,
+        items: await Promise.all(outfit.items.map(async (item) => ({
+          ...item,
+          image_url: (await getSafeImageUrl(item.image_url)) || item.image_url,
+        }))),
+      }))
+    );
     
     // Apply season filter (client-side since season is stored in items)
-    let filteredHistory = history;
+    let filteredHistory = historyWithImages;
     if (season) {
       filteredHistory = history.filter(outfit => 
         outfit.items.some(item => 

@@ -143,7 +143,7 @@ export const TextRollNavigation: React.FC<TextRollNavigationProps> = ({
             <TextRoll
               center
               className={cn(
-                "text-4xl font-extrabold uppercase leading-[0.8] tracking-[-0.03em] transition-colors lg:text-5xl",
+                "text-4xl font-extrabold leading-[0.8] tracking-[-0.03em] transition-colors lg:text-5xl",
                 itemClassName
               )}
             >
