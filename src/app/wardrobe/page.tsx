@@ -7,7 +7,6 @@ import { WardrobeGrid } from "@/components/wardrobe/WardrobeGrid";
 import { ClothingItem, ClothingType } from "@/types/retro";
 import { IClothingItem } from "@/types";
 import { toast } from "@/components/ui/toaster";
-import { MainLayout } from "@/components/layout/MainLayout";
 
 export default function WardrobePage() {
   const [items, setItems] = useState<ClothingItem[]>([]);
@@ -179,14 +178,8 @@ export default function WardrobePage() {
   };
 
   return (
-    <MainLayout>
         <div className="h-full p-4 md:p-8 overflow-y-auto bg-[#f0f0f0] min-h-screen">
             <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-4xl md:text-6xl font-black mb-2 tracking-tighter">WARDROBE_GRID</h1>
-                    <p className="font-mono text-gray-500">MANAGE YOUR DIGITAL INVENTORY</p>
-                </div>
-
                 {loading ? (
                     <div className="flex items-center justify-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
@@ -205,6 +198,5 @@ export default function WardrobePage() {
                 )}
             </div>
         </div>
-    </MainLayout>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { RefreshCcw, ThumbsUp, CheckCircle, Zap, Sparkles, Loader2, BrainCircuit, ChevronDown, ChevronUp, Thermometer } from 'lucide-react';
+import { RefreshCcw, ThumbsUp, CheckCircle, Zap, Sparkles, Loader2, BrainCircuit, ChevronDown, ChevronUp, Thermometer, Lock, Unlock } from 'lucide-react';
 import { RetroWindow, RetroButton, RetroBadge } from '@/components/retro-ui';
 import { ClothingItem, Outfit, ClothingType } from '@/types/retro';
 
@@ -7,9 +7,12 @@ interface OutfitRecommenderProps {
     items: ClothingItem[];
     suggestedOutfit: Outfit | null;
     isGenerating: boolean;
+    generationProgress?: number;
     onGenerate: () => void;
     onLogOutfit: (items: ClothingItem[]) => void;
     onOutfitChange?: (items: ClothingItem[]) => void;
+    lockedItems?: string[];
+    onToggleLock?: (itemId: string) => void;
 }
 
 interface OrganizedOutfit {
@@ -24,9 +27,12 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
     items, 
     suggestedOutfit, 
     isGenerating, 
+    generationProgress = 0,
     onGenerate, 
     onLogOutfit,
-    onOutfitChange 
+    onOutfitChange,
+    lockedItems = [],
+    onToggleLock
 }) => {
   const [isSwapping, setIsSwapping] = useState(false);
   const [activeSwapCategory, setActiveSwapCategory] = useState<ClothingType | null>(null);
@@ -165,8 +171,17 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                                 <img 
                                     src={acc.image_url} 
                                     alt={acc.name} 
-                                    className="w-12 h-12 md:w-20 md:h-20 object-cover border-2 border-black bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" 
+                                    className={`w-12 h-12 md:w-20 md:h-20 object-cover border-2 bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${lockedItems.includes(acc.id) ? 'border-red-500' : 'border-black'}`}
                                 />
+                                <div 
+                                    className="absolute top-0 right-0 bg-white border border-black p-0.5 z-20 hover:bg-gray-100"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onToggleLock?.(acc.id);
+                                    }}
+                                >
+                                    {lockedItems.includes(acc.id) ? <Lock size={10} className="text-red-500" /> : <Unlock size={10} className="text-gray-400" />}
+                                </div>
                                 <div className="absolute inset-x-0 bottom-0 bg-black/80 text-white text-[8px] font-mono p-0.5 truncate opacity-0 group-hover:opacity-100 transition-opacity">
                                     {acc.name}
                                 </div>
@@ -184,11 +199,23 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                      {/* Top */}
                      <div 
                         className="relative group w-full max-w-[160px] md:max-w-[220px] cursor-pointer transition-transform hover:-translate-y-1" 
-                        onClick={() => openSwapModal('Top')}
+                        onClick={() => !lockedItems.includes(coreTop.id) && openSwapModal('Top')}
                      >
                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-20 font-mono text-[8px] md:text-[9px] font-bold bg-[#A0C4FF] border border-black px-1 shadow-sm">CORE TOP</span>
-                         <div className="w-full aspect-square border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative z-10">
+                         <div className={`w-full aspect-square border-2 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative z-10 ${lockedItems.includes(coreTop.id) ? 'border-red-500' : 'border-black'}`}>
                              <img src={coreTop.image_url} className="w-full h-full object-cover" />
+                             
+                             {/* Lock Button */}
+                             <div 
+                                className="absolute top-1 left-1 bg-white border border-black p-1 z-30 hover:bg-gray-100"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleLock?.(coreTop.id);
+                                }}
+                             >
+                                {lockedItems.includes(coreTop.id) ? <Lock size={12} className="text-red-500" /> : <Unlock size={12} className="text-gray-400" />}
+                             </div>
+
                              <div className="absolute top-1 right-1 bg-[#FDFFB6] border-2 border-black p-1 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
                                 <RefreshCcw size={12} />
                              </div>
@@ -204,11 +231,23 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                      {/* Bottom */}
                      <div 
                         className="relative group w-full max-w-[160px] md:max-w-[220px] cursor-pointer transition-transform hover:-translate-y-1 mt-1 md:mt-2" 
-                        onClick={() => openSwapModal('Bottom')}
+                        onClick={() => !lockedItems.includes(coreBottom.id) && openSwapModal('Bottom')}
                      >
                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-20 font-mono text-[8px] md:text-[9px] font-bold bg-[#A0C4FF] border border-black px-1 shadow-sm">CORE BOTTOM</span>
-                         <div className="w-full aspect-[4/5] border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative z-10">
+                         <div className={`w-full aspect-[4/5] border-2 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative z-10 ${lockedItems.includes(coreBottom.id) ? 'border-red-500' : 'border-black'}`}>
                              <img src={coreBottom.image_url} className="w-full h-full object-cover" />
+                             
+                             {/* Lock Button */}
+                             <div 
+                                className="absolute top-1 left-1 bg-white border border-black p-1 z-30 hover:bg-gray-100"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleLock?.(coreBottom.id);
+                                }}
+                             >
+                                {lockedItems.includes(coreBottom.id) ? <Lock size={12} className="text-red-500" /> : <Unlock size={12} className="text-gray-400" />}
+                             </div>
+
                              <div className="absolute top-1 right-1 bg-[#FDFFB6] border-2 border-black p-1 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
                                 <RefreshCcw size={12} />
                              </div>
@@ -228,7 +267,7 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                     <div className="flex flex-col items-end gap-1 relative w-full">
                          <div 
                             className="group relative cursor-pointer transition-transform hover:scale-105 hover:-rotate-2 w-full flex flex-col items-end"
-                            onClick={() => openSwapModal('Outerwear')}
+                            onClick={() => outerwear && !lockedItems.includes(outerwear.id) && openSwapModal('Outerwear')}
                          >
                             <span className="absolute -top-2 md:-top-3 right-0 font-mono text-[8px] md:text-[9px] font-bold bg-white border border-black px-1 z-20">LAYER</span>
                             {outerwear ? (
@@ -236,8 +275,20 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                                     <img 
                                         src={outerwear.image_url} 
                                         alt="Outerwear" 
-                                        className="w-16 h-16 md:w-24 md:h-24 object-cover border-2 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10" 
+                                        className={`w-16 h-16 md:w-24 md:h-24 object-cover border-2 bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10 ${lockedItems.includes(outerwear.id) ? 'border-red-500' : 'border-black'}`} 
                                     />
+                                    
+                                    {/* Lock Button */}
+                                    <div 
+                                        className="absolute top-1 left-1 bg-white border border-black p-0.5 z-30 hover:bg-gray-100"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onToggleLock?.(outerwear.id);
+                                        }}
+                                    >
+                                        {lockedItems.includes(outerwear.id) ? <Lock size={10} className="text-red-500" /> : <Unlock size={10} className="text-gray-400" />}
+                                    </div>
+
                                     <div className="absolute top-1 right-1 bg-[#FDFFB6] border-2 border-black p-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                                         <RefreshCcw size={10} />
                                     </div>

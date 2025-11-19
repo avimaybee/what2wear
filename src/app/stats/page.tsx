@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client";
 import { StatsPage as StatsPageComponent } from "@/components/stats/StatsPage";
 import { ClothingItem, Outfit, ClothingType } from "@/types/retro";
 import { IClothingItem } from "@/types";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { toast } from "@/components/ui/toaster";
 
 export default function StatsPage() {
@@ -109,7 +108,6 @@ export default function StatsPage() {
   };
 
   return (
-    <MainLayout>
         <div className="h-full p-4 md:p-8 overflow-y-auto bg-[#f0f0f0] min-h-screen">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
@@ -126,6 +124,5 @@ export default function StatsPage() {
                 )}
             </div>
         </div>
-    </MainLayout>
   );
 }

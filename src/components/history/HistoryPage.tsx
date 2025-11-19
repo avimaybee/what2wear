@@ -35,7 +35,14 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ history, onDelete }) =
                                         {log.items.slice(0, 4).map((item, i) => (
                                             <div key={i} className="aspect-square border border-black overflow-hidden bg-white relative">
                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                                <img 
+                                                    src={item.image_url} 
+                                                    alt={item.name} 
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = "https://picsum.photos/200/300?grayscale";
+                                                    }}
+                                                />
                                             </div>
                                         ))}
                                         {log.items.length > 4 && (

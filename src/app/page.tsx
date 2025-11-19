@@ -9,6 +9,8 @@ import { WeatherWidget, WeatherData as WidgetWeatherData } from "@/components/we
 import { OutfitRecommender, Outfit, ClothingItem, ClothingType } from "@/components/outfit-recommendation";
 import { RetroWindow, RetroButton } from "@/components/retro-ui";
 import { toast } from "@/components/ui/toaster";
+import { MissionControl } from "@/components/mission-control";
+import { SystemMsg } from "@/components/system-msg";
 
 type RecommendationApiResponse = {
   success: boolean;
@@ -19,6 +21,24 @@ type RecommendationApiResponse = {
   error?: string;
 };
 
+const mapClothingItem = (item: IClothingItem): ClothingItem => ({
+  id: item.id.toString(),
+  name: item.name,
+  category: item.type as ClothingType, 
+  type: item.category || item.type,
+  color: item.color || "Unknown",
+  image_url: item.image_url,
+  insulation_value: item.insulation_value || 0,
+  season_tags: [],
+  style_tags: [],
+  material: "Unknown",
+  dress_code: [],
+  wear_count: 0,
+  last_worn: null,
+  is_favorite: false,
+  created_at: new Date().toISOString(),
+});
+
 export default function HomePage() {
   const router = useRouter();
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
@@ -28,23 +48,31 @@ export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [logs, setLogs] = useState<{ message: string; ts: string }[]>([]);
+  const [selectedOccasion, setSelectedOccasion] = useState<string>('');
+  const [lockedItems, setLockedItems] = useState<string[]>([]);
+  const [allWardrobeItems, setAllWardrobeItems] = useState<ClothingItem[]>([]);
+
+  useEffect(() => {
+      if (isAuthenticated) {
+          const fetchWardrobe = async () => {
+              const supabase = createClient();
+              const { data } = await supabase.from('clothing_items').select('*');
+              if (data) {
+                  // @ts-ignore - Supabase types might not match exactly with IClothingItem yet
+                  setAllWardrobeItems(data.map(mapClothingItem));
+              }
+          };
+          fetchWardrobe();
+      }
+  }, [isAuthenticated]);
 
   const emitClientLog = useCallback((message: string, context?: Record<string, unknown>) => {
-    if (typeof window === "undefined") return;
     const entry = {
       message,
-      context: context ?? null,
       ts: new Date().toISOString(),
     };
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const globalWindow = window as any;
-      globalWindow.__setmyfitLogBuffer = globalWindow.__setmyfitLogBuffer || [];
-      globalWindow.__setmyfitLogBuffer.push(entry);
-      if (globalWindow.__setmyfitLogBuffer.length > 200) {
-        globalWindow.__setmyfitLogBuffer.shift();
-      }
-    } catch (_err) { }
+    setLogs(prev => [...prev.slice(-50), entry]); // Keep last 50 logs
     if (context) console.info(`[setmyfit] ${message}`, context);
     else console.info(`[setmyfit] ${message}`);
   }, []);
@@ -113,10 +141,16 @@ export default function HomePage() {
         return;
       }
 
+      const payload = {
+        ...location,
+        occasion: selectedOccasion,
+        lockedItems: lockedItems
+      };
+
       const res = await fetch("/api/recommendation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(location),
+        body: JSON.stringify(payload),
       });
       
       const data: RecommendationApiResponse = await res.json();
@@ -152,24 +186,6 @@ export default function HomePage() {
     wind: recommendationData?.weather?.wind_speed || 0,
   };
 
-  const mapClothingItem = (item: IClothingItem): ClothingItem => ({
-    id: item.id.toString(),
-    name: item.name,
-    category: item.type as ClothingType, 
-    type: item.category || item.type,
-    color: item.color || "Unknown",
-    image_url: item.image_url,
-    insulation_value: item.insulation_value || 0,
-    season_tags: [],
-    style_tags: [],
-    material: "Unknown",
-    dress_code: [],
-    wear_count: 0,
-    last_worn: null,
-    is_favorite: false,
-    created_at: new Date().toISOString(),
-  });
-
   const suggestedOutfit: Outfit | null = recommendationData?.recommendation ? {
     id: recommendationData.recommendation.id?.toString() || "temp-id",
     outfit_date: new Date().toISOString(),
@@ -181,51 +197,79 @@ export default function HomePage() {
     }
   } : null;
 
-  const wardrobeItems: ClothingItem[] = suggestedOutfit ? suggestedOutfit.items : [];
+  const handleToggleLock = (itemId: string) => {
+      setLockedItems(prev => {
+          if (prev.includes(itemId)) {
+              emitClientLog(`Unlocked item: ${itemId}`);
+              return prev.filter(id => id !== itemId);
+          } else {
+              emitClientLog(`Locked item: ${itemId}`);
+              return [...prev, itemId];
+          }
+      });
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
-        {/* Left Column: Weather & Status */}
-        <div className="flex flex-col gap-6">
-            <div className="h-48">
-                <WeatherWidget data={weatherData} />
-            </div>
-            
-            <RetroWindow title="SYSTEM_OPTS" className="flex-1" icon={<Settings size={16} />}>
-                <div className="space-y-2 font-mono text-xs">
-                    <div className="flex justify-between">
-                        <span>Database Sync</span>
-                        <span className="text-green-600 font-bold">ONLINE</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span>Version</span>
-                        <span>v1.0.6-beta</span>
-                    </div>
-                    <div className="mt-4 pt-4 border-t-2 border-black">
-                        <RetroButton variant="danger" className="w-full text-xs py-1" onClick={async () => {
-                            const supabase = createClient();
-                            await supabase.auth.signOut();
-                            router.push('/login');
-                        }}>
-                            <LogOut size={12} className="inline mr-1" /> DISCONNECT
-                        </RetroButton>
-                    </div>
-                </div>
-            </RetroWindow>
+    <div className="h-full grid grid-cols-1 md:grid-cols-12 gap-6 p-4 md:p-0">
+        
+        {/* Left Panel: Mission Control */}
+        <div className="md:col-span-3 h-full">
+            <MissionControl 
+                selectedOccasion={selectedOccasion}
+                onOccasionChange={(occ) => {
+                    setSelectedOccasion(occ);
+                    emitClientLog(`Mission profile updated: ${occ || 'General'}`);
+                }}
+                lockedCount={lockedItems.length}
+            />
         </div>
 
-        {/* Center Column: Outfit Generator */}
-        <div className="md:col-span-2 h-full">
+        {/* Center Panel: Outfit Generator */}
+        <div className="md:col-span-6 h-full">
              <OutfitRecommender 
-                items={wardrobeItems}
+                items={allWardrobeItems}
                 suggestedOutfit={suggestedOutfit}
                 isGenerating={isGenerating}
+                generationProgress={0}
                 onGenerate={fetchRecommendation}
-                onLogOutfit={(items) => console.log("Log outfit", items)}
+                onLogOutfit={(items) => {
+                    console.log("Log outfit", items);
+                    emitClientLog("Outfit logged to history");
+                    toast.success("Outfit logged successfully");
+                }}
                 onOutfitChange={(newItems) => {
                     console.log("Outfit changed", newItems);
                 }}
+                lockedItems={lockedItems}
+                onToggleLock={handleToggleLock}
              />
+        </div>
+
+        {/* Right Panel: Widgets */}
+        <div className="md:col-span-3 flex flex-col gap-6 h-full">
+            
+            {/* Weather Widget */}
+            <div className="h-48">
+                {weatherData ? (
+                    <WeatherWidget data={weatherData} />
+                ) : (
+                    <RetroWindow title="WEATHER_LINK" className="h-full">
+                        <div className="flex items-center justify-center h-full">
+                            <span className="animate-pulse font-mono text-xs">CONNECTING SAT...</span>
+                        </div>
+                    </RetroWindow>
+                )}
+            </div>
+
+            {/* System Messages */}
+            <div className="flex-1 min-h-[200px]">
+                <SystemMsg 
+                    logs={logs} 
+                    location={weatherData?.city} 
+                    season="Autumn" 
+                    itemCount={allWardrobeItems.length}
+                />
+            </div>
         </div>
     </div>
   );

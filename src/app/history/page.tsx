@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client";
 import { HistoryPage as HistoryPageComponent } from "@/components/history/HistoryPage";
 import { Outfit, ClothingType } from "@/types/retro";
 import { toast } from "@/components/ui/toaster";
-import { MainLayout } from "@/components/layout/MainLayout";
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<Outfit[]>([]);
@@ -34,7 +33,7 @@ export default function HistoryPage() {
             name: i.name,
             category: mapDbTypeToUiCategory(i.type),
             type: i.type,
-            image_url: i.image_url,
+            image_url: i.image_url || "https://picsum.photos/200/300?grayscale",
             color: i.color,
             season_tags: i.season_tags || [],
             style_tags: i.style_tags || [],
@@ -91,17 +90,13 @@ export default function HistoryPage() {
 
   if (loading) {
       return (
-          <MainLayout>
-              <div className="flex items-center justify-center h-full">
-                  <div className="font-mono text-xl animate-pulse">LOADING HISTORY...</div>
-              </div>
-          </MainLayout>
+          <div className="flex items-center justify-center h-full">
+              <div className="font-mono text-xl animate-pulse">LOADING HISTORY...</div>
+          </div>
       );
   }
 
   return (
-    <MainLayout>
       <HistoryPageComponent history={history} onDelete={handleDelete} />
-    </MainLayout>
   );
 }

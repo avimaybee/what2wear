@@ -49,3 +49,12 @@ export interface UserPreferences {
   theme?: 'RETRO' | 'HACKER'; // New field
   gender?: 'MASC' | 'FEM' | 'NEUTRAL'; // New field
 }
+
+export interface OutfitTemplate {
+    id: string;
+    name: string;
+    description: string;
+    styleTags: string[];
+    coverImage: string;
+    requirements?: string[];
+}
