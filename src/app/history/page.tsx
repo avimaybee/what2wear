@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { HistoryPage as HistoryPageComponent } from "@/components/history/HistoryPage";
 import { Outfit, ClothingType } from "@/types/retro";
@@ -10,7 +10,7 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<Outfit[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
       const supabase = createClient();
@@ -57,11 +57,11 @@ export default function HistoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [fetchHistory]);
 
   const handleDelete = async (id: string) => {
       try {

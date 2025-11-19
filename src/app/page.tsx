@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { Settings, LogOut } from "lucide-react";
+import { useRouter as _useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { RecommendationApiPayload, RecommendationDiagnostics, IClothingItem } from "@/lib/types";
-import { WeatherWidget, WeatherData as WidgetWeatherData } from "@/components/weather-widget";
-import { OutfitRecommender, Outfit, ClothingItem, ClothingType } from "@/components/outfit-recommendation";
-import { RetroWindow, RetroButton } from "@/components/retro-ui";
-import { toast } from "@/components/ui/toaster";
-import { MissionControl } from "@/components/mission-control";
-import { SystemMsg } from "@/components/system-msg";
+import { WeatherWidget, WeatherData as WidgetWeatherData } from "../components/weather-widget";
+import { OutfitRecommender, Outfit, ClothingItem, ClothingType } from "../components/outfit-recommendation";
+import { RetroWindow } from "../components/retro-ui";
+import { toast } from "../components/ui/toaster";
+import { MissionControl } from "../components/mission-control";
+import { SystemMsg } from "../components/system-msg";
 
 type RecommendationApiResponse = {
   success: boolean;
@@ -40,13 +39,13 @@ const mapClothingItem = (item: IClothingItem): ClothingItem => ({
 });
 
 export default function HomePage() {
-  const router = useRouter();
+  const _router = _useRouter();
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [recommendationData, setRecommendationData] = useState<RecommendationApiPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [_userId, setUserId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [logs, setLogs] = useState<{ message: string; ts: string }[]>([]);
   const [selectedOccasion, setSelectedOccasion] = useState<string>('');
@@ -58,10 +57,10 @@ export default function HomePage() {
           const fetchWardrobe = async () => {
               const supabase = createClient();
               const { data } = await supabase.from('clothing_items').select('*');
-              if (data) {
-                  // @ts-ignore - Supabase types might not match exactly with IClothingItem yet
-                  setAllWardrobeItems(data.map(mapClothingItem));
-              }
+                  if (data && Array.isArray(data)) {
+                    const typed = data as IClothingItem[];
+                    setAllWardrobeItems(typed.map(mapClothingItem));
+                  }
           };
           fetchWardrobe();
       }
@@ -163,13 +162,13 @@ export default function HomePage() {
              // Handle needs wardrobe case
         }
       }
-    } catch (err) {
+    } catch (_err) {
       setError("An error occurred while fetching recommendation");
     } finally {
       setLoading(false);
       setIsGenerating(false);
     }
-  }, [location]);
+  }, [location, selectedOccasion, lockedItems]);
 
   useEffect(() => {
     if (location && !recommendationData && isAuthenticated) {

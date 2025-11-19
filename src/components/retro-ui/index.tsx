@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { X, Minus, Square, AlertCircle, Check, Info, AlertTriangle } from 'lucide-react';
 
 interface RetroBoxProps {

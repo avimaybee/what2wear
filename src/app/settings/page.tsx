@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SettingsPage as SettingsPageComponent } from "@/components/settings/SettingsPage";
 import { UserPreferences } from "@/types/retro";
@@ -21,7 +21,7 @@ export default function SettingsPage() {
     }
   }, [preferences.theme]);
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
       const supabase = createClient();
@@ -55,11 +55,11 @@ export default function SettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [fetchSettings]);
 
   const handleUpdate = async (newPrefs: Partial<UserPreferences>) => {
       try {

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import Image from 'next/image';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, Cell } from 'recharts';
 import { RetroWindow, RetroBox } from '@/components/retro-ui';
 import { Award, TrendingUp, Activity } from 'lucide-react';
@@ -6,12 +7,12 @@ import { ClothingItem, Outfit } from '@/types/retro';
 
 interface StatsPageProps {
   items: ClothingItem[];
-  history: Outfit[];
+  _history?: Outfit[];
 }
 
 const COLORS = ['#FF99C8', '#A0C4FF', '#CAFFBF', '#FDFFB6', '#FF8E72', '#A0C4FF', '#FF99C8'];
 
-export const StatsPage: React.FC<StatsPageProps> = ({ items, history }) => {
+export const StatsPage: React.FC<StatsPageProps> = ({ items }) => {
   
   // Calculate Analytics on the fly (simulating wardrobe_analytics view)
   const analytics = useMemo(() => {
@@ -100,8 +101,8 @@ export const StatsPage: React.FC<StatsPageProps> = ({ items, history }) => {
         <RetroWindow title="MOST_VALUABLE_ITEM.EXE" className="flex-1">
             {analytics.maxWearItem ? (
                 <div className="p-4 flex gap-4 items-center h-full">
-                    <div className="w-24 h-24 border-2 border-black overflow-hidden bg-gray-100">
-                        <img src={analytics.maxWearItem.image_url} alt={analytics.maxWearItem.name} className="w-full h-full object-cover" />
+                    <div className="w-24 h-24 border-2 border-black overflow-hidden bg-gray-100 relative">
+                        <Image src={analytics.maxWearItem.image_url} alt={analytics.maxWearItem.name} fill className="w-full h-full object-cover" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2 mb-1">

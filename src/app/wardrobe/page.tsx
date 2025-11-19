@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { uploadClothingImage } from "@/lib/supabase/storage";
 import { WardrobeGrid } from "@/components/wardrobe/WardrobeGrid";
@@ -13,7 +13,7 @@ export default function WardrobePage() {
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
 
-  const fetchWardrobe = async () => {
+    const fetchWardrobe = useCallback(async () => {
     try {
       setLoading(true);
       const supabase = createClient();
@@ -51,11 +51,11 @@ export default function WardrobePage() {
     } finally {
       setLoading(false);
     }
-  };
+    }, []);
 
-  useEffect(() => {
-    fetchWardrobe();
-  }, []);
+    useEffect(() => {
+        fetchWardrobe();
+    }, [fetchWardrobe]);
 
   const mapDbTypeToUiCategory = (dbType: string): ClothingType => {
       switch (dbType) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { StatsPage as StatsPageComponent } from "@/components/stats/StatsPage";
 import { ClothingItem, Outfit, ClothingType } from "@/types/retro";
@@ -9,10 +9,10 @@ import { toast } from "@/components/ui/toaster";
 
 export default function StatsPage() {
   const [items, setItems] = useState<ClothingItem[]>([]);
-  const [history, setHistory] = useState<Outfit[]>([]);
+  const [_history, setHistory] = useState<Outfit[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const supabase = createClient();
@@ -89,11 +89,11 @@ export default function StatsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const mapDbTypeToUiCategory = (dbType: string): ClothingType => {
       switch (dbType) {
@@ -120,7 +120,7 @@ export default function StatsPage() {
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
                     </div>
                 ) : (
-                    <StatsPageComponent items={items} history={history} />
+                    <StatsPageComponent items={items} />
                 )}
             </div>
         </div>

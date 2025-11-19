@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { RetroWindow, RetroButton } from '@/components/retro-ui';
 import { Outfit } from '@/types/retro';
 import { Calendar, Star, Trash2, RotateCcw, Tag } from 'lucide-react';
@@ -34,10 +35,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ history, onDelete }) =
                                     <div className="grid grid-cols-2 gap-2 bg-[#f0f0f0] p-2 border-2 border-black border-dashed">
                                         {log.items.slice(0, 4).map((item, i) => (
                                             <div key={i} className="aspect-square border border-black overflow-hidden bg-white relative">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img 
+                                                <Image 
                                                     src={item.image_url} 
-                                                    alt={item.name} 
+                                                    alt={item.name}
+                                                    fill
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
                                                         (e.target as HTMLImageElement).src = "https://picsum.photos/200/300?grayscale";

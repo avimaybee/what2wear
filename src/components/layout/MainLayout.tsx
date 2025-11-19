@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Shirt, BarChart3, Clock, Settings, LayoutTemplate } from 'lucide-react';
@@ -35,7 +36,7 @@ export const MainLayout: React.FC<LayoutProps> = ({ children }) => {
             SET<span className="text-[#FDFFB6]">MY</span>FIT <span className="text-[10px] font-mono mt-1 ml-1 opacity-80">v1.0.5</span>
         </h1>
         <div className="w-8 h-8 bg-white border-2 border-black rounded-full overflow-hidden">
-             <img src="https://picsum.photos/100/100?grayscale" alt="User" className="w-full h-full object-cover" />
+             <Image src="https://picsum.photos/100/100?grayscale" alt="User" width={32} height={32} className="w-full h-full object-cover" />
         </div>
       </header>
 
@@ -55,7 +56,7 @@ export const MainLayout: React.FC<LayoutProps> = ({ children }) => {
         {/* User Profile Snippet */}
         <div className="bg-white border-2 border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3">
             <div className="w-10 h-10 bg-gray-200 border-2 border-black rounded-none overflow-hidden relative">
-                <img src="https://picsum.photos/100/100?grayscale" alt="User" className="w-full h-full object-cover mix-blend-multiply" />
+                <Image src="https://picsum.photos/100/100?grayscale" alt="User" width={40} height={40} className="w-full h-full object-cover mix-blend-multiply" />
             </div>
             <div className="leading-none">
                 <span className="block font-black text-sm uppercase">USER_01</span>

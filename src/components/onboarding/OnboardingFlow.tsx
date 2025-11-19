@@ -11,9 +11,9 @@ interface OnboardingFlowProps {
 
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     const [step, setStep] = useState(1);
-    const [gender, setGender] = useState<'masculine' | 'feminine' | 'neutral'>('neutral');
+    const [gender, setGender] = useState<'MASC' | 'FEM' | 'NEUTRAL'>('NEUTRAL');
     const [aesthetics, setAesthetics] = useState<string[]>([]);
-    const [file, setFile] = useState<File | null>(null);
+    const [_file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,6 +69,26 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
 
             <div className="space-y-4">
                 <div>
+                    <label className="font-mono text-xs font-bold mb-2 block">GENDER EXPRESSION</label>
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                        {(['MASC', 'FEM', 'NEUTRAL'] as const).map(g => (
+                            <button
+                                key={g}
+                                onClick={() => setGender(g)}
+                                className={`
+                                    p-3 text-xs font-mono border-2 border-black transition-all
+                                    ${gender === g
+                                        ? 'bg-[#FF99C8] text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0)] translate-x-[2px] translate-y-[2px]'
+                                        : 'bg-white hover:bg-gray-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}
+                                `}
+                            >
+                                {g}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div>
                     <label className="font-mono text-xs font-bold mb-2 block">STYLE PREFERENCE (MAX 3)</label>
                     <div className="grid grid-cols-2 gap-2">
                         {AESTHETICS.map(style => (
@@ -119,6 +139,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             >
                 {previewUrl ? (
                     <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                              <div className="bg-white p-2 border-2 border-black">REPLACE</div>
@@ -160,7 +181,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             <p className="font-mono text-xs">{progress < 100 ? 'GENERATING NEURAL PATHWAYS...' : 'SYSTEM READY.'}</p>
 
             {progress === 100 && (
-                <RetroButton onClick={() => onComplete({ styles: aesthetics })} variant="secondary" className="w-full animate-bounce mt-4">
+                <RetroButton
+                    onClick={() => onComplete({ preferred_styles: aesthetics, gender })}
+                    variant="secondary"
+                    className="w-full animate-bounce mt-4"
+                >
                     ENTER DASHBOARD
                 </RetroButton>
             )}

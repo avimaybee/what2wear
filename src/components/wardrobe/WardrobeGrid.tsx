@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Plus, Search, Upload, X, Trash2, Filter, AlertTriangle, Clock, Heart, Thermometer, ScanLine } from 'lucide-react';
 import { RetroButton, RetroInput, RetroCard, RetroWindow, RetroSelect, RetroSlider } from '@/components/retro-ui';
 import { ClothingItem, ClothingType, ClothingMaterial, Season } from '@/types/retro';
@@ -240,7 +241,7 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                         </button>
 
                         <div className="aspect-square border-2 border-black mb-2 overflow-hidden bg-gray-100 relative">
-                            <img src={item.image_url} alt={item.name} className="w-full h-full object-cover md:grayscale md:group-hover:grayscale-0 transition-all duration-300" />
+                            <Image src={item.image_url} alt={item.name} fill className="w-full h-full object-cover md:grayscale md:group-hover:grayscale-0 transition-all duration-300" />
                             <div className="absolute bottom-1 left-1 bg-white border border-black px-1 py-0.5 text-[8px] font-mono font-bold uppercase">
                                 {item.category}
                             </div>
@@ -313,7 +314,7 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                             >
                                 {previewUrl ? (
                                     <>
-                                        <img src={previewUrl} alt="Preview" className="w-full h-48 object-cover" />
+                                        <Image src={previewUrl} alt="Preview" width={300} height={192} className="w-full h-48 object-cover" />
                                         
                                         {/* Scanning Overlay */}
                                         {isAnalyzing && (

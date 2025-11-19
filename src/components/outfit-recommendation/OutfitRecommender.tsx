@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { RefreshCcw, ThumbsUp, CheckCircle, Zap, Sparkles, Loader2, BrainCircuit, ChevronDown, ChevronUp, Thermometer, Lock, Unlock } from 'lucide-react';
-import { RetroWindow, RetroButton, RetroBadge } from '@/components/retro-ui';
+import Image from 'next/image';
+import { RefreshCcw, ThumbsUp, CheckCircle, Sparkles, Loader2, BrainCircuit, ChevronDown, ChevronUp, Thermometer, Lock, Unlock } from 'lucide-react';
+import { RetroWindow, RetroButton, RetroBadge } from '../retro-ui';
 import { ClothingItem, Outfit, ClothingType } from '@/types/retro';
 
 interface OutfitRecommenderProps {
@@ -150,10 +151,10 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
            
            {isGenerating && (
                <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white">
-                   <Loader2 size={48} className="animate-spin text-[#FF99C8] mb-4" />
+                        <Loader2 size={48} className="animate-spin text-[#FF99C8] mb-4" />
                    <p className="font-mono font-bold text-lg animate-pulse text-center px-4">ANALYZING THERMAL PROPERTIES...</p>
                    <div className="w-48 h-2 border border-white mt-2 overflow-hidden">
-                       <div className="h-full bg-[#CAFFBF] animate-[width_1s_ease-in-out_infinite]" style={{width: '50%'}}></div>
+                       <div className="h-full bg-[#CAFFBF] animate-[width_1s_ease-in-out_infinite]" style={{width: `${generationProgress}%`}}></div>
                    </div>
                </div>
            )}
@@ -166,11 +167,13 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                 <div className="relative h-full border-2 border-black/10 bg-black/5 rounded-lg p-1 md:p-2 flex flex-col">
                     <span className="absolute -top-2 md:-top-3 left-1 md:left-2 font-mono text-[8px] md:text-[9px] font-bold bg-[#FDFFB6] border border-black px-1">ACCESSORIES</span>
                     <div className="flex-1 flex flex-col gap-2 md:gap-3 justify-center overflow-y-auto no-scrollbar py-2">
-                        {accessories.length > 0 ? accessories.map((acc, idx) => (
+                        {accessories.length > 0 ? accessories.map((acc, _idx) => (
                             <div key={acc.id} className="group relative cursor-pointer transition-transform hover:scale-105 hover:rotate-2 shrink-0 self-center">
-                                <img 
+                                <Image 
                                     src={acc.image_url} 
                                     alt={acc.name} 
+                                    width={80}
+                                    height={80}
                                     className={`w-12 h-12 md:w-20 md:h-20 object-cover border-2 bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${lockedItems.includes(acc.id) ? 'border-red-500' : 'border-black'}`}
                                 />
                                 <div 
@@ -203,7 +206,7 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                      >
                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-20 font-mono text-[8px] md:text-[9px] font-bold bg-[#A0C4FF] border border-black px-1 shadow-sm">CORE TOP</span>
                          <div className={`w-full aspect-square border-2 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative z-10 ${lockedItems.includes(coreTop.id) ? 'border-red-500' : 'border-black'}`}>
-                             <img src={coreTop.image_url} className="w-full h-full object-cover" />
+                             <Image src={coreTop.image_url} alt={coreTop.name || 'Top'} fill className="w-full h-full object-cover" />
                              
                              {/* Lock Button */}
                              <div 
@@ -235,7 +238,7 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                      >
                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-20 font-mono text-[8px] md:text-[9px] font-bold bg-[#A0C4FF] border border-black px-1 shadow-sm">CORE BOTTOM</span>
                          <div className={`w-full aspect-[4/5] border-2 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative z-10 ${lockedItems.includes(coreBottom.id) ? 'border-red-500' : 'border-black'}`}>
-                             <img src={coreBottom.image_url} className="w-full h-full object-cover" />
+                             <Image src={coreBottom.image_url} alt={coreBottom.name || 'Bottom'} fill className="w-full h-full object-cover" />
                              
                              {/* Lock Button */}
                              <div 
@@ -272,9 +275,11 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                             <span className="absolute -top-2 md:-top-3 right-0 font-mono text-[8px] md:text-[9px] font-bold bg-white border border-black px-1 z-20">LAYER</span>
                             {outerwear ? (
                                 <>
-                                    <img 
+                                    <Image 
                                         src={outerwear.image_url} 
-                                        alt="Outerwear" 
+                                        alt={outerwear.name || 'Outerwear'}
+                                        width={96}
+                                        height={96}
                                         className={`w-16 h-16 md:w-24 md:h-24 object-cover border-2 bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10 ${lockedItems.includes(outerwear.id) ? 'border-red-500' : 'border-black'}`} 
                                     />
                                     
@@ -310,9 +315,11 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                         onClick={() => openSwapModal('Shoes')}
                     >
                         <span className="absolute -top-2 md:-top-3 right-0 font-mono text-[8px] md:text-[9px] font-bold bg-white border border-black px-1 z-20">FOOTWEAR</span>
-                        <img 
+                        <Image 
                             src={coreShoes.image_url} 
-                            alt="Shoes" 
+                            alt="Shoes"
+                            width={112}
+                            height={112}
                             className="w-20 h-20 md:w-28 md:h-28 object-cover border-2 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10" 
                         />
                          <div className="absolute top-1 right-1 bg-[#FDFFB6] border-2 border-black p-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
@@ -421,7 +428,7 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                             >
                                 <div className="bg-white border-2 border-black p-1 flex flex-col shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] group-hover:bg-[#CAFFBF] transition-colors">
                                     <div className="relative aspect-square border border-black mb-1 overflow-hidden">
-                                         <img src={item.image_url} className="w-full h-full object-cover" />
+                                         <Image src={item.image_url} alt={item.name || 'Item'} fill className="w-full h-full object-cover" />
                                          <div className="absolute top-1 left-1 bg-white/80 backdrop-blur px-1 border border-black text-[8px] font-mono flex items-center gap-0.5">
                                             <Thermometer size={8} /> {item.insulation_value}
                                          </div>
