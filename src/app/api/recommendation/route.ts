@@ -325,7 +325,7 @@ async function generateRecommendation(
     .select(`
       id, name, type, category, color, material, insulation_value, 
       last_worn, image_url, season_tags, style_tags, dress_code, 
-      created_at, pattern, fit, style, occasion, description, favorite
+      created_at, pattern, fit, style, occasion, description, favorite:is_favorite
     `)
     .eq('user_id', userId);
 

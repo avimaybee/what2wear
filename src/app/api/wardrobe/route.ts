@@ -33,7 +33,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse<ApiRespon
     .select(`
       id, name, type, category, color, material, insulation_value, 
       last_worn, image_url, season_tags, style_tags, dress_code, 
-      created_at, pattern, fit, style, occasion, description, favorite
+      created_at, pattern, fit, style, occasion, description, favorite:is_favorite
     `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
