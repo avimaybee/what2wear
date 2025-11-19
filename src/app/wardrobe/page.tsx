@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Filter, Trash2, Calendar, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit } from "lucide-react";
+import { Plus, Filter, Trash2, Calendar, PackageOpen, AlertCircle, Search, X, ArrowUpDown, Shirt, Upload, Loader2, Image as ImageIcon, Edit, Camera } from "lucide-react";
 import { getRelativeTime, cn } from "@/lib/utils";
 import { motionVariants, motionDurations } from "@/lib/motion";
 import { toast } from "@/components/ui/toaster";
@@ -55,6 +55,10 @@ export default function WardrobePage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+
+  // File input refs for camera and gallery
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch wardrobe items from API
   const fetchWardrobe = async () => {
@@ -607,25 +611,49 @@ export default function WardrobePage() {
                       <input
                         type="file"
                         accept="image/*"
-                        capture="environment"
                         id="wardrobe-file-input"
                         className="hidden"
+                        ref={fileInputRef}
                         onChange={handleFileSelect}
                         disabled={uploading}
                       />
-                      <label
-                        htmlFor="wardrobe-file-input"
-                        className="flex flex-col items-center gap-3 cursor-pointer w-full"
-                      >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        id="wardrobe-camera-input"
+                        className="hidden"
+                        ref={cameraInputRef}
+                        onChange={handleFileSelect}
+                        disabled={uploading}
+                      />
+                      <div className="flex flex-col items-center gap-3 w-full">
                         <div className="p-4 rounded-full bg-primary/15 text-primary shadow-sm border-2 border-primary/20">
                           <Upload className="h-8 w-8" />
                         </div>
-                        <div className="text-center">
-                          <p className="text-sm font-semibold mb-1">Tap to upload photo</p>
-                          <p className="text-xs text-muted-foreground">Camera or Gallery</p>
-                          <p className="text-xs text-muted-foreground mt-2">Max 5MB • JPG, PNG, WEBP</p>
+                        <div className="text-center mb-2">
+                          <p className="text-sm font-semibold mb-1">Add photo</p>
+                          <p className="text-xs text-muted-foreground">Max 5MB • JPG, PNG, WEBP</p>
                         </div>
-                      </label>
+                        <div className="flex gap-2 w-full px-4">
+                          <button
+                            onClick={() => cameraInputRef.current?.click()}
+                            disabled={uploading}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Camera className="h-4 w-4" />
+                            <span>Camera</span>
+                          </button>
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ImageIcon className="h-4 w-4" />
+                            <span>Gallery</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     // Image preview
@@ -1121,25 +1149,49 @@ export default function WardrobePage() {
                     <input
                       type="file"
                       accept="image/*"
-                      capture="environment"
-                      id="wardrobe-file-input"
+                      id="wardrobe-file-input-2"
                       className="hidden"
+                      ref={fileInputRef}
                       onChange={handleFileSelect}
                       disabled={uploading}
                     />
-                    <label
-                      htmlFor="wardrobe-file-input"
-                      className="flex flex-col items-center gap-3 cursor-pointer w-full"
-                    >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      id="wardrobe-camera-input-2"
+                      className="hidden"
+                      ref={cameraInputRef}
+                      onChange={handleFileSelect}
+                      disabled={uploading}
+                    />
+                    <div className="flex flex-col items-center gap-3 w-full">
                       <div className="p-4 rounded-full bg-primary/15 text-primary shadow-sm border-2 border-primary/20">
                         <Upload className="h-8 w-8" />
                       </div>
-                      <div className="text-center">
-                        <p className="text-sm font-semibold mb-1">Tap to upload photo</p>
-                        <p className="text-xs text-muted-foreground">Camera or Gallery</p>
-                        <p className="text-xs text-muted-foreground mt-2">Max 5MB • JPG, PNG, WEBP</p>
+                      <div className="text-center mb-2">
+                        <p className="text-sm font-semibold mb-1">Add photo</p>
+                        <p className="text-xs text-muted-foreground">Max 5MB • JPG, PNG, WEBP</p>
                       </div>
-                    </label>
+                      <div className="flex gap-2 w-full px-4">
+                        <button
+                          onClick={() => cameraInputRef.current?.click()}
+                          disabled={uploading}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Camera className="h-4 w-4" />
+                          <span>Camera</span>
+                        </button>
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          <span>Gallery</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   // Image preview
