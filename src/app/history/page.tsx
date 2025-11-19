@@ -1,58 +1,107 @@
-/**
- * Outfit History & Timeline Page
- * /history
- * 
- * Displays complete outfit history with infinite scroll, filtering, and search
- */
+"use client";
 
-import { Suspense } from 'react';
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-import { HistoryClient } from '@/components/client/history-client';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { HistoryPage as HistoryPageComponent } from "@/components/history/HistoryPage";
+import { Outfit, ClothingType } from "@/types/retro";
+import { toast } from "@/components/ui/toaster";
+import { MainLayout } from "@/components/layout/MainLayout";
 
-export const metadata = {
-  title: 'Outfit History | What2Wear',
-  description: 'Browse your complete outfit timeline and history'
-};
+export default function HistoryPage() {
+  const [history, setHistory] = useState<Outfit[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function HistoryPage() {
-  const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
-  if (error || !user) {
-    redirect('/auth/sign-in?redirect=/history');
+  const fetchHistory = async () => {
+    try {
+      setLoading(true);
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) return;
+
+      const response = await fetch("/api/outfits/history?limit=50");
+      if (!response.ok) throw new Error("Failed to fetch history");
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mappedHistory: Outfit[] = data.data.map((h: any) => ({
+          id: h.id.toString(),
+          outfit_date: h.outfit_date,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          items: h.items.map((i: any) => ({
+            id: i.id.toString(),
+            name: i.name,
+            category: mapDbTypeToUiCategory(i.type),
+            type: i.type,
+            image_url: i.image_url,
+            color: i.color,
+            season_tags: i.season_tags || [],
+            style_tags: i.style_tags || [],
+            material: i.material || "Unknown",
+            insulation_value: i.insulation_value || 0,
+            dress_code: i.dress_code || [],
+            wear_count: i.wear_count || 0,
+            last_worn: i.last_worn || null,
+            is_favorite: i.is_favorite || false,
+            created_at: i.created_at || new Date().toISOString()
+          })),
+          status: 'completed',
+          rating: h.feedback,
+          weather_snapshot: h.weather_data
+        }));
+        setHistory(mappedHistory);
+      }
+    } catch (err) {
+      console.error("Error fetching history:", err);
+      toast.error("Failed to load history.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+      try {
+          const response = await fetch(`/api/outfits/${id}`, { method: "DELETE" });
+          if (!response.ok) throw new Error("Failed to delete outfit");
+          
+          setHistory(prev => prev.filter(h => h.id !== id));
+          toast.success("Outfit log deleted.");
+      } catch (err) {
+          console.error("Error deleting outfit:", err);
+          toast.error("Failed to delete outfit log.");
+      }
+  };
+
+  const mapDbTypeToUiCategory = (dbType: string): ClothingType => {
+      switch (dbType) {
+          case 'Footwear': return 'Shoes';
+          case 'Headwear': return 'Accessory';
+          case 'Outerwear': return 'Outerwear';
+          case 'Top': return 'Top';
+          case 'Bottom': return 'Bottom';
+          case 'Dress': return 'Dress';
+          default: return 'Top';
+      }
+  };
+
+  if (loading) {
+      return (
+          <MainLayout>
+              <div className="flex items-center justify-center h-full">
+                  <div className="font-mono text-xl animate-pulse">LOADING HISTORY...</div>
+              </div>
+          </MainLayout>
+      );
   }
-  
-  return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-4 py-4 max-w-7xl space-y-6">
-        <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase text-muted-foreground font-heading">Timeline</p>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl md:text-3xl font-semibold uppercase font-heading">Outfit History</h1>
-          </div>
-        </div>
-        <Suspense fallback={<HistoryLoadingSkeleton />}>
-          <HistoryClient userId={user.id} />
-        </Suspense>
-      </main>
-    </div>
-  );
-}
 
-function HistoryLoadingSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="flex gap-3">
-        <Skeleton className="flex-1" variant="text" />
-        <Skeleton className="w-24" variant="text" />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <Skeleton key={i} className="h-72" variant="panel" />
-        ))}
-      </div>
-    </div>
+    <MainLayout>
+      <HistoryPageComponent history={history} onDelete={handleDelete} />
+    </MainLayout>
   );
 }

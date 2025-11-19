@@ -1,0 +1,46 @@
+export type Season = 'Spring' | 'Summer' | 'Autumn' | 'Winter' | 'All Season';
+export type ClothingType = 'Top' | 'Bottom' | 'Shoes' | 'Outerwear' | 'Accessory' | 'Dress';
+export type ClothingMaterial = 'Cotton' | 'Polyester' | 'Wool' | 'Silk' | 'Leather' | 'Denim' | 'Linen' | 'Synthetic' | 'Gore-Tex' | 'Other';
+export type DressCode = 'Casual' | 'Business Casual' | 'Formal' | 'Sport' | 'Lounge' | 'Streetwear';
+
+export interface ClothingItem {
+  id: string;
+  name: string;
+  category: ClothingType;
+  type: string;
+  color: string;
+  season_tags: string[]; // Keeping as string[] to be flexible with DB, or cast to Season[]
+  style_tags: string[];
+  image_url: string;
+  material: string; // Keeping as string to be flexible
+  insulation_value: number;
+  dress_code: string[];
+  wear_count: number;
+  last_worn: string | null;
+  is_favorite: boolean;
+  created_at: string;
+}
+
+export interface Outfit {
+  id: string;
+  outfit_date: string;
+  items: ClothingItem[];
+  weather_snapshot?: Record<string, unknown>;
+  status?: string;
+  feedback?: string;
+  rating?: number;
+  reasoning?: {
+    weatherMatch?: string;
+    totalInsulation?: number;
+    historyCheck?: string;
+    styleScore?: number;
+    layeringStrategy?: string;
+  };
+}
+
+export interface UserPreferences {
+  styles?: string[];
+  colors?: string[];
+  temperature_sensitivity?: number;
+  variety_days?: number;
+}
