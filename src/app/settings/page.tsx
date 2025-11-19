@@ -5,13 +5,21 @@ import { createClient } from "@/lib/supabase/client";
 import { SettingsPage as SettingsPageComponent } from "@/components/settings/SettingsPage";
 import { UserPreferences } from "@/types/retro";
 import { toast } from "@/components/ui/toaster";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
   const [preferences, setPreferences] = useState<UserPreferences>({});
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  // Effect for Hacker Mode
+  useEffect(() => {
+    if (preferences.theme === 'HACKER') {
+      document.body.classList.add('theme-hacker');
+    } else {
+      document.body.classList.remove('theme-hacker');
+    }
+  }, [preferences.theme]);
 
   const fetchSettings = async () => {
     try {
@@ -31,10 +39,14 @@ export default function SettingsPage() {
       if (data.success && data.data && data.data.preferences) {
         const prefs = data.data.preferences;
         setPreferences({
-            styles: prefs.preferred_styles || [],
+            preferred_styles: prefs.preferred_styles || [],
             colors: prefs.preferred_colors || [],
             temperature_sensitivity: prefs.temperature_sensitivity || 0,
-            variety_days: prefs.variety_days || 7
+            variety_days: prefs.variety_days || 7,
+            repeat_interval: prefs.repeat_interval || 0,
+            style_strictness: prefs.style_strictness || 50,
+            theme: prefs.theme || 'RETRO',
+            gender: prefs.gender || 'NEUTRAL'
         });
       }
     } catch (err) {
@@ -52,19 +64,24 @@ export default function SettingsPage() {
   const handleUpdate = async (newPrefs: Partial<UserPreferences>) => {
       try {
           // Optimistic update
-          setPreferences(prev => ({ ...prev, ...newPrefs }));
+          const updatedPrefs = { ...preferences, ...newPrefs };
+          setPreferences(updatedPrefs);
 
           const payload = {
               preferences: {
-                  preferred_styles: newPrefs.styles !== undefined ? newPrefs.styles : preferences.styles,
-                  preferred_colors: newPrefs.colors !== undefined ? newPrefs.colors : preferences.colors,
-                  temperature_sensitivity: newPrefs.temperature_sensitivity !== undefined ? newPrefs.temperature_sensitivity : preferences.temperature_sensitivity,
-                  variety_days: newPrefs.variety_days !== undefined ? newPrefs.variety_days : preferences.variety_days
+                  preferred_styles: updatedPrefs.preferred_styles,
+                  preferred_colors: updatedPrefs.colors,
+                  temperature_sensitivity: updatedPrefs.temperature_sensitivity,
+                  variety_days: updatedPrefs.variety_days,
+                  repeat_interval: updatedPrefs.repeat_interval,
+                  style_strictness: updatedPrefs.style_strictness,
+                  theme: updatedPrefs.theme,
+                  gender: updatedPrefs.gender
               }
           };
 
           const response = await fetch("/api/settings/profile", {
-              method: "PATCH",
+              method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
           });
@@ -87,21 +104,17 @@ export default function SettingsPage() {
 
   if (loading) {
       return (
-          <MainLayout>
-              <div className="flex items-center justify-center h-full">
-                  <div className="font-mono text-xl animate-pulse">LOADING SETTINGS...</div>
-              </div>
-          </MainLayout>
+          <div className="flex items-center justify-center h-full">
+              <div className="font-mono text-xl animate-pulse">LOADING SETTINGS...</div>
+          </div>
       );
   }
 
   return (
-    <MainLayout>
       <SettingsPageComponent 
-        preferences={preferences} 
-        onUpdate={handleUpdate} 
-        onLogout={handleLogout}
+          preferences={preferences} 
+          onUpdate={handleUpdate} 
+          onLogout={handleLogout}
       />
-    </MainLayout>
   );
 }

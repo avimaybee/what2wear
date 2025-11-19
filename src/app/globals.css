@@ -1,66 +1,142 @@
 @import "tailwindcss";
-/* Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:wght@400;600;800&display=swap');
 
+/* Fonts */
 @theme {
   --font-sans: 'Work Sans', sans-serif;
   --font-mono: 'Space Mono', monospace;
 }
 
-body {
-  font-family: var(--font-sans);
-  background-color: #FFF8E7; /* Cream background */
-  background-image: radial-gradient(#e5e5e5 1px, transparent 1px);
-  background-size: 20px 20px;
+:root {
+  --bg-main: #FFF8E7;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #f0f0f0; /* Light gray for panels */
+  --border: #000000;
+  --text: #000000;
+  --text-muted: #4b5563; /* Gray-600 */
+  
+  --accent-blue: #A0C4FF;
+  --accent-pink: #FF99C8;
+  --accent-orange: #FF8E72;
+  --accent-yellow: #FDFFB6;
+  --accent-green: #CAFFBF;
+  
+  --card-shadow: 4px 4px 0px 0px var(--border);
 }
 
+.theme-hacker {
+  --bg-main: #000000;
+  --bg-secondary: #0c0c0c;
+  --bg-tertiary: #111111;
+  --border: #00ff41;
+  --text: #00ff41;
+  --text-muted: rgba(0, 255, 65, 0.7);
+
+  /* Accents in hacker mode are dark backgrounds with bright borders usually, 
+      or we keep them as distinct colors but suitable for dark mode */
+  --accent-blue: #001a33;
+  --accent-pink: #33001a;
+  --accent-orange: #331a00;
+  --accent-yellow: #333300;
+  --accent-green: #003300;
+  
+  --card-shadow: 4px 4px 0px 0px var(--border);
+}
+
+body {
+  font-family: 'Work Sans', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Default Retro Theme Background */
+body:not(.theme-hacker) {
+    background-image: radial-gradient(#e5e5e5 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.theme-hacker body {
+  background-image: 
+      linear-gradient(0deg, transparent 24%, rgba(0, 255, 65, .03) 25%, rgba(0, 255, 65, .03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 65, .03) 75%, rgba(0, 255, 65, .03) 76%, transparent 77%, transparent), 
+      linear-gradient(90deg, transparent 24%, rgba(0, 255, 65, .03) 25%, rgba(0, 255, 65, .03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 65, .03) 75%, rgba(0, 255, 65, .03) 76%, transparent 77%, transparent);
+  background-size: 30px 30px;
+  font-family: 'Space Mono', monospace;
+}
+
+.theme-hacker * {
+    border-color: var(--border) !important;
+}
+
+/* Force text color on inputs in hacker mode to ensure visibility */
+.theme-hacker input, .theme-hacker select, .theme-hacker textarea {
+    background-color: #050505;
+    color: #00ff41;
+}
+.theme-hacker input::placeholder {
+    color: rgba(0, 255, 65, 0.5);
+}
+
+.font-mono {
+  font-family: 'Space Mono', monospace;
+}
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 12px;
 }
 ::-webkit-scrollbar-track {
-  background: #FFF8E7;
-  border-left: 2px solid black;
+  background: var(--bg-main);
+  border-left: 2px solid var(--border);
 }
 ::-webkit-scrollbar-thumb {
-  background: #FF99C8;
-  border: 2px solid black;
+  background: var(--accent-pink);
+  border: 2px solid var(--border);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff6b6b;
-obile (prevents zoom on iOS) */
-  input,
-  textarea,
-  select {
-    font-size: max(16px, 1em); /* iOS won't zoom if font-size >= 16px */
-  }
-  
-  /* Optimized modal positioning */
-  [role="dialog"] {
-    max-height: calc(100vh - env(safe-area-inset-bottom) - env(safe-area-inset-top));
-  }
+  background: var(--accent-orange);
 }
 
-/* Haptic feedback simulation (visual only, actual haptics require native) */
-@utility haptic-feedback {
-  transition: opacity 80ms ease-out;
-  
-  &:active {
-    opacity: 0.7;
-  }
+/* Effects */
+@keyframes crt-flicker {
+  0% { opacity: 0.95; }
+  5% { opacity: 1; }
+  10% { opacity: 0.95; }
+  15% { opacity: 1; }
+  100% { opacity: 0.95; }
 }
 
-/* Mobile sheet drag handle */
-@utility drag-handle {
-  width: 48px;
-  height: 4px;
-  background: oklch(from var(--muted-foreground) l c h / 0.2);
-  border-radius: 2px;
-  margin: 8px auto;
-  cursor: grab;
-  
-  &:active {
-    cursor: grabbing;
-  }
+@keyframes chromatic {
+  0% { text-shadow: 2px 0 red, -2px 0 blue; }
+  100% { text-shadow: -2px 0 red, 2px 0 blue; }
 }
+
+.crt-effect {
+  animation: crt-flicker 0.1s infinite;
+  position: relative;
+}
+
+.crt-effect::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 2;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+@keyframes pixelate-out {
+  0% { filter: blur(0px); transform: scale(1); opacity: 1; }
+  50% { filter: blur(2px); transform: scale(0.9); opacity: 0.5; }
+  100% { filter: blur(4px); transform: scale(0.8); opacity: 0; }
+}
+
+.pixelate-exit {
+  animation: pixelate-out 0.3s forwards;
+}
+
 

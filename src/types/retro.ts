@@ -40,7 +40,12 @@ export interface Outfit {
 
 export interface UserPreferences {
   styles?: string[];
+  preferred_styles?: string[]; // New field
   colors?: string[];
   temperature_sensitivity?: number;
   variety_days?: number;
+  repeat_interval?: number; // New field
+  style_strictness?: number; // New field
+  theme?: 'RETRO' | 'HACKER'; // New field
+  gender?: 'MASC' | 'FEM' | 'NEUTRAL'; // New field
 }
