@@ -258,12 +258,13 @@ export default function OnboardingPage() {
         <Card className="relative overflow-hidden border-[2.5px] border-[hsl(210_10%_85%)] shadow-[0_10px_30px_rgba(15,23,42,0.10)] bg-[hsl(40_50%_99%)] rounded-[26px]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(6_100%_88%)/40%,transparent_60%),radial-gradient(circle_at_bottom_right,hsl(177_79%_80%)/35%,transparent_65%)]" />
           <div className="pointer-events-none absolute inset-[10px] border border-dashed border-[hsl(210_14%_82%)/80%] rounded-[20px]" />
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             {/* Step 1: Welcome */}
             {currentStep === 1 && (
               <motion.div
                 key="step1"
                 initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
                 <CardHeader className="relative z-10 text-center space-y-4 pb-2">
@@ -485,14 +486,31 @@ export default function OnboardingPage() {
                         <p className="text-sm text-muted-foreground max-w-md mx-auto">
                           Click the button below to grant location permission. We&apos;ll use this to get accurate weather data for your outfit recommendations.
                         </p>
-                        <Button
-                          size="lg"
-                          onClick={requestLocation}
-                          className="mx-auto"
-                        >
-                          <MapPin className="h-4 w-4 mr-2" />
-                          Grant Location Permission
-                        </Button>
+                        <div className="flex flex-col gap-3 items-center">
+                          <Button
+                            size="lg"
+                            onClick={requestLocation}
+                            className="mx-auto"
+                          >
+                            <MapPin className="h-4 w-4 mr-2" />
+                            Grant Location Permission
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              // Use default location (New York) if skipped
+                              const defaultLocation = { lat: 40.7128, lon: -74.0060 };
+                              setUserLocation(defaultLocation);
+                              setLocationGranted(true);
+                              localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
+                              toast.info("Using default location (New York). You can change this in settings.");
+                            }}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            Skip for now
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>

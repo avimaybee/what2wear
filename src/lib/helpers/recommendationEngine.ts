@@ -276,20 +276,41 @@ export function isItemSuitableForAlerts(
 
 /**
  * Calculate required insulation based on temperature
+ * This is the target insulation PER ITEM (roughly) for filtering.
  */
 export function calculateRequiredInsulation(temperature: number): number {
-  // Simplified insulation scale (0-10)
+  // Adjusted thresholds to be slightly warmer
   // Below 0°C: 9-10 (very warm)
   // 0-10°C: 7-8 (warm)
-  // 10-20°C: 5-6 (moderate)
-  // 20-25°C: 3-4 (light)
-  // Above 25°C: 0-2 (minimal)
+  // 10-18°C: 5-6 (moderate) - Changed from 20 to 18
+  // 18-24°C: 3-4 (light) - Changed from 20-25 to 18-24
+  // Above 24°C: 1-2 (minimal)
   
   if (temperature < 0) return 9;
   if (temperature <= 10) return 7;
-  if (temperature <= 20) return 5;
-  if (temperature <= 25) return 3;
+  if (temperature <= 18) return 5;
+  if (temperature <= 24) return 3;
   return 1;
+}
+
+/**
+ * Calculate target TOTAL outfit insulation based on temperature.
+ * Used to determine if layering is needed.
+ */
+function calculateTargetTotalInsulation(temperature: number): number {
+  // Heuristic targets for total outfit warmth (sum of all items)
+  // 25°C+: ~8 (Light items)
+  // 20°C: ~12 (T-shirt + Jeans + Sneakers)
+  // 15°C: ~18 (Sweater + Jeans + Boots)
+  // 10°C: ~25 (Add Jacket)
+  // 0°C: ~35 (Heavy layers)
+  
+  if (temperature >= 25) return 8;
+  if (temperature >= 20) return 12;
+  if (temperature >= 15) return 18;
+  if (temperature >= 10) return 25;
+  if (temperature >= 0) return 35;
+  return 45; // Very cold
 }
 
 // ============================================================================
@@ -883,11 +904,13 @@ export function getRecommendation(
 
   // Add variety: instead of always picking the absolute best, select randomly from top candidates
   // This ensures each refresh shows a different outfit while maintaining quality
-  const topCandidateCount = Math.min(5, Math.ceil(combinations.length * 0.2)); // Top 20% or 5 max
+  // Increased pool size to 50% or max 10 to avoid repetition
+  const topCandidateCount = Math.min(10, Math.ceil(combinations.length * 0.5)); 
   emitDebug('generator:combinations', { count: combinations.length, topCandidateCount });
   const topCandidates = combinations.slice(0, topCandidateCount);
   
   // Select randomly from top candidates, weighted toward higher scores
+  // Increased randomness for variety
   const selectedIndex = Math.floor(Math.random() * topCandidates.length);
   const selectedOutfit = topCandidates[selectedIndex];
   
@@ -896,10 +919,13 @@ export function getRecommendation(
   // Skip verbose scoring debug - user doesn't need to see internal scores
 
   const baseOutfitInsulation = bestOutfitItems.reduce((sum, item) => sum + resolveInsulationValue(item), 0);
-  const insulationDeficit = requiredInsulation - baseOutfitInsulation;
+  const targetTotalInsulation = calculateTargetTotalInsulation(context.weather.feels_like);
+  const insulationDeficit = targetTotalInsulation - baseOutfitInsulation;
 
   // Add outerwear if needed and available
-  const shouldLayer = insulationDeficit > 1 || context.weather.feels_like <= 16;
+  // We layer if there is a significant deficit OR if it's simply cold enough to warrant it (<= 16C)
+  const shouldLayer = insulationDeficit > 3 || context.weather.feels_like <= 18;
+  
   if (shouldLayer && itemsByType.Outerwear.length > 0) {
     let bestOuterwear: IClothingItem | null = null;
     let bestOutfitWithOuterwearScore = -1;
@@ -907,11 +933,20 @@ export function getRecommendation(
     for (const outerwear of itemsByType.Outerwear) {
       // Only consider outerwear that helps meet the insulation deficit
       const outerwearInsulation = resolveInsulationValue(outerwear);
-      if (outerwearInsulation >= insulationDeficit - insulationTolerance) {
+      // We want something that adds meaningful warmth, but doesn't have to be exact
+      if (outerwearInsulation >= 2) { 
         const outfitWithOuterwear = [...bestOutfitItems, outerwear];
         const score = scoreOutfit(outfitWithOuterwear, context);
-        if (score > bestOutfitWithOuterwearScore) {
-          bestOutfitWithOuterwearScore = score;
+        
+        // Bonus for meeting the target insulation closer
+        const newTotalInsulation = baseOutfitInsulation + outerwearInsulation;
+        const distToTarget = Math.abs(targetTotalInsulation - newTotalInsulation);
+        const insulationScore = Math.max(0, 100 - (distToTarget * 5)); // 100 if exact, -5 per point off
+        
+        const finalScore = (score * 0.7) + (insulationScore * 0.3);
+
+        if (finalScore > bestOutfitWithOuterwearScore) {
+          bestOutfitWithOuterwearScore = finalScore;
           bestOuterwear = outerwear;
         }
       }
@@ -920,7 +955,7 @@ export function getRecommendation(
     if (bestOuterwear) {
       bestOutfitItems.push(bestOuterwear);
       reasoning.push(`Added outerwear for warmth and style compatibility.`);
-    } else if (insulationDeficit > 1) {
+    } else if (insulationDeficit > 5) {
       const alternateLayer = itemsByType.Outerwear.find(item => !bestOutfitItems.some(existing => existing.id === item.id));
       if (alternateLayer) {
         enhancementSuggestions.push(`Layer your ${describeItem(alternateLayer)} if you want extra insulation without committing to the full look.`);

@@ -500,81 +500,201 @@ export default function WardrobePage() {
     );
   }
 
-  // Empty state - no items at all in wardrobe
+  // Empty state logic moved inside main return to ensure modals are always rendered
+  const renderEmptyState = () => (
+    <>
+      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-heading text-foreground mb-1">Virtual Wardrobe</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage your clothing collection
+            </p>
+          </div>
+        </div>
+        <div className="space-y-6">
+          <EmptyState
+            icon={PackageOpen}
+            title="Your wardrobe is empty"
+            description="Start building your digital closet! Add your first clothing item and we'll start generating personalized outfit recommendations."
+            actions={[
+              {
+                label: "Add Your First Item",
+                onClick: handleOpenAddModal,
+                icon: Plus,
+                variant: "default"
+              }
+            ]}
+            tips={[
+              "Take a photo or upload from your phone",
+              "Add details like color, season, and style tags",
+              "Track when you last wore each item",
+              "Get AI-powered outfit suggestions based on weather"
+            ]}
+            variant="illustrated"
+          />
+
+          {/* Photography Tips Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="max-w-2xl mx-auto"
+          >
+            <Card className="border-[2.5px] border-[hsl(210_10%_85%)] shadow-md bg-[hsl(40_50%_99%)]">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-primary/10">
+                    <ImageIcon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-foreground">📸 Photography Tips</h3>
+                </div>
+                <ul className="space-y-2 text-sm text-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary font-bold">•</span>
+                    <span className="text-foreground">Use a neutral background (plain wall or bed)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary font-bold">•</span>
+                    <span className="text-foreground">Capture the full garment clearly</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary font-bold">•</span>
+                    <span className="text-foreground">Good lighting helps us detect colors better</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary font-bold">•</span>
+                    <span className="text-foreground">One item per photo works best</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </div>
+    </>
+  );
+
   if (wardrobeItems.length === 0) {
     return (
       <>
-        <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-4 md:py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-heading text-foreground mb-1">Virtual Wardrobe</h1>
-              <p className="text-sm text-muted-foreground">
-                Manage your clothing collection
-              </p>
-            </div>
-          </div>
-          <div className="space-y-6">
-            <EmptyState
-              icon={PackageOpen}
-              title="Your wardrobe is empty"
-              description="Start building your digital closet! Add your first clothing item and we'll start generating personalized outfit recommendations."
-              actions={[
-                {
-                  label: "Add Your First Item",
-                  onClick: handleOpenAddModal,
-                  icon: Plus,
-                  variant: "default"
-                }
-              ]}
-              tips={[
-                "Take a photo or upload from your phone",
-                "Add details like color, season, and style tags",
-                "Track when you last wore each item",
-                "Get AI-powered outfit suggestions based on weather"
-              ]}
-              variant="illustrated"
-            />
-
-            {/* Photography Tips Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="max-w-2xl mx-auto"
-            >
-              <Card className="border-[2.5px] border-[hsl(210_10%_85%)] shadow-md bg-[hsl(40_50%_99%)]">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-xl bg-primary/10">
-                      <ImageIcon className="h-5 w-5 text-primary" />
+        {renderEmptyState()}
+        {/* Add Item Dialog (uses new Dialog component with layoutId) */}
+        <AnimatePresence>
+          {showAddModal && (
+            <Dialog open={showAddModal} onOpenChange={handleCloseAddModal}>
+              <DialogContent variant="scale" layoutId="add-item-button" className="max-w-md border-[2.5px] border-[hsl(210_10%_85%)] shadow-lg bg-[hsl(40_50%_99%)] rounded-[26px]">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-heading">Add New Item</DialogTitle>
+                  <DialogDescription className="text-sm">
+                    Upload a photo of your clothing item
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4 py-4">
+                  {!imagePreview ? (
+                    // File upload area
+                    <div
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-4 py-12 border-[2.5px] border-dashed rounded-[20px] transition-all cursor-pointer bg-card",
+                        dragActive ? "border-primary bg-primary/5 shadow-md" : "border-[hsl(210_14%_82%)] hover:border-primary/50 hover:bg-primary/5"
+                      )}
+                      onDragEnter={handleDragOver}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        id="wardrobe-file-input"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                        disabled={uploading}
+                      />
+                      <label
+                        htmlFor="wardrobe-file-input"
+                        className="flex flex-col items-center gap-3 cursor-pointer w-full"
+                      >
+                        <div className="p-4 rounded-full bg-primary/15 text-primary shadow-sm border-2 border-primary/20">
+                          <Upload className="h-8 w-8" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-semibold mb-1">Tap to upload photo</p>
+                          <p className="text-xs text-muted-foreground">Camera or Gallery</p>
+                          <p className="text-xs text-muted-foreground mt-2">Max 5MB • JPG, PNG, WEBP</p>
+                        </div>
+                      </label>
                     </div>
-                    <h3 className="font-semibold text-lg text-foreground">📸 Photography Tips</h3>
-                  </div>
-                  <ul className="space-y-2 text-sm text-foreground">
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary font-bold">•</span>
-                      <span className="text-foreground">Use a neutral background (plain wall or bed)</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary font-bold">•</span>
-                      <span className="text-foreground">Capture the full garment clearly</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary font-bold">•</span>
-                      <span className="text-foreground">Good lighting helps us detect colors better</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary font-bold">•</span>
-                      <span className="text-foreground">One item per photo works best</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        </div>
-
-
+                  ) : (
+                    // Image preview
+                    <div className="space-y-4">
+                        <div className="relative aspect-square rounded-[20px] overflow-hidden bg-muted border-[2.5px] border-[hsl(210_10%_85%)] shadow-md">
+                        <Image
+                          src={imagePreview}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground truncate flex-1">
+                          {selectedFile?.name}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setImagePreview(null);
+                          }}
+                          disabled={uploading}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">
+                        After uploading, you&apos;ll be able to edit details like name, type, color, and season tags.
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <DialogFooter className="gap-3">
+                  <Button 
+                    onClick={handleCloseAddModal} 
+                    variant="outline"
+                    disabled={uploading}
+                    className="rounded-2xl border-[2.5px] shadow-sm hover:-translate-y-[1px] hover:shadow-md"
+                  >
+                    Cancel
+                  </Button>
+                  {imagePreview && (
+                    <Button 
+                      onClick={handleUploadAndCreate}
+                      disabled={uploading || !selectedFile}
+                      className="rounded-2xl border-[2.5px] border-primary shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] hover:translate-y-[1px] hover:shadow-md"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Add Item
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </AnimatePresence>
       </>
     );
   }
@@ -1164,16 +1284,16 @@ export default function WardrobePage() {
 
               {/* Insulation Value */}
               <div className="space-y-2">
-                <Label htmlFor="edit-insulation">Warmth Level (1-5)</Label>
+                <Label htmlFor="edit-insulation">Warmth Level (1-10)</Label>
                 <Input
                   id="edit-insulation"
                   type="number"
                   min="1"
-                  max="5"
-                  value={editFormData.insulation_value || 2}
+                  max="10"
+                  value={editFormData.insulation_value || 3}
                   onChange={(e) => setEditFormData({ ...editFormData, insulation_value: parseInt(e.target.value) })}
                 />
-                <p className="text-xs text-muted-foreground">1 = Very Light, 5 = Very Warm</p>
+                <p className="text-xs text-muted-foreground">1 = Very Light, 10 = Extreme Warmth</p>
               </div>
 
               {/* Pattern */}

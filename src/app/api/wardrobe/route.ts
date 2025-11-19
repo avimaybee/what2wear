@@ -27,9 +27,14 @@ export async function GET(_request: NextRequest): Promise<NextResponse<ApiRespon
   }
 
   // Fetch all clothing items for the user
+  // Explicitly select columns to avoid over-fetching (e.g. if we add large columns later)
   const { data, error } = await supabase
     .from('clothing_items')
-    .select('*')
+    .select(`
+      id, name, type, category, color, material, insulation_value, 
+      last_worn, image_url, season_tags, style_tags, dress_code, 
+      created_at, pattern, fit, style, occasion, description, favorite
+    `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 

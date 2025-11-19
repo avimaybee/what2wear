@@ -319,9 +319,14 @@ async function generateRecommendation(
   };
 
   // Fetch user's wardrobe
+  // Explicitly select columns to avoid fetching unnecessary large data
   const { data: wardrobeItems, error: wardrobeError } = await supabase
     .from('clothing_items')
-    .select('*')
+    .select(`
+      id, name, type, category, color, material, insulation_value, 
+      last_worn, image_url, season_tags, style_tags, dress_code, 
+      created_at, pattern, fit, style, occasion, description, favorite
+    `)
     .eq('user_id', userId);
 
   if (wardrobeError) {
