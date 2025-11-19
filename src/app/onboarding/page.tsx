@@ -504,7 +504,7 @@ export default function OnboardingPage() {
                               setUserLocation(defaultLocation);
                               setLocationGranted(true);
                               localStorage.setItem("userLocation", JSON.stringify(defaultLocation));
-                              toast.info("Using default location (New York). You can change this in settings.");
+                              toast("Using default location (New York). You can change this in settings.");
                             }}
                             className="text-muted-foreground hover:text-foreground"
                           >
