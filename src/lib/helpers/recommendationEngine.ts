@@ -1080,13 +1080,18 @@ export function getRecommendation(
       const seasonContext = context.weather.season_description 
         ? `Currently ${context.weather.season_description}.` 
         : '';
-      detailedParts.push(`Temperature & protection: ${seasonContext} Selected to match a feels-like temperature of ${context.weather.feels_like}°C with an estimated insulation level of ${baseOutfitInsulation} (target ${requiredInsulation}). Season appropriateness takes priority over temperature alone.`);
+      const feels = Number.isFinite(Number(context.weather.feels_like))
+        ? Number((context.weather.feels_like as number).toFixed(1))
+        : context.weather.feels_like;
+      const totalWarmth = Math.round(baseOutfitInsulation);
+      const targetWarmth = Math.round(targetTotalInsulation);
+      detailedParts.push(`Temperature & protection: ${seasonContext} Feels-like ${feels}°C. Outfit warmth ${totalWarmth} vs target ${targetWarmth}. ${totalWarmth >= targetWarmth ? 'Aligned for comfort.' : 'Added warmth where possible based on your wardrobe.'}`);
 
       if (alerts && alerts.length > 0) {
         detailedParts.push(`Safety & alerts: The recommendation considered active alerts (${alerts.map(a => a.type).join(', ')}), adding protection where appropriate.`);
       }
 
-      detailedParts.push(`Recommendation confidence: ${(bestScore / 100 * 100).toFixed(0)}% based on color, style, fit and your preferences.`);
+      detailedParts.push(`Recommendation confidence: ${Math.round(bestScore)}% based on color, style, fit and your preferences.`);
 
       if (enhancementSuggestions.length > 0) {
         detailedParts.push(`Optional finishing touches to elevate this look: ${enhancementSuggestions.join('; ')}.`);
