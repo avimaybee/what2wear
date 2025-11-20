@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, type GenerativeModel } from '@google/generative-ai'
 import { IClothingItem, OutfitValidation } from '@/lib/types';
 import { UserPreferences } from '@/types/retro';
 import { config } from '@/lib/config';
-import { resolveInsulationValue } from './recommendationEngine';
+import { resolveInsulationValue } from './clothingHelpers';
 
 /**
  * AI-Powered Outfit Analyzer using Gemini 2.5 Flash
@@ -229,7 +229,7 @@ export async function generateAIOutfitRecommendation(
       - Gender Context: ${userPreferences.gender}.
 
       ### RULES
-      - You MUST select 1 Top, 1 Bottom, and 1 Shoes.
+      - You MUST select at least1 Top, 1 Bottom, and 1 Shoes and prefer layering.
       - Outerwear and Accessories are recommended if its a cold season.
       - MANDATORY: You MUST include these locked Item IDs if provided: ${JSON.stringify(lockedItems)}.
       - Prioritize items with 'is_favorite: true' if they fit the vibe.

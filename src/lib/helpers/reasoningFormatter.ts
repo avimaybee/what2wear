@@ -73,9 +73,9 @@ export function formatReasoningForUser(detailedReasoning: string): string {
     (_, temp) => {
       const tempNum = parseFloat(temp);
       let tempDesc = "moderate";
-      if (tempNum < 5) tempDesc = "cold";
-      else if (tempNum > 20) tempDesc = "warm";
-      else if (tempNum < 15) tempDesc = "cool";
+      if (tempNum < 16) tempDesc = "cold";
+      else if (tempNum > 35) tempDesc = "warm";
+      else if (tempNum < 24) tempDesc = "cool";
       
       return `These pieces are chosen for today's ${tempDesc} weather (feels like ${temp}°C), keeping you comfortable without overdoing it.`;
     }

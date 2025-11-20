@@ -120,9 +120,9 @@ export const RetroBadge: React.FC<{ children: React.ReactNode; color?: string }>
   </span>
 );
 
-export const RetroInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
+export const RetroInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className = '', ...props }) => (
   <input 
-    className="w-full border-2 border-[var(--border)] p-2 font-mono text-sm bg-[var(--bg-secondary)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-pink)] focus:border-[var(--border)] placeholder:text-gray-500 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] disabled:opacity-50 disabled:cursor-not-allowed"
+    className={`w-full border-2 border-[var(--border)] p-2 font-mono text-sm bg-[var(--bg-secondary)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-pink)] focus:border-[var(--border)] placeholder:text-gray-500 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     {...props}
   />
 );

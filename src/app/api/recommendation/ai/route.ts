@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ApiResponse, IClothingItem, WeatherData } from '@/lib/types';
 import { generateAIOutfitRecommendation } from '@/lib/helpers/aiOutfitAnalyzer';
-import { filterByLastWorn } from '@/lib/helpers/recommendationEngine';
+import { filterByLastWorn } from '@/lib/helpers/clothingHelpers';
 import { getCurrentSeason, getSeasonDescription } from '@/lib/helpers/seasonDetector';
 
 /**

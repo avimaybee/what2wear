@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RetroButton, RetroInput, RetroWindow } from '@/components/retro-ui';
-import { ShieldCheck, Terminal, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Terminal, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface LoginPageProps {
     email: string;
@@ -17,6 +17,8 @@ interface LoginPageProps {
 export const LoginPage: React.FC<LoginPageProps> = ({ 
     email, setEmail, password, setPassword, isSignUp, setIsSignUp, loading, error, onSubmit 
 }) => {
+    const [showPassword, setShowPassword] = useState(false);
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#FFF8E7] p-4" 
              style={{ backgroundImage: 'radial-gradient(#e5e5e5 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
@@ -60,13 +62,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                             </div>
                             <div>
                                 <label className="font-bold font-mono text-xs uppercase mb-1 block">PASSCODE</label>
-                                <RetroInput 
-                                    type="password" 
-                                    placeholder="••••••••" 
-                                    required 
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
+                                <div className="relative">
+                                    <RetroInput 
+                                        type={showPassword ? "text" : "password"} 
+                                        placeholder="••••••••" 
+                                        required 
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

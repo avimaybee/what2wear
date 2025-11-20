@@ -9,9 +9,25 @@ import { IClothingItem } from "@/types";
 import { toast } from "@/components/ui/toaster";
 
 export default function WardrobePage() {
-  const [items, setItems] = useState<ClothingItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
+    const [items, setItems] = useState<ClothingItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isAdding, setIsAdding] = useState(false);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("action") === "new") {
+            setIsAdding(true);
+        }
+    }, []);
+
+  const handleCloseAdd = () => {
+      setIsAdding(false);
+      // Remove query param without full reload
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('action');
+      window.history.replaceState({}, '', newUrl.toString());
+  };
 
     const fetchWardrobe = useCallback(async () => {
     try {
@@ -229,7 +245,7 @@ export default function WardrobePage() {
                         onDelete={handleDelete}
                         isAdding={isAdding}
                         onOpenAdd={() => setIsAdding(true)}
-                        onCloseAdd={() => setIsAdding(false)}
+                        onCloseAdd={handleCloseAdd}
                         onToggleFavorite={handleToggleFavorite}
                         onAnalyzeImage={handleAnalyzeImage}
                     />

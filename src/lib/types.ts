@@ -77,6 +77,7 @@ export interface IClothingItem {
   occasion?: string[] | null;
   description?: string | null;
   favorite?: boolean;
+  wear_count?: number;
 }
 
 /**
@@ -127,6 +128,7 @@ export interface WeatherData {
   timestamp: Date;
   season?: string; // Current season based on date and location
   season_description?: string; // Detailed season description
+  city?: string; // Detected city name
 }
 
 export interface WeatherAlert {

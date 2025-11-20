@@ -143,6 +143,12 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
       
       const newOutfitItems = [...filtered, newItem];
       onOutfitChange?.(newOutfitItems);
+
+      // Smart Auto-Lock: Lock the manually selected item
+      if (onToggleLock && !lockedItems.includes(newItem.id)) {
+          onToggleLock(newItem.id);
+      }
+
       setIsSwapping(false);
   };
 

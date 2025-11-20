@@ -261,6 +261,20 @@ async function fetchWeatherData(
         } catch (aqiError) {
           logger.error('AQI fetch error', { error: aqiError });
         }
+
+        // Fetch city name via reverse geocoding
+        try {
+          const geoUrl = `http://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${config.weather.openWeather.apiKey}`;
+          const geoResponse = await fetch(geoUrl);
+          if (geoResponse.ok) {
+            const geoData = await geoResponse.json();
+            if (geoData && geoData.length > 0) {
+              weatherData.city = geoData[0].name;
+            }
+          }
+        } catch (geoError) {
+          logger.error('Geocoding fetch error', { error: geoError });
+        }
       }
     } catch (error) {
       logger.error('OpenWeatherMap fetch error', { error });

@@ -51,7 +51,22 @@ export default function HomePage() {
   const [selectedOccasion, setSelectedOccasion] = useState<string>('');
   const [lockedItems, setLockedItems] = useState<string[]>([]);
   const [allWardrobeItems, setAllWardrobeItems] = useState<ClothingItem[]>([]);
+  const [rawWardrobeItems, setRawWardrobeItems] = useState<IClothingItem[]>([]);
   const [isLoggingOutfit, setIsLoggingOutfit] = useState(false);
+  const [isRestored, setIsRestored] = useState(false);
+
+  // Restore state from session storage on mount
+  useEffect(() => {
+    const cached = sessionStorage.getItem("lastRecommendation");
+    if (cached) {
+      try {
+        setRecommendationData(JSON.parse(cached));
+      } catch (e) {
+        console.error("Failed to parse cached recommendation", e);
+      }
+    }
+    setIsRestored(true);
+  }, []);
 
   useEffect(() => {
       if (isAuthenticated) {
@@ -60,6 +75,7 @@ export default function HomePage() {
               const { data } = await supabase.from('clothing_items').select('*');
                   if (data && Array.isArray(data)) {
                     const typed = data as IClothingItem[];
+                    setRawWardrobeItems(typed);
                     setAllWardrobeItems(typed.map(mapClothingItem));
                   }
           };
@@ -157,6 +173,7 @@ export default function HomePage() {
       
       if (data.success && data.data) {
         setRecommendationData(data.data);
+        sessionStorage.setItem("lastRecommendation", JSON.stringify(data.data));
       } else {
         setError(data.message || "Failed to fetch recommendation");
         if (data.needsWardrobe) {
@@ -206,30 +223,106 @@ export default function HomePage() {
   }, [emitClientLog, isLoggingOutfit]);
 
   useEffect(() => {
-    if (location && !recommendationData && isAuthenticated) {
+    if (isRestored && location && !recommendationData && isAuthenticated) {
       fetchRecommendation();
     }
-  }, [location, fetchRecommendation, recommendationData, isAuthenticated]);
+  }, [isRestored, location, fetchRecommendation, recommendationData, isAuthenticated]);
 
   // Map data to new UI types
   const weatherData: WidgetWeatherData = {
     temp: recommendationData?.weather?.temperature || 0,
     condition: recommendationData?.weather?.weather_condition || "Unknown",
-    city: "Current Location", 
+    city: recommendationData?.weather?.city || "Current Location", 
     humidity: recommendationData?.weather?.humidity || 0,
     wind: recommendationData?.weather?.wind_speed || 0,
   };
+
+  let parsedReasoning = {
+    weatherMatch: recommendationData?.recommendation?.reasoning || "AI Optimized",
+    totalInsulation: 0,
+    layeringStrategy: "AI Optimized",
+    colorAnalysis: "",
+    occasionFit: ""
+  };
+
+  if (recommendationData?.recommendation?.detailed_reasoning) {
+    try {
+      const detailed = JSON.parse(recommendationData.recommendation.detailed_reasoning);
+      parsedReasoning = {
+        ...parsedReasoning,
+        ...detailed
+      };
+    } catch (e) {
+      console.error("Failed to parse detailed reasoning", e);
+      parsedReasoning.layeringStrategy = recommendationData.recommendation.detailed_reasoning;
+    }
+  }
 
   const _suggestedOutfit: Outfit | null = recommendationData?.recommendation ? {
     id: recommendationData.recommendation.id?.toString() || "temp-id",
     outfit_date: new Date().toISOString(),
     items: recommendationData.recommendation.outfit.map(mapClothingItem),
-    reasoning: {
-        weatherMatch: recommendationData.recommendation.reasoning,
-        totalInsulation: 0, 
-        layeringStrategy: recommendationData.recommendation.detailed_reasoning || "AI Optimized",
-    }
+    reasoning: parsedReasoning
   } : null;
+
+  const handleOutfitChange = (newItems: ClothingItem[]) => {
+    // Map UI items back to IClothingItem using rawWardrobeItems
+    const newOutfitRaw = newItems.map(uiItem => {
+      const raw = rawWardrobeItems.find(r => r.id.toString() === uiItem.id);
+      if (raw) return raw;
+      // Fallback if not found (shouldn't happen if data is consistent)
+      console.warn(`Could not find raw item for ${uiItem.id}`);
+      return null;
+    }).filter(Boolean) as IClothingItem[];
+
+    // Update recommendationData
+    setRecommendationData(prev => {
+      // Create a base object if prev is null (e.g. starting from scratch)
+      const base: RecommendationApiPayload = prev || {
+        weather: {
+            temperature: 0,
+            feels_like: 0,
+            humidity: 0,
+            wind_speed: 0,
+            uv_index: 0,
+            air_quality_index: 0,
+            pollen_count: 0,
+            weather_condition: "Unknown",
+            timestamp: new Date(),
+            city: "Manual Selection"
+        },
+        alerts: [],
+        recommendation: {
+            outfit: [],
+            confidence_score: 1,
+            reasoning: "Manual configuration active",
+            dress_code: "Casual",
+            weather_alerts: []
+        }
+      };
+
+      const updated: RecommendationApiPayload = {
+        ...base,
+        recommendation: {
+          ...base.recommendation,
+          outfit: newOutfitRaw,
+          reasoning: "Manual configuration active",
+          // Clear detailed reasoning as it might no longer apply
+          detailed_reasoning: JSON.stringify({
+             weatherMatch: "Manual Override",
+             layeringStrategy: "User selected configuration",
+             colorAnalysis: "Manual Selection",
+             occasionFit: "Manual Selection"
+          })
+        }
+      };
+      
+      // Persist to session storage
+      sessionStorage.setItem("lastRecommendation", JSON.stringify(updated));
+      
+      return updated;
+    });
+  };
 
   const handleToggleLock = (itemId: string) => {
       setLockedItems(prev => {
@@ -255,19 +348,13 @@ export default function HomePage() {
                     outfit_date: new Date().toISOString(),
                     items: recommendationData.recommendation.outfit.map(mapClothingItem),
                     weather_snapshot: weatherData as unknown as Record<string, unknown>,
-                    reasoning: {
-                        weatherMatch: recommendationData.recommendation.reasoning,
-                        totalInsulation: 0,
-                        layeringStrategy: recommendationData.recommendation.detailed_reasoning || "AI Optimized",
-                    }
+                    reasoning: parsedReasoning
                 } : null}
                 isGenerating={isGenerating}
                 generationProgress={0}
                 onGenerate={fetchRecommendation}
                 onLogOutfit={handleLogOutfit}
-                onOutfitChange={(newItems) => {
-                    console.log("Outfit changed", newItems);
-                }}
+                onOutfitChange={handleOutfitChange}
                 lockedItems={lockedItems}
                 onToggleLock={handleToggleLock}
                 isLogging={isLoggingOutfit}

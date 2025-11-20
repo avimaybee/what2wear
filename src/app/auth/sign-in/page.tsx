@@ -4,7 +4,6 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { toast } from "@/components/ui/toaster";
-import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -12,7 +11,6 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +31,7 @@ export default function SignInPage() {
 
         if (data.user) {
           toast.success("Account created! Welcome to setmyfit! 🎉");
-          router.push("/onboarding");
+          window.location.href = "/onboarding";
         }
       } else {
         // Sign in
@@ -46,7 +44,7 @@ export default function SignInPage() {
 
         if (data.user) {
           toast.success("Welcome back!");
-          router.push("/");
+          window.location.href = "/";
         }
       }
     } catch (err) {

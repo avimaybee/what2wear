@@ -16,6 +16,7 @@ export const recommendationRequestSchema = z.object({
   lat: z.number().min(-90).max(90),
   lon: z.number().min(-180).max(180),
   occasion: z.string().optional(),
+  lockedItems: z.array(z.string()).optional(),
 });
 
 // Helper to validate query params

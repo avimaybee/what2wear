@@ -6,11 +6,8 @@
 import { classifyEvent } from '../eventClassifier';
 import { 
   filterByLastWorn, 
-  getDressCodeFromEvents,
-  adjustInsulationForActivity,
-  calculateRequiredInsulation,
-  getRecommendation,
-} from '../recommendationEngine';
+} from '../clothingHelpers';
+// Removed: getDressCodeFromEvents, adjustInsulationForActivity, calculateRequiredInsulation, getRecommendation
 import { adjustPreferences } from '../preferenceLearning';
 import { 
   IClothingItem, 
