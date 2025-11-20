@@ -108,19 +108,14 @@ export default function StatsPage() {
   };
 
   return (
-        <div className="h-full p-4 md:p-8 overflow-y-auto bg-[#f0f0f0] min-h-screen">
+        <div className="h-full p-4 md:p-8 overflow-y-auto bg-[var(--bg-primary)] min-h-screen text-[var(--text)]">
             <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-4xl md:text-6xl font-black mb-2 tracking-tighter">STATS_DASHBOARD</h1>
-                    <p className="font-mono text-gray-500">ANALYZE YOUR STYLE METRICS</p>
-                </div>
-
                 {loading ? (
                     <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--border)]"></div>
                     </div>
                 ) : (
-                    <StatsPageComponent items={items} />
+                    <StatsPageComponent items={items} history={_history} />
                 )}
             </div>
         </div>

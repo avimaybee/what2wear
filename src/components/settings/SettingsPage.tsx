@@ -113,6 +113,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onLogout, preference
                                 ))}
                             </div>
                         </div>
+
+                        <div>
+                             <label className="font-bold font-mono text-xs uppercase mb-2 block text-[var(--text)]">Core Vibe Description</label>
+                             <textarea 
+                                className="w-full h-24 border-2 border-[var(--border)] p-2 font-mono text-sm bg-[var(--bg-secondary)] text-[var(--text)] resize-none shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-pink)]"
+                                placeholder="Describe your ideal style (e.g., '90s grunge meets modern utility')..."
+                                defaultValue="Relaxed fits with a focus on utility and comfort. Prefer earth tones."
+                             ></textarea>
+                        </div>
                     </div>
                 </RetroWindow>
 

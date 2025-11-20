@@ -90,13 +90,17 @@ export default function HistoryPage() {
 
   if (loading) {
       return (
-          <div className="flex items-center justify-center h-full">
-              <div className="font-mono text-xl animate-pulse">LOADING HISTORY...</div>
+          <div className="flex items-center justify-center h-full bg-[var(--bg-primary)]">
+              <div className="font-mono text-xl animate-pulse text-[var(--text)]">LOADING HISTORY...</div>
           </div>
       );
   }
 
   return (
-      <HistoryPageComponent history={history} onDelete={handleDelete} />
+      <div className="h-full p-4 md:p-8 bg-[var(--bg-primary)] min-h-screen">
+        <div className="max-w-5xl mx-auto h-full">
+            <HistoryPageComponent history={history} onDelete={handleDelete} />
+        </div>
+      </div>
   );
 }

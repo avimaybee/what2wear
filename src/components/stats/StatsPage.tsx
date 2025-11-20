@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import Image from 'next/image';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, Cell } from 'recharts';
 import { RetroWindow, RetroBox } from '@/components/retro-ui';
 import { Award, TrendingUp, Activity } from 'lucide-react';
@@ -7,12 +6,19 @@ import { ClothingItem, Outfit } from '@/types/retro';
 
 interface StatsPageProps {
   items: ClothingItem[];
-  _history?: Outfit[];
+  history: Outfit[];
 }
 
-const COLORS = ['#FF99C8', '#A0C4FF', '#CAFFBF', '#FDFFB6', '#FF8E72', '#A0C4FF', '#FF99C8'];
+// We will use CSS variables for colors so they switch with theme
+const CHART_COLORS = [
+    'var(--accent-pink)', 
+    'var(--accent-blue)', 
+    'var(--accent-green)', 
+    'var(--accent-yellow)', 
+    'var(--accent-orange)'
+];
 
-export const StatsPage: React.FC<StatsPageProps> = ({ items }) => {
+export const StatsPage: React.FC<StatsPageProps> = ({ items, history }) => {
   
   // Calculate Analytics on the fly (simulating wardrobe_analytics view)
   const analytics = useMemo(() => {
@@ -46,29 +52,32 @@ export const StatsPage: React.FC<StatsPageProps> = ({ items }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <RetroWindow title="WARDROBE_ANALYTICS.VIEW" className="min-h-[300px]">
         <div className="p-4 flex flex-col gap-2 h-full">
-             <h3 className="font-mono font-bold uppercase border-b-2 border-black pb-1">Inventory Distribution</h3>
+             <h3 className="font-mono font-bold uppercase border-b-2 border-[var(--border)] pb-1 text-[var(--text)]">Inventory Distribution</h3>
              <div className="h-64 w-full flex-1">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={analytics.chartData}>
                     <XAxis 
                         dataKey="name" 
-                        tick={{fill: '#000000', fontFamily: 'monospace', fontSize: 10, fontWeight: 'bold'}} 
-                        axisLine={{stroke: 'black', strokeWidth: 2}}
+                        tick={{fill: 'var(--text)', fontFamily: 'monospace', fontSize: 10, fontWeight: 'bold'}} 
+                        axisLine={{stroke: 'var(--border)', strokeWidth: 2}}
                         tickLine={false}
                         dy={10}
                     />
                     <Tooltip 
                         contentStyle={{ 
-                            backgroundColor: '#FFFFFF', 
-                            border: '2px solid black', 
-                            boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)',
-                            fontFamily: 'monospace'
+                            backgroundColor: 'var(--bg-secondary)', 
+                            border: '2px solid var(--border)', 
+                            boxShadow: '4px 4px 0px 0px var(--border)',
+                            fontFamily: 'monospace',
+                            color: 'var(--text)'
                         }} 
-                        cursor={{fill: 'rgba(0,0,0,0.1)'}}
+                        itemStyle={{ color: 'var(--text)' }}
+                        labelStyle={{ color: 'var(--text)', fontWeight: 'bold', borderBottom: '1px dashed var(--border)', marginBottom: '4px' }}
+                        cursor={{fill: 'var(--bg-tertiary)'}}
                     />
                     <Bar dataKey="count" radius={[2, 2, 0, 0]}>
                         {analytics.chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="black" strokeWidth={2} />
+                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} stroke="var(--border)" strokeWidth={2} />
                         ))}
                     </Bar>
                     </BarChart>
@@ -79,45 +88,51 @@ export const StatsPage: React.FC<StatsPageProps> = ({ items }) => {
 
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-4">
-            <RetroBox color="bg-[#CAFFBF]" className="flex flex-col justify-between">
+            <RetroBox color="bg-[var(--accent-green)]" className="flex flex-col justify-between text-[var(--text)]">
                 <div className="flex justify-between items-start">
                     <Activity size={24} />
                     <span className="font-mono text-xs font-bold">AVG WEAR</span>
                 </div>
                 <p className="font-black text-4xl mt-2">{analytics.avgWearCount}</p>
-                <p className="text-[10px] font-mono">Per Item</p>
+                <p className="text-[10px] font-mono opacity-80">Per Item</p>
             </RetroBox>
             
-            <RetroBox color="bg-[#FF8E72]" className="flex flex-col justify-between">
+            <RetroBox color="bg-[var(--accent-orange)]" className="flex flex-col justify-between text-[var(--text)]">
                 <div className="flex justify-between items-start">
                     <TrendingUp size={24} />
                     <span className="font-mono text-xs font-bold">RARELY WORN</span>
                 </div>
                 <p className="font-black text-4xl mt-2">{analytics.rarelyWornCount}</p>
-                <p className="text-[10px] font-mono">Items to purge?</p>
+                <p className="text-[10px] font-mono opacity-80">Items to purge?</p>
             </RetroBox>
         </div>
 
-        <RetroWindow title="MOST_VALUABLE_ITEM.EXE" className="flex-1">
-            {analytics.maxWearItem ? (
-                <div className="p-4 flex gap-4 items-center h-full">
-                    <div className="w-24 h-24 border-2 border-black overflow-hidden bg-gray-100 relative">
-                        <Image src={analytics.maxWearItem.image_url} alt={analytics.maxWearItem.name} fill className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Award size={20} className="text-[#FFD700]" />
-                            <span className="font-black text-lg">MVP</span>
-                        </div>
-                        <h4 className="font-bold">{analytics.maxWearItem.name}</h4>
-                        <p className="font-mono text-xs text-gray-600">Worn {analytics.maxWearItem.wear_count} times</p>
-                    </div>
+        <RetroBox color="bg-[var(--accent-blue)]" className="flex items-center gap-4">
+            <div className="p-3 bg-[var(--bg-secondary)] border-2 border-[var(--border)] rounded-full shadow-[2px_2px_0px_0px_var(--border)]">
+                <Award size={32} className="text-[var(--text)]" />
+            </div>
+            <div>
+                <h3 className="font-mono text-sm uppercase font-bold text-[var(--text)]">MVP Item</h3>
+                <p className="font-black text-xl tracking-tight text-[var(--text)]">{analytics.maxWearItem?.name || "N/A"}</p>
+                <p className="text-xs font-mono font-bold text-[var(--text)] bg-[var(--bg-secondary)] px-1 inline-block border border-[var(--border)] mt-1">Worn {analytics.maxWearItem?.wear_count || 0} times</p>
+            </div>
+        </RetroBox>
+
+        <RetroWindow title="DATA_HEALTH.LOG">
+            <div className="space-y-2 font-mono text-sm p-2 text-[var(--text)]">
+                <div className="flex justify-between items-center border-b border-[var(--border)] border-dashed pb-1">
+                    <span className="text-[var(--text-muted)]">Total Assets:</span>
+                    <span className="font-bold">{analytics.totalItems} Items</span>
                 </div>
-            ) : (
-                <div className="p-4 flex items-center justify-center h-full font-mono text-gray-400">
-                    NO DATA AVAILABLE
+                <div className="flex justify-between items-center border-b border-[var(--border)] border-dashed pb-1">
+                    <span className="text-[var(--text-muted)]">Favorites:</span>
+                    <span className="font-bold text-red-500">{analytics.favoriteCount} ♥</span>
                 </div>
-            )}
+                <div className="flex justify-between items-center">
+                    <span className="text-[var(--text-muted)]">Database Size:</span>
+                    <span className="font-bold">{JSON.stringify(items).length / 1024} KB</span>
+                </div>
+            </div>
         </RetroWindow>
       </div>
     </div>

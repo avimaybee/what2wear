@@ -17,7 +17,7 @@ export const SystemMsg: React.FC<SystemMsgProps> = ({ logs, location, season, it
     }, [logs]);
 
     return (
-        <RetroWindow title="SYSTEM_MSG" icon={<Terminal size={14} />} className="h-full">
+        <RetroWindow title="SYSTEM_MSG" icon={<Terminal size={14} />} className="h-full bg-[var(--accent-yellow)]" headerColor="bg-[var(--accent-pink)]">
             <div className="p-3 h-full flex flex-col font-mono text-xs">
                 
                 {/* Status Header */}

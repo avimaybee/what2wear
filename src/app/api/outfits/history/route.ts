@@ -17,6 +17,7 @@ interface OutfitHistoryItem {
   rendered_image_url: string | null;
   feedback: number | null;
   created_at: string;
+  weather_data?: Record<string, unknown>;
   items: Array<{
     id: number;
     name: string;
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
         rendered_image_url,
         feedback,
         created_at,
+        weather_data,
         outfit_items (
           clothing_items (
             id,
@@ -106,6 +108,7 @@ export async function GET(request: NextRequest) {
       rendered_image_url: outfit.rendered_image_url,
       feedback: outfit.feedback,
       created_at: outfit.created_at,
+      weather_data: outfit.weather_data,
       items: (outfit.outfit_items || [])
         .map(outfitItem => outfitItem.clothing_items)
         .flat()

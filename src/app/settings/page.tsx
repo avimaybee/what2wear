@@ -104,17 +104,21 @@ export default function SettingsPage() {
 
   if (loading) {
       return (
-          <div className="flex items-center justify-center h-full">
-              <div className="font-mono text-xl animate-pulse">LOADING SETTINGS...</div>
+          <div className="flex items-center justify-center h-full bg-[var(--bg-primary)]">
+              <div className="font-mono text-xl animate-pulse text-[var(--text)]">LOADING SETTINGS...</div>
           </div>
       );
   }
 
   return (
-      <SettingsPageComponent 
-          preferences={preferences} 
-          onUpdate={handleUpdate} 
-          onLogout={handleLogout}
-      />
+    <div className="h-full p-4 md:p-8 overflow-y-auto bg-[var(--bg-primary)] min-h-screen text-[var(--text)]">
+        <div className="max-w-7xl mx-auto">
+            <SettingsPageComponent 
+                preferences={preferences} 
+                onUpdate={handleUpdate} 
+                onLogout={handleLogout}
+            />
+        </div>
+    </div>
   );
 }

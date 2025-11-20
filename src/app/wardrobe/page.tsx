@@ -126,6 +126,37 @@ export default function WardrobePage() {
       }
   };
 
+  const handleUpdateItem = async (item: Partial<ClothingItem>) => {
+      if (!item.id) return;
+      try {
+          const payload = {
+              name: item.name,
+              type: mapUiCategoryToDbType(item.category as ClothingType),
+              material: item.material,
+              season_tags: item.season_tags,
+              dress_code: item.dress_code,
+              image_url: item.image_url,
+              insulation_value: item.insulation_value,
+              is_favorite: item.is_favorite,
+              style_tags: item.style_tags
+          };
+
+          const response = await fetch(`/api/wardrobe/${item.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) throw new Error("Failed to update item");
+
+          toast.success("Item updated.");
+          fetchWardrobe();
+      } catch (err) {
+          console.error("Error updating item:", err);
+          toast.error("Failed to update item.");
+      }
+  };
+
   const handleDelete = async (id: string) => {
       try {
           const response = await fetch(`/api/wardrobe/${id}`, { method: "DELETE" });
@@ -178,16 +209,17 @@ export default function WardrobePage() {
   };
 
   return (
-        <div className="h-full p-4 md:p-8 overflow-y-auto bg-[#f0f0f0] min-h-screen">
+        <div className="h-full p-4 md:p-8 overflow-y-auto bg-[var(--bg-primary)] min-h-screen text-[var(--text)]">
             <div className="max-w-7xl mx-auto">
                 {loading ? (
                     <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--border)]"></div>
                     </div>
                 ) : (
                     <WardrobeGrid 
                         items={items}
                         onAddItem={handleAddItem}
+                        onUpdateItem={handleUpdateItem}
                         onDelete={handleDelete}
                         isAdding={isAdding}
                         onOpenAdd={() => setIsAdding(true)}

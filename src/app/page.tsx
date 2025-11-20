@@ -209,25 +209,23 @@ export default function HomePage() {
   };
 
   return (
-    <div className="h-full grid grid-cols-1 md:grid-cols-12 gap-6 p-4 md:p-0">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
         
-        {/* Left Panel: Mission Control */}
-        <div className="md:col-span-3 h-full">
-            <MissionControl 
-                selectedOccasion={selectedOccasion}
-                onOccasionChange={(occ) => {
-                    setSelectedOccasion(occ);
-                    emitClientLog(`Mission profile updated: ${occ || 'General'}`);
-                }}
-                lockedCount={lockedItems.length}
-            />
-        </div>
-
-        {/* Center Panel: Outfit Generator */}
-        <div className="md:col-span-6 h-full">
+        {/* Left/Center Panel: Outfit Generator */}
+        <div className="lg:col-span-2 h-full">
              <OutfitRecommender 
                 items={allWardrobeItems}
-                suggestedOutfit={suggestedOutfit}
+                suggestedOutfit={recommendationData?.recommendation?.outfit ? {
+                    id: "generated",
+                    outfit_date: new Date().toISOString(),
+                    items: recommendationData.recommendation.outfit.map(mapClothingItem),
+                    weather_snapshot: weatherData as unknown as Record<string, unknown>,
+                    reasoning: {
+                        weatherMatch: recommendationData.recommendation.reasoning,
+                        totalInsulation: 0,
+                        layeringStrategy: recommendationData.recommendation.detailed_reasoning || "AI Optimized",
+                    }
+                } : null}
                 isGenerating={isGenerating}
                 generationProgress={0}
                 onGenerate={fetchRecommendation}
@@ -245,7 +243,7 @@ export default function HomePage() {
         </div>
 
         {/* Right Panel: Widgets */}
-        <div className="md:col-span-3 flex flex-col gap-6 h-full">
+        <div className="flex flex-col gap-4 h-full">
             
             {/* Weather Widget */}
             <div className="h-48">
@@ -261,12 +259,24 @@ export default function HomePage() {
             </div>
 
             {/* System Messages */}
-            <div className="flex-1 min-h-[200px]">
+            <div className="flex-1">
                 <SystemMsg 
                     logs={logs} 
                     location={weatherData?.city} 
                     season="Autumn" 
                     itemCount={allWardrobeItems.length}
+                />
+            </div>
+
+            {/* Mission Control */}
+            <div className="flex-1 min-h-[200px]">
+                <MissionControl 
+                    selectedOccasion={selectedOccasion}
+                    onOccasionChange={(occ) => {
+                        setSelectedOccasion(occ);
+                        emitClientLog(`Mission profile updated: ${occ || 'General'}`);
+                    }}
+                    lockedCount={lockedItems.length}
                 />
             </div>
         </div>

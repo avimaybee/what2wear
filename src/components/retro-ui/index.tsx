@@ -72,13 +72,14 @@ interface RetroWindowProps {
   className?: string;
   onClose?: () => void;
   icon?: React.ReactNode;
+  headerColor?: string;
 }
 
-export const RetroWindow: React.FC<RetroWindowProps> = ({ title, children, className = '', onClose, icon }) => {
+export const RetroWindow: React.FC<RetroWindowProps> = ({ title, children, className = '', onClose, icon, headerColor = 'bg-[var(--accent-orange)]' }) => {
   return (
     <div className={`bg-[var(--bg-main)] border-2 border-[var(--border)] shadow-[8px_8px_0px_0px_var(--border)] flex flex-col ${className}`}>
       {/* Window Header */}
-      <div className="bg-[var(--accent-orange)] border-b-2 border-[var(--border)] p-1 px-2 flex items-center justify-between select-none">
+      <div className={`${headerColor} border-b-2 border-[var(--border)] p-1 px-2 flex items-center justify-between select-none`}>
         <div className="flex items-center gap-2 pl-1">
           {icon && <span className="text-[var(--text)]">{icon}</span>}
           <span className="font-bold font-mono text-sm uppercase tracking-wider text-[var(--text)] truncate">{title}</span>

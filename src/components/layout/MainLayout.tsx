@@ -4,7 +4,8 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Shirt, BarChart3, Clock, Settings, LayoutTemplate } from 'lucide-react';
+import { Home, Shirt, BarChart3, Clock, Settings, LayoutTemplate, Plus } from 'lucide-react';
+import { RetroButton } from '../retro-ui';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -87,13 +88,16 @@ export const MainLayout: React.FC<LayoutProps> = ({ children }) => {
             ))}
         </nav>
 
-        {/* Decorative Box */}
-        <div className="flex-1 flex flex-col justify-end">
-            <div className="bg-[url('https://www.transparenttextures.com/patterns/checkered-pattern.png')] h-32 border-2 border-black opacity-30 relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center -rotate-12 opacity-50">
-                    <span className="text-4xl font-black text-black border-2 border-black p-2 bg-white">OUTFIT</span>
-                </div>
-            </div>
+        {/* Quick Add Button (Bottom Left) */}
+        <div className="mt-auto">
+            <Link href="/wardrobe">
+                <RetroButton 
+                    className="w-full py-4 flex items-center justify-center gap-2 border-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    variant="neutral"
+                >
+                    <Plus size={18} strokeWidth={3} /> QUICK ADD ITEM
+                </RetroButton>
+            </Link>
         </div>
       </aside>
 

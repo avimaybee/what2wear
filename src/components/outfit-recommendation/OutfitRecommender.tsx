@@ -129,7 +129,7 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
       : [];
 
   return (
-    <RetroWindow title="OUTFIT_GEN.EXE" className="h-full flex flex-col relative">
+    <RetroWindow title="OUTFIT_GEN.EXE" className="h-full flex flex-col relative" headerColor="bg-[#FF99C8]">
       
       {/* Header Status Bar */}
       <div className="flex flex-row justify-between items-center bg-white border-2 border-black p-2 mb-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] gap-2">

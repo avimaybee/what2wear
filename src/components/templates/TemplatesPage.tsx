@@ -3,42 +3,12 @@ import { RetroWindow, RetroButton } from '@/components/retro-ui';
 import { OutfitTemplate } from '@/types/retro';
 import { Wand2, ArrowRight, Layers, AlertCircle } from 'lucide-react';
 
-const MOCK_TEMPLATES: (OutfitTemplate & { requirements: string[] })[] = [
-    {
-        id: 't1',
-        name: 'Office Core',
-        description: 'Professional yet approachable. Optimized for climate-controlled environments.',
-        styleTags: ['Smart', 'Minimal'],
-        coverImage: 'https://picsum.photos/300/200?random=20',
-        requirements: ['1x Blazer/Jacket', '1x Trousers', '1x Leather Shoes']
-    },
-    {
-        id: 't2',
-        name: 'Weekend Warrior',
-        description: 'Maximum mobility for urban exploration. Durable fabrics.',
-        styleTags: ['Utility', 'Street'],
-        coverImage: 'https://picsum.photos/300/200?random=21',
-        requirements: ['1x Cargo/Denim', '1x Hoodie', '1x Sneakers']
-    },
-    {
-        id: 't3',
-        name: 'Date Night',
-        description: 'High-contrast aesthetics for evening social protocols.',
-        styleTags: ['Elegant', 'Sharp'],
-        coverImage: 'https://picsum.photos/300/200?random=22',
-        requirements: ['1x Statement Top', '1x Dark Bottoms', '1x Accessory']
-    },
-    {
-        id: 't4',
-        name: 'Rain Defense',
-        description: 'Water-resistant layering for high humidity forecasts.',
-        styleTags: ['Techwear', 'Functional'],
-        coverImage: 'https://picsum.photos/300/200?random=23',
-        requirements: ['1x Waterproof Outer', '1x Boots', '1x Hat']
-    }
-];
+interface TemplatesPageProps {
+    templates: (OutfitTemplate & { requirements?: string[] })[];
+    onApply: (template: OutfitTemplate) => void;
+}
 
-export const TemplatesPage: React.FC<{ onApply: (template: OutfitTemplate) => void }> = ({ onApply }) => {
+export const TemplatesPage: React.FC<TemplatesPageProps> = ({ templates, onApply }) => {
     return (
         <RetroWindow title="STYLE_BLUEPRINTS.LIB" className="h-full" icon={<Wand2 size={14} />}>
             <div className="p-2">
@@ -53,7 +23,7 @@ export const TemplatesPage: React.FC<{ onApply: (template: OutfitTemplate) => vo
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {MOCK_TEMPLATES.map(template => (
+                    {templates.map(template => (
                         <div key={template.id} className="relative group">
                              {/* Background Card Effect */}
                             <div className="absolute inset-0 bg-black translate-x-2 translate-y-2 z-0 border border-[var(--border)]"></div>
@@ -86,7 +56,7 @@ export const TemplatesPage: React.FC<{ onApply: (template: OutfitTemplate) => vo
                                     <div className="bg-[var(--bg-tertiary)] p-2 border border-[var(--border)] mt-auto">
                                         <span className="block font-mono text-[10px] font-bold uppercase mb-1 border-b border-[var(--border)] border-dashed pb-1 text-[var(--text-muted)]">Ingredients Required:</span>
                                         <ul className="list-none space-y-1">
-                                            {template.requirements.map((req, i) => (
+                                            {(template.requirements || []).map((req, i) => (
                                                 <li key={i} className="font-mono text-xs flex items-center gap-2 text-[var(--text)]">
                                                     <div className="w-1.5 h-1.5 bg-[var(--text)]"></div>
                                                     {req}
