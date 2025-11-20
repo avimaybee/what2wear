@@ -13,6 +13,7 @@ interface OutfitRecommenderProps {
     onOutfitChange?: (items: ClothingItem[]) => void;
     lockedItems?: string[];
     onToggleLock?: (itemId: string) => void;
+    isLogging?: boolean;
 }
 
 interface OrganizedOutfit {
@@ -32,7 +33,8 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
     onLogOutfit,
     onOutfitChange,
     lockedItems = [],
-    onToggleLock
+    onToggleLock,
+    isLogging = false
 }) => {
   const [isSwapping, setIsSwapping] = useState(false);
   const [activeSwapCategory, setActiveSwapCategory] = useState<ClothingType | null>(null);
@@ -118,7 +120,10 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
       return list;
   };
 
-  const handleLogClick = () => {
+    const handleLogClick = () => {
+            if (isLogging) {
+                    return;
+            }
       const itemsToLog = getCurrentItems();
       if (itemsToLog.length > 0) {
         onLogOutfit(itemsToLog);
@@ -466,8 +471,21 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                 className="w-full flex items-center justify-center gap-2 py-3 text-xs md:text-base" 
                 variant="secondary"
                 onClick={handleLogClick}
+                disabled={isLogging}
             >
-                <ThumbsUp size={16} className="md:w-[18px] md:h-[18px]" /> <span className="hidden md:inline">LOG OUTFIT</span> <span className="md:hidden">LOG FIT</span>
+                {isLogging ? (
+                    <>
+                        <Loader2 size={16} className="animate-spin md:w-[18px] md:h-[18px]" />
+                        <span className="hidden md:inline">LOGGING...</span>
+                        <span className="md:hidden">LOG...</span>
+                    </>
+                ) : (
+                    <>
+                        <ThumbsUp size={16} className="md:w-[18px] md:h-[18px]" />
+                        <span className="hidden md:inline">LOG OUTFIT</span>
+                        <span className="md:hidden">LOG FIT</span>
+                    </>
+                )}
             </RetroButton>
             
             <RetroButton 

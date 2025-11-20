@@ -51,6 +51,7 @@ export default function HomePage() {
   const [selectedOccasion, setSelectedOccasion] = useState<string>('');
   const [lockedItems, setLockedItems] = useState<string[]>([]);
   const [allWardrobeItems, setAllWardrobeItems] = useState<ClothingItem[]>([]);
+  const [isLoggingOutfit, setIsLoggingOutfit] = useState(false);
 
   useEffect(() => {
       if (isAuthenticated) {
@@ -170,6 +171,40 @@ export default function HomePage() {
     }
   }, [location, selectedOccasion, lockedItems]);
 
+  const handleLogOutfit = useCallback(async (items: ClothingItem[]) => {
+    if (!items.length || isLoggingOutfit) return;
+    setIsLoggingOutfit(true);
+    const itemIds = items
+      .map((item) => Number.parseInt(item.id, 10))
+      .filter((id) => Number.isFinite(id)) as number[];
+
+    try {
+      const response = await fetch('/api/outfit/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_ids: itemIds }),
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        const errorMessage = payload?.message || payload?.error || 'Failed to log outfit';
+        toast.error(errorMessage);
+        emitClientLog('outfit:log:error', { error: errorMessage, status: response.status });
+        return;
+      }
+
+      toast.success('Outfit logged successfully');
+      emitClientLog('outfit:log:success', { outfitId: payload.data?.outfit_id });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error('Failed to log outfit');
+      emitClientLog('outfit:log:error', { error: message });
+    } finally {
+      setIsLoggingOutfit(false);
+    }
+  }, [emitClientLog, isLoggingOutfit]);
+
   useEffect(() => {
     if (location && !recommendationData && isAuthenticated) {
       fetchRecommendation();
@@ -229,16 +264,13 @@ export default function HomePage() {
                 isGenerating={isGenerating}
                 generationProgress={0}
                 onGenerate={fetchRecommendation}
-                onLogOutfit={(items) => {
-                    console.log("Log outfit", items);
-                    emitClientLog("Outfit logged to history");
-                    toast.success("Outfit logged successfully");
-                }}
+                onLogOutfit={handleLogOutfit}
                 onOutfitChange={(newItems) => {
                     console.log("Outfit changed", newItems);
                 }}
                 lockedItems={lockedItems}
                 onToggleLock={handleToggleLock}
+                isLogging={isLoggingOutfit}
              />
         </div>
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Image, { ImageProps } from 'next/image';
 import { X, Minus, Square, AlertCircle, Check, Info, AlertTriangle, ImageOff, Loader2 } from 'lucide-react';
 
 interface RetroBoxProps {
@@ -254,8 +255,9 @@ export const RetroSkeleton: React.FC<{ className?: string }> = ({ className = ''
   );
 };
 
-interface RetroImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface RetroImageProps extends Omit<ImageProps, 'className'> {
   containerClassName?: string;
+  className?: string;
 }
 
 export const RetroImage: React.FC<RetroImageProps> = ({ 
@@ -270,6 +272,8 @@ export const RetroImage: React.FC<RetroImageProps> = ({
   useEffect(() => {
     setStatus('loading');
   }, [src]);
+
+  const resolvedSrc = src || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
   return (
     <div className={`relative overflow-hidden bg-[var(--bg-secondary)] border-2 border-[var(--border)] ${containerClassName}`}>
@@ -296,14 +300,18 @@ export const RetroImage: React.FC<RetroImageProps> = ({
       )}
 
       {/* Actual Image */}
-      <img
-        src={src}
-        alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'} ${className}`}
-        onLoad={() => setStatus('loaded')}
-        onError={() => setStatus('error')}
-        {...props}
-      />
+      <div className="relative w-full h-full">
+        <Image
+          {...props}
+          src={resolvedSrc}
+          alt={alt || 'image'}
+          fill
+          sizes="100vw"
+          className={`object-cover transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'} ${className}`}
+          onLoadingComplete={() => setStatus('loaded')}
+          onError={() => setStatus('error')}
+        />
+      </div>
       
       {/* Scanline overlay (optional aesthetic) */}
       <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>

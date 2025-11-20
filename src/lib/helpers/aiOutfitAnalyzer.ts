@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, type GenerativeModel } from '@google/generative-ai';
-import { IClothingItem } from '@/lib/types';
-import { ClothingItem, UserPreferences } from '@/types/retro';
+import { IClothingItem, OutfitValidation } from '@/lib/types';
+import { UserPreferences } from '@/types/retro';
 import { config } from '@/lib/config';
 import { resolveInsulationValue } from './recommendationEngine';
 
@@ -32,22 +32,6 @@ const getTextModel = (() => {
     return cachedModel;
   };
 })();
-
-const extractJsonSegment = <T>(source: string, pattern: RegExp): T | null => {
-  const match = source.match(pattern);
-  if (!match) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(match[0]) as T;
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to parse Gemini response JSON segment', error, { source });
-    }
-    return null;
-  }
-};
 
 /**
  * Analyze a clothing item image to extract metadata
@@ -81,7 +65,7 @@ Respond with only valid JSON (no markdown, no code blocks).
 
 {
   "name": "A creative, short name for the item (e.g. 'Vintage Acid Wash Tee')",
-  "category": "Top|Bottom|Shoes|Outerwear|Accessory|Dress",
+  "category": "Top|Bottom|Shoes|Outerwear|Accessory|Dress (e.g. dress, gown, frock, sundress, maxi, mini, wrap, shift, sheath)",
   "material": "Cotton|Polyester|Wool|Silk|Leather|Denim|Linen|Synthetic|Gore-Tex|Other",
   "color": "Main color name or hex",
   "formality_insulation_value": 0-10 (0 for naked, 10 for arctic parka),
@@ -214,7 +198,7 @@ export async function generateAIOutfitRecommendation(
   const lockedItems = context.lockedItems || [];
 
   // Prepare Wardrobe Context (Lightweight to save tokens)
-  const wardrobeContext = wardrobeItems.map(item => ({
+    const wardrobeContext = wardrobeItems.map(item => ({
       id: item.id,
       name: item.name,
       category: item.type, // Mapping type to category
@@ -222,9 +206,9 @@ export async function generateAIOutfitRecommendation(
       style_tags: item.style_tags,
       insulation: resolveInsulationValue(item), 
       material: item.material,
-      fit: (item as any).fit || 'Regular',
-      is_favorite: (item as any).is_favorite
-  }));
+      fit: item.fit || 'Regular',
+      is_favorite: Boolean(item.favorite)
+    }));
 
   const systemInstruction = `
       You are "SetMyFit", a world-class Stylist and Creative Director.
@@ -331,4 +315,20 @@ export async function generateAIOutfitRecommendation(
     log.push(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error;
   }
+}
+
+export async function validateOutfitImages(items: IClothingItem[]): Promise<OutfitValidation> {
+  const missingImageItems = items.filter(item => !item.image_url);
+  const issues = missingImageItems.map(item => `Missing image for ${item.name || item.id}`);
+  const suggestions = missingImageItems.length
+    ? ['Upload clear photos for the highlighted items.']
+    : ['All outfit items include imagery.'];
+
+  return {
+    isValid: issues.length === 0,
+    score: missingImageItems.length ? 65 : 100,
+    issues,
+    suggestions,
+    problemItemId: missingImageItems[0]?.id,
+  };
 }

@@ -52,14 +52,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function mapCategoryToDbType(category: string): string {
-  const cat = category.toLowerCase();
-  if (cat.includes('shoe') || cat.includes('foot')) return 'Footwear';
-  if (cat.includes('head') || cat.includes('hat')) return 'Headwear';
-  if (cat.includes('outer') || cat.includes('jacket') || cat.includes('coat')) return 'Outerwear';
-  if (cat.includes('bottom') || cat.includes('pant') || cat.includes('jean')) return 'Bottom';
-  if (cat.includes('dress')) return 'Dress';
-  if (cat.includes('top') || cat.includes('shirt')) return 'Top';
-  return 'Top'; // Default
+function mapCategoryToDbType(category?: string): ClothingType {
+  const cat = category?.toLowerCase() ?? '';
+    if (cat.includes('shoe') || cat.includes('foot')) return 'Shoes';
+    if (cat.includes('head') || cat.includes('hat')) return 'Accessory';
+    if (cat.includes('outer') || cat.includes('jacket') || cat.includes('coat')) return 'Outerwear';
+    if (cat.includes('bottom') || cat.includes('pant') || cat.includes('jean')) return 'Bottom';
+    if (cat.includes('dress')) return 'Dress';
+    if (cat.includes('top') || cat.includes('shirt')) return 'Top';
+    return 'Top';
 }
 

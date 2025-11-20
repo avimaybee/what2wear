@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Plus, Search, Upload, X, Trash2, Heart, Thermometer, ScanLine, Pencil, ArrowUpDown, AlertTriangle, Ruler, Loader2 } from 'lucide-react';
 import { RetroButton, RetroInput, RetroCard, RetroWindow, RetroSelect, RetroSlider, RetroImage, RetroToggle } from '@/components/retro-ui';
 import { ClothingItem, ClothingType, ClothingMaterial, Season } from '@/types/retro';
@@ -425,7 +426,15 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                             >
                                 {previewUrl ? (
                                     <>
-                                        <img src={previewUrl} alt="Preview" className="w-full h-48 object-contain bg-[var(--bg-tertiary)]" />
+                                        <div className="relative w-full h-48">
+                                            <Image
+                                                src={previewUrl}
+                                                alt="Preview"
+                                                fill
+                                                sizes="100vw"
+                                                className="object-contain bg-[var(--bg-tertiary)]"
+                                            />
+                                        </div>
                                         
                                         {/* Scanning/Processing Overlay */}
                                         {(isAnalyzing || isProcessingImage) && (
