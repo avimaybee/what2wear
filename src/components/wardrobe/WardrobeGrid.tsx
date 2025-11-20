@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Search, Upload, X, Trash2, Heart, Thermometer, Tag, ScanLine, Pencil, ArrowUpDown, AlertTriangle, Ruler, Grid, Wand2, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Plus, Search, Upload, X, Trash2, Heart, Thermometer, ScanLine, Pencil, ArrowUpDown, AlertTriangle, Ruler, Loader2 } from 'lucide-react';
 import { RetroButton, RetroInput, RetroCard, RetroWindow, RetroSelect, RetroSlider, RetroImage, RetroToggle } from '@/components/retro-ui';
 import { ClothingItem, ClothingType, ClothingMaterial, Season } from '@/types/retro';
 import { processImageUpload } from '@/lib/imageProcessor';
@@ -486,13 +486,13 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="font-bold font-mono text-xs uppercase block mb-1 text-[var(--text)]">Category</label>
-                                    <RetroSelect value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value as any)} disabled={isAnalyzing || isProcessingImage}>
+                                    <RetroSelect value={newItemCategory} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewItemCategory(e.target.value as ClothingType)} disabled={isAnalyzing || isProcessingImage}>
                                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                     </RetroSelect>
                                 </div>
                                 <div>
                                     <label className="font-bold font-mono text-xs uppercase block mb-1 text-[var(--text)]">Material</label>
-                                    <RetroSelect value={newItemMaterial} onChange={(e) => setNewItemMaterial(e.target.value as any)} disabled={isAnalyzing || isProcessingImage}>
+                                    <RetroSelect value={newItemMaterial} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewItemMaterial(e.target.value as ClothingMaterial)} disabled={isAnalyzing || isProcessingImage}>
                                         {['Cotton', 'Polyester', 'Wool', 'Leather', 'Denim', 'Linen', 'Synthetic', 'Gore-Tex', 'Other'].map(m => 
                                             <option key={m} value={m}>{m}</option>
                                         )}

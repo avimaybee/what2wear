@@ -433,6 +433,18 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                                     <span>Total Insulation: {reasoning?.totalInsulation}/10</span>
                                 </div>
                                 <div className="flex items-start gap-2">
+                                    <span className="text-pink-600 font-bold">COLOR</span>
+                                    <span>{reasoning?.colorAnalysis}</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <span className="text-orange-600 font-bold">LAYERING</span>
+                                    <span>{reasoning?.layeringStrategy}</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <span className="text-indigo-600 font-bold">OCCASION</span>
+                                    <span>{reasoning?.occasionFit}</span>
+                                </div>
+                                <div className="flex items-start gap-2">
                                     <span className="text-blue-600 font-bold">HISTORY</span>
                                     <span>{reasoning?.historyCheck}</span>
                                 </div>

@@ -21,6 +21,7 @@ export interface ClothingItem {
   created_at: string;
   pattern?: string;
   fit?: string;
+  formality_insulation_value?: number;
 }
 
 export interface Outfit {
@@ -37,6 +38,8 @@ export interface Outfit {
     historyCheck?: string;
     styleScore?: number;
     layeringStrategy?: string;
+    colorAnalysis?: string;
+    occasionFit?: string;
   };
 }
 
@@ -50,6 +53,10 @@ export interface UserPreferences {
   style_strictness?: number; // New field
   theme?: 'RETRO' | 'HACKER'; // New field
   gender?: 'MASC' | 'FEM' | 'NEUTRAL'; // New field
+  preferred_silhouette?: string;
+  preferred_color_palette?: string;
+  default_preview_count?: number;
+  delete_images_after_use?: boolean;
 }
 
 export interface OutfitTemplate {

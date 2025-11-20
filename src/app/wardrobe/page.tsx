@@ -192,20 +192,26 @@ export default function WardrobePage() {
       }
   };
 
-  const handleAnalyzeImage = async (_base64: string): Promise<Partial<ClothingItem> | null> => {
-      // Placeholder for AI analysis
-      // In a real implementation, this would call an API endpoint that uses a vision model
-      console.log("Analyzing image...");
-      return new Promise((resolve) => {
-          setTimeout(() => {
-              resolve({
-                  name: "Detected Item",
-                  category: "Top",
-                  material: "Cotton",
-                  season_tags: ["Spring", "Summer"]
-              });
-          }, 1500);
-      });
+  const handleAnalyzeImage = async (base64: string): Promise<Partial<ClothingItem> | null> => {
+      try {
+          const response = await fetch("/api/wardrobe/analyze", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ image: base64 })
+          });
+
+          if (!response.ok) throw new Error("Analysis failed");
+
+          const result = await response.json();
+          if (result.success && result.data) {
+              return result.data as Partial<ClothingItem>;
+          }
+          return null;
+      } catch (error) {
+          console.error("Error analyzing image:", error);
+          toast.error("Failed to analyze image.");
+          return null;
+      }
   };
 
   return (
