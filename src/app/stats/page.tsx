@@ -115,7 +115,7 @@ export default function StatsPage() {
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--border)]"></div>
                     </div>
                 ) : (
-                    <StatsPageComponent items={items} history={_history} />
+                  <StatsPageComponent items={items} _history={_history} />
                 )}
             </div>
         </div>

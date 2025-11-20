@@ -5,8 +5,8 @@ import { Award, TrendingUp, Activity } from 'lucide-react';
 import { ClothingItem, Outfit } from '@/types/retro';
 
 interface StatsPageProps {
-  items: ClothingItem[];
-  history: Outfit[];
+    items: ClothingItem[];
+    _history?: Outfit[];
 }
 
 // We will use CSS variables for colors so they switch with theme
@@ -18,7 +18,7 @@ const CHART_COLORS = [
     'var(--accent-orange)'
 ];
 
-export const StatsPage: React.FC<StatsPageProps> = ({ items, history }) => {
+export const StatsPage: React.FC<StatsPageProps> = ({ items, _history }) => {
   
   // Calculate Analytics on the fly (simulating wardrobe_analytics view)
   const analytics = useMemo(() => {

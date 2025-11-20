@@ -185,7 +185,7 @@ export default function HomePage() {
     wind: recommendationData?.weather?.wind_speed || 0,
   };
 
-  const suggestedOutfit: Outfit | null = recommendationData?.recommendation ? {
+  const _suggestedOutfit: Outfit | null = recommendationData?.recommendation ? {
     id: recommendationData.recommendation.id?.toString() || "temp-id",
     outfit_date: new Date().toISOString(),
     items: recommendationData.recommendation.outfit.map(mapClothingItem),

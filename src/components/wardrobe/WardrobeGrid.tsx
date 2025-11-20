@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Search, Upload, X, Trash2, Heart, Thermometer, Tag, ScanLine, Pencil, ArrowUpDown, IndianRupee, AlertTriangle } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Plus, Search, Upload, X, Trash2, Heart, Thermometer, ScanLine, Pencil, ArrowUpDown, IndianRupee, AlertTriangle } from 'lucide-react';
+import Image from 'next/image';
 import { RetroButton, RetroInput, RetroCard, RetroWindow, RetroSelect, RetroSlider } from '@/components/retro-ui';
 import { ClothingItem, ClothingType, ClothingMaterial, Season } from '@/types/retro';
 
@@ -313,7 +314,7 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                         </div>
 
                         <div className="aspect-square border-2 border-[var(--border)] mb-2 overflow-hidden bg-[var(--bg-main)] relative">
-                            <img src={item.image_url} alt={item.name} className="w-full h-full object-cover transition-all duration-300" />
+                            <Image src={item.image_url} alt={item.name} fill className="object-cover transition-all duration-300" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                             <div className="absolute bottom-1 left-1 bg-[var(--bg-secondary)] border border-[var(--border)] px-1 py-0.5 text-[8px] font-mono font-bold uppercase text-[var(--text)]">
                                 {item.category}
                             </div>
@@ -386,7 +387,9 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                             >
                                 {previewUrl ? (
                                     <>
-                                        <img src={previewUrl} alt="Preview" className="w-full h-48 object-cover" />
+                                        <div className="relative w-full h-48">
+                                            <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+                                        </div>
                                         
                                         {/* Scanning Overlay */}
                                         {isAnalyzing && (
@@ -427,13 +430,13 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="font-bold font-mono text-xs uppercase block mb-1 text-[var(--text)]">Category</label>
-                                    <RetroSelect value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value as any)} disabled={isAnalyzing}>
+                                    <RetroSelect value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value as ClothingType)} disabled={isAnalyzing}>
                                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                     </RetroSelect>
                                 </div>
                                 <div>
                                     <label className="font-bold font-mono text-xs uppercase block mb-1 text-[var(--text)]">Material</label>
-                                    <RetroSelect value={newItemMaterial} onChange={(e) => setNewItemMaterial(e.target.value as any)} disabled={isAnalyzing}>
+                                    <RetroSelect value={newItemMaterial} onChange={(e) => setNewItemMaterial(e.target.value as ClothingMaterial)} disabled={isAnalyzing}>
                                         {['Cotton', 'Polyester', 'Wool', 'Leather', 'Denim', 'Linen', 'Synthetic', 'Gore-Tex', 'Other'].map(m => 
                                             <option key={m} value={m}>{m}</option>
                                         )}

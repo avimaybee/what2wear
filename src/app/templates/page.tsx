@@ -16,14 +16,15 @@ export default function TemplatesPage() {
         const result = await response.json();
         
         if (result.success) {
-          // Map DB fields to UI fields if necessary
-          const mappedTemplates = result.data.map((t: any) => ({
-            id: t.id,
-            name: t.name,
-            description: t.description,
-            styleTags: t.style_tags,
-            coverImage: t.cover_image,
-            requirements: t.requirements
+          // Map DB fields to UI fields using a safe record type (avoid `any`)
+          const raw = result.data as Array<Record<string, unknown>>;
+          const mappedTemplates = raw.map((t) => ({
+            id: String(t['id'] ?? ''),
+            name: String(t['name'] ?? ''),
+            description: String(t['description'] ?? ''),
+            styleTags: (t['style_tags'] as string[]) || [],
+            coverImage: String(t['cover_image'] ?? ''),
+            requirements: (t['requirements'] as string[]) || []
           }));
           setTemplates(mappedTemplates);
         } else {
