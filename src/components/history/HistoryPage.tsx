@@ -1,6 +1,5 @@
 import React from 'react';
-import Image from 'next/image';
-import { RetroWindow, RetroButton } from '@/components/retro-ui';
+import { RetroWindow, RetroButton, RetroImage } from '@/components/retro-ui';
 import { Outfit } from '@/types/retro';
 import { Calendar, Star, Trash2, RotateCcw, Tag } from 'lucide-react';
 
@@ -35,12 +34,10 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ history, onDelete }) =
                                     <div className="grid grid-cols-2 gap-2 bg-[var(--bg-tertiary)] p-2 border-2 border-[var(--border)] border-dashed">
                                         {log.items.slice(0, 4).map((item, i) => (
                                             <div key={i} className="aspect-square border border-[var(--border)] overflow-hidden bg-[var(--bg-main)] relative">
-                                                <Image 
+                                                <RetroImage 
                                                     src={item.image_url} 
                                                     alt={item.name} 
-                                                    fill
-                                                    className="object-cover"
-                                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                    containerClassName="w-full h-full border-0"
                                                 />
                                             </div>
                                         ))}

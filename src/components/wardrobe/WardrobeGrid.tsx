@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { Plus, Search, Upload, X, Trash2, Heart, Thermometer, ScanLine, Pencil, ArrowUpDown, IndianRupee, AlertTriangle } from 'lucide-react';
-import Image from 'next/image';
-import { RetroButton, RetroInput, RetroCard, RetroWindow, RetroSelect, RetroSlider } from '@/components/retro-ui';
+import React, { useState, useRef, useEffect } from 'react';
+import { Plus, Search, Upload, X, Trash2, Heart, Thermometer, Tag, ScanLine, Pencil, ArrowUpDown, AlertTriangle, Ruler, Grid, Wand2, Loader2 } from 'lucide-react';
+import { RetroButton, RetroInput, RetroCard, RetroWindow, RetroSelect, RetroSlider, RetroImage, RetroToggle } from '@/components/retro-ui';
 import { ClothingItem, ClothingType, ClothingMaterial, Season } from '@/types/retro';
+import { processImageUpload } from '@/lib/imageProcessor';
 
 interface WardrobeGridProps {
     items: ClothingItem[];
@@ -25,8 +25,12 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null); // For animation
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Processing State
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [processStatus, setProcessStatus] = useState<string>('IDLE');
+  const [removeBgEnabled, setRemoveBgEnabled] = useState(true);
 
   // Analysis State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -39,7 +43,8 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
   const [newItemInsulation, setNewItemInsulation] = useState<number>(5);
   const [newItemSeasons, setNewItemSeasons] = useState<Season[]>([]);
   const [newItemStyleTags, setNewItemStyleTags] = useState<string[]>([]);
-  const [newItemPrice, setNewItemPrice] = useState<string>('');
+  const [newItemPattern, setNewItemPattern] = useState<string>('');
+  const [newItemFit, setNewItemFit] = useState<string>('Regular');
 
   const categories: ClothingType[] = ['Top', 'Bottom', 'Shoes', 'Outerwear', 'Accessory', 'Dress'];
   const tabs = ['ALL', ...categories];
@@ -71,7 +76,8 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
       setNewItemInsulation(item.insulation_value);
       setNewItemSeasons(item.season_tags as Season[]);
       setNewItemStyleTags(item.style_tags);
-      // setNewItemPrice(item.price ? item.price.toString() : ''); // Assuming price exists on ClothingItem or we ignore it for now
+      setNewItemPattern(item.pattern || '');
+      setNewItemFit(item.fit || 'Regular');
       setPreviewUrl(item.image_url);
       onOpenAdd();
   };
@@ -86,14 +92,15 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
         season_tags: newItemSeasons.length > 0 ? newItemSeasons : ['All Season'],
         image_url: previewUrl || 'https://picsum.photos/200/300',
         style_tags: newItemStyleTags,
+        pattern: newItemPattern || 'Solid',
+        fit: newItemFit,
         dress_code: ['Casual'],
-        // price: newItemPrice ? parseInt(newItemPrice) : 0, // Add price to ClothingItem type if needed
     };
 
     if (editingId) {
         onUpdateItem({ ...itemPayload, id: editingId });
     } else {
-        onAddItem({ ...itemPayload, wear_count: 0, is_favorite: false, created_at: new Date().toISOString() }, selectedFile || undefined);
+        onAddItem({ ...itemPayload, wear_count: 0, is_favorite: false, created_at: new Date().toISOString() });
     }
     
     handleCloseModal();
@@ -107,14 +114,16 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
   const resetForm = () => {
       setEditingId(null);
       setPreviewUrl(null);
-      setSelectedFile(null);
       setNewItemName('');
       setNewItemCategory('Top');
       setNewItemMaterial('Cotton');
       setNewItemInsulation(5);
       setNewItemSeasons([]);
       setNewItemStyleTags([]);
-      setNewItemPrice('');
+      setNewItemPattern('');
+      setNewItemFit('Regular');
+      setRemoveBgEnabled(true);
+      setIsProcessingImage(false);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,17 +145,25 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
     e.stopPropagation();
   };
 
-  const processFile = (file: File) => {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const base64 = ev.target?.result as string;
-        setPreviewUrl(base64);
-        
-        // Trigger Auto-Analysis only for new items
-        if (onAnalyzeImage && base64 && !editingId) {
+  const processFile = async (file: File) => {
+      setIsProcessingImage(true);
+      setProcessStatus('INITIALIZING');
+
+      try {
+          const optimizedBase64 = await processImageUpload(file, {
+              removeBackground: removeBgEnabled,
+              maxWidth: 1024,
+              quality: 0.8,
+              onProgress: (status, percent) => setProcessStatus(`${status} ${percent}%`)
+          });
+
+          setPreviewUrl(optimizedBase64);
+          setIsProcessingImage(false);
+
+          // Trigger Auto-Analysis only for new items if not editing
+          if (onAnalyzeImage && optimizedBase64 && !editingId) {
             setIsAnalyzing(true);
-            const result = await onAnalyzeImage(base64);
+            const result = await onAnalyzeImage(optimizedBase64);
             if (result) {
                 if (result.name) setNewItemName(result.name);
                 if (result.category) setNewItemCategory(result.category);
@@ -154,11 +171,20 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                 if (result.insulation_value !== undefined) setNewItemInsulation(result.insulation_value);
                 if (result.season_tags) setNewItemSeasons(result.season_tags as Season[]);
                 if (result.style_tags) setNewItemStyleTags(result.style_tags);
+                if (result.pattern) setNewItemPattern(result.pattern);
+                if (result.fit) setNewItemFit(result.fit);
             }
             setIsAnalyzing(false);
         }
-      };
-      reader.readAsDataURL(file);
+
+      } catch (error) {
+          console.error(error);
+          setIsProcessingImage(false);
+          // Fallback to simple read if pipeline fails
+          const reader = new FileReader();
+          reader.onload = (ev) => setPreviewUrl(ev.target?.result as string);
+          reader.readAsDataURL(file);
+      }
   }
 
   const triggerFileInput = () => {
@@ -168,7 +194,6 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
   const clearImage = (e: React.MouseEvent) => {
       e.stopPropagation();
       setPreviewUrl(null);
-      setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -314,7 +339,7 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                         </div>
 
                         <div className="aspect-square border-2 border-[var(--border)] mb-2 overflow-hidden bg-[var(--bg-main)] relative">
-                            <Image src={item.image_url} alt={item.name} fill className="object-cover transition-all duration-300" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+                            <RetroImage src={item.image_url} alt={item.name} containerClassName="w-full h-full border-0" />
                             <div className="absolute bottom-1 left-1 bg-[var(--bg-secondary)] border border-[var(--border)] px-1 py-0.5 text-[8px] font-mono font-bold uppercase text-[var(--text)]">
                                 {item.category}
                             </div>
@@ -329,8 +354,8 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                             
                             <div className="flex justify-between items-center text-[10px] font-mono text-[var(--text-muted)] mb-1">
                                 <div className="flex items-center gap-1">
-                                    <IndianRupee size={8} />
-                                    <span>{/* item.price || */ '---'}</span>
+                                    <Ruler size={8} />
+                                    <span>{item.fit || 'Reg'}</span>
                                 </div>
                                 <div className="flex items-center gap-1 bg-[var(--bg-main)] border border-[var(--border)] px-1">
                                     <span className="text-[var(--text)]">XP: {item.wear_count}</span>
@@ -347,9 +372,9 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                             </div>
 
                             <div className="mt-auto pt-2 border-t-2 border-[var(--border)] border-dashed flex flex-wrap gap-1">
-                                {item.style_tags.slice(0, 2).map(tag => (
-                                    <span key={tag} className="text-[8px] md:text-[9px] bg-[var(--accent-green)] px-1 border border-[var(--border)] uppercase text-[var(--text)]">{tag}</span>
-                                ))}
+                                {item.pattern && (
+                                     <span className="text-[8px] md:text-[9px] bg-[var(--accent-pink)] px-1 border border-[var(--border)] uppercase text-[var(--text)]">{item.pattern}</span>
+                                )}
                                 {item.season_tags.slice(0,1).map(tag => (
                                     <span key={tag} className="text-[8px] md:text-[9px] bg-[var(--accent-blue)] px-1 border border-[var(--border)] uppercase text-[var(--text)]">{tag}</span>
                                 ))}
@@ -375,6 +400,19 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                                 accept="image/*" 
                                 className="hidden" 
                             />
+                            
+                            <div className="flex justify-between items-center px-1">
+                                <label className="font-bold font-mono text-xs uppercase text-[var(--text)]">Item Image</label>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono text-[10px] text-[var(--text-muted)]">AI REMOVE BG:</span>
+                                    <RetroToggle 
+                                        label=""
+                                        checked={removeBgEnabled}
+                                        onChange={setRemoveBgEnabled}
+                                    />
+                                </div>
+                            </div>
+
                             <div 
                                 onClick={triggerFileInput}
                                 onDrop={handleDrop}
@@ -382,20 +420,27 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                                 className={`
                                     border-2 border-[var(--border)] border-dashed 
                                     ${previewUrl ? 'p-0' : 'p-6 bg-[var(--bg-secondary)] hover:bg-[var(--bg-main)]'} 
-                                    flex flex-col items-center justify-center text-center gap-2 cursor-pointer transition-colors relative overflow-hidden min-h-[150px]
+                                    flex flex-col items-center justify-center text-center gap-2 cursor-pointer transition-colors relative overflow-hidden min-h-[180px]
                                 `}
                             >
                                 {previewUrl ? (
                                     <>
-                                        <div className="relative w-full h-48">
-                                            <Image src={previewUrl} alt="Preview" fill className="object-cover" />
-                                        </div>
+                                        <img src={previewUrl} alt="Preview" className="w-full h-48 object-contain bg-[var(--bg-tertiary)]" />
                                         
-                                        {/* Scanning Overlay */}
-                                        {isAnalyzing && (
-                                            <div className="absolute inset-0 bg-green-900/40 flex flex-col items-center justify-center z-20 backdrop-blur-sm">
-                                                <ScanLine size={48} className="text-[#00ff41] animate-bounce mb-2" />
-                                                <span className="font-mono font-bold text-[#00ff41] animate-pulse bg-black px-2">SCANNING...</span>
+                                        {/* Scanning/Processing Overlay */}
+                                        {(isAnalyzing || isProcessingImage) && (
+                                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-20 backdrop-blur-sm p-4">
+                                                {isProcessingImage ? (
+                                                    <>
+                                                        <Loader2 size={32} className="text-[var(--accent-blue)] animate-spin mb-2" />
+                                                        <span className="font-mono font-bold text-[var(--accent-blue)] bg-black px-2 border border-[var(--accent-blue)] text-xs animate-pulse">{processStatus}</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <ScanLine size={32} className="text-[#00ff41] animate-bounce mb-2" />
+                                                        <span className="font-mono font-bold text-[#00ff41] animate-pulse bg-black px-2 text-xs">ANALYZING METADATA...</span>
+                                                    </>
+                                                )}
                                             </div>
                                         )}
 
@@ -409,9 +454,20 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                                     </>
                                 ) : (
                                     <>
-                                        <Upload size={32} className="text-[var(--text-muted)]" />
-                                        <span className="font-mono text-xs text-[var(--text-muted)]">CLICK OR DRAG TO UPLOAD</span>
-                                        <span className="font-mono text-[9px] bg-[var(--accent-green)] border border-[var(--border)] px-1 text-[var(--text)]">AI VISION ENABLED</span>
+                                        {isProcessingImage ? (
+                                            <div className="flex flex-col items-center">
+                                                <Loader2 size={32} className="text-[var(--text-muted)] animate-spin" />
+                                                <span className="font-mono text-xs mt-2 text-[var(--text)]">{processStatus}</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Upload size={32} className="text-[var(--text-muted)]" />
+                                                <span className="font-mono text-xs text-[var(--text-muted)]">CLICK OR DRAG TO UPLOAD</span>
+                                                <span className="font-mono text-[9px] bg-[var(--accent-green)] border border-[var(--border)] px-1 text-[var(--text)] mt-1">
+                                                    {removeBgEnabled ? 'BG REMOVAL ACTIVE' : 'AUTO-OPTIMIZE ON'}
+                                                </span>
+                                            </>
+                                        )}
                                     </>
                                 )}
                             </div>
@@ -423,20 +479,20 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                                     required 
                                     value={newItemName}
                                     onChange={(e) => setNewItemName(e.target.value)}
-                                    disabled={isAnalyzing}
+                                    disabled={isAnalyzing || isProcessingImage}
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="font-bold font-mono text-xs uppercase block mb-1 text-[var(--text)]">Category</label>
-                                    <RetroSelect value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value as ClothingType)} disabled={isAnalyzing}>
+                                    <RetroSelect value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value as any)} disabled={isAnalyzing || isProcessingImage}>
                                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                     </RetroSelect>
                                 </div>
                                 <div>
                                     <label className="font-bold font-mono text-xs uppercase block mb-1 text-[var(--text)]">Material</label>
-                                    <RetroSelect value={newItemMaterial} onChange={(e) => setNewItemMaterial(e.target.value as ClothingMaterial)} disabled={isAnalyzing}>
+                                    <RetroSelect value={newItemMaterial} onChange={(e) => setNewItemMaterial(e.target.value as any)} disabled={isAnalyzing || isProcessingImage}>
                                         {['Cotton', 'Polyester', 'Wool', 'Leather', 'Denim', 'Linen', 'Synthetic', 'Gore-Tex', 'Other'].map(m => 
                                             <option key={m} value={m}>{m}</option>
                                         )}
@@ -444,19 +500,22 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                                 </div>
                             </div>
 
-                            {/* Price Input */}
-                            <div>
-                                <label className="font-bold font-mono text-xs uppercase block mb-1 text-[var(--text)]">Price (INR)</label>
-                                <div className="relative">
-                                    <RetroInput 
-                                        type="number"
-                                        placeholder="0" 
-                                        value={newItemPrice}
-                                        onChange={(e) => setNewItemPrice(e.target.value)}
-                                        disabled={isAnalyzing}
-                                        className="pl-8 w-full border-2 border-[var(--border)] p-2 font-mono text-sm bg-[var(--bg-secondary)] text-[var(--text)]"
-                                    />
-                                    <IndianRupee size={14} className="absolute left-2 top-3 text-[var(--text)]" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="font-bold font-mono text-xs uppercase block mb-1 text-[var(--text)]">Pattern</label>
+                                    <RetroSelect value={newItemPattern} onChange={(e) => setNewItemPattern(e.target.value)} disabled={isAnalyzing || isProcessingImage}>
+                                        {['Solid', 'Striped', 'Plaid', 'Floral', 'Graphic', 'Camo', 'Polka Dot', 'Other'].map(p => 
+                                            <option key={p} value={p}>{p}</option>
+                                        )}
+                                    </RetroSelect>
+                                </div>
+                                <div>
+                                    <label className="font-bold font-mono text-xs uppercase block mb-1 text-[var(--text)]">Fit</label>
+                                    <RetroSelect value={newItemFit} onChange={(e) => setNewItemFit(e.target.value)} disabled={isAnalyzing || isProcessingImage}>
+                                        {['Regular', 'Slim', 'Oversized', 'Loose', 'Tight', 'Tailored'].map(f => 
+                                            <option key={f} value={f}>{f}</option>
+                                        )}
+                                    </RetroSelect>
                                 </div>
                             </div>
 
@@ -466,7 +525,7 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                                 value={newItemInsulation}
                                 onChange={(e) => setNewItemInsulation(parseInt(e.target.value))}
                                 minLabel="Light" maxLabel="Heavy"
-                                disabled={isAnalyzing}
+                                disabled={isAnalyzing || isProcessingImage}
                             />
 
                             <div>
@@ -477,7 +536,7 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                                             type="button"
                                             key={season}
                                             onClick={() => toggleSeason(season as Season)}
-                                            disabled={isAnalyzing}
+                                            disabled={isAnalyzing || isProcessingImage}
                                             className={`px-2 py-1 border-2 border-[var(--border)] font-mono text-xs ${newItemSeasons.includes(season as Season) ? 'bg-[var(--accent-green)] text-[var(--text)]' : 'bg-[var(--bg-secondary)] text-[var(--text)]'}`}
                                         >
                                             {season}
@@ -498,7 +557,7 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
                             )}
 
                             <div className="pt-2">
-                                <RetroButton type="submit" className="w-full py-2" disabled={isAnalyzing}>
+                                <RetroButton type="submit" className="w-full py-2" disabled={isAnalyzing || isProcessingImage}>
                                     {isAnalyzing ? 'PROCESSING IMAGE...' : (editingId ? 'UPDATE ITEM' : 'SAVE TO DATABASE')}
                                 </RetroButton>
                             </div>

@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import Image from 'next/image';
 import { RefreshCcw, ThumbsUp, CheckCircle, Sparkles, Loader2, BrainCircuit, ChevronDown, ChevronUp, Thermometer, Lock, Unlock } from 'lucide-react';
-import { RetroWindow, RetroButton, RetroBadge } from '../retro-ui';
+import { RetroWindow, RetroButton, RetroBadge, RetroImage } from '../retro-ui';
 import { ClothingItem, Outfit, ClothingType } from '@/types/retro';
 
 interface OutfitRecommenderProps {
@@ -43,7 +42,42 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
       const set: OrganizedOutfit = { accessories: [] };
       
       // Deep copy to avoid mutation
-      const sourceItems = suggestedOutfit ? [...suggestedOutfit.items] : [...items];
+      // Normalize incoming items' category values so DB variations don't break UI logic
+      const normalizeCategory = (itm: ClothingItem): ClothingItem => {
+          const cat = (itm.category || itm.type || '').toString();
+          let resolved: ClothingType = 'Top';
+          switch (cat.toLowerCase()) {
+              case 'footwear':
+              case 'shoes':
+                  resolved = 'Shoes';
+                  break;
+              case 'headwear':
+              case 'head':
+              case 'hat':
+              case 'accessory':
+                  resolved = 'Accessory';
+                  break;
+              case 'outerwear':
+              case 'coat':
+              case 'jacket':
+                  resolved = 'Outerwear';
+                  break;
+              case 'bottom':
+              case 'pants':
+              case 'trousers':
+                  resolved = 'Bottom';
+                  break;
+              case 'dress':
+                  resolved = 'Dress';
+                  break;
+              case 'top':
+              default:
+                  resolved = 'Top';
+          }
+          return { ...itm, category: resolved } as ClothingItem;
+      };
+
+      const sourceItems = suggestedOutfit ? suggestedOutfit.items.map(normalizeCategory) : items.map(normalizeCategory);
 
       const extract = (cat: ClothingType) => {
           const idx = sourceItems.findIndex(i => i.category === cat);
@@ -63,11 +97,12 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
       // Anything left with category 'Accessory' goes to accessories
       set.accessories = sourceItems.filter(i => i.category === 'Accessory');
 
-      // Fallback for empty state (Home Screen initial)
-      if (!suggestedOutfit && items.length > 0 && !set.coreTop) {
-          if (!set.coreTop) set.coreTop = items.find(i => i.category === 'Top');
-          if (!set.coreBottom) set.coreBottom = items.find(i => i.category === 'Bottom');
-          if (!set.coreShoes) set.coreShoes = items.find(i => i.category === 'Shoes');
+      // Fallback for empty state (Home Screen initial) - search normalized incoming items
+      if (!suggestedOutfit && items.length > 0 && (!set.coreTop || !set.coreBottom || !set.coreShoes)) {
+          const normalized = items.map(normalizeCategory);
+          if (!set.coreTop) set.coreTop = normalized.find(i => i.category === 'Top');
+          if (!set.coreBottom) set.coreBottom = normalized.find(i => i.category === 'Bottom');
+          if (!set.coreShoes) set.coreShoes = normalized.find(i => i.category === 'Shoes');
       }
 
       return set;
@@ -106,12 +141,43 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
       setIsSwapping(false);
   };
 
-  if (items.length < 3) {
+  // Check usable items after normalization; require at least Top, Bottom and Shoes available
+  const normalizeCategoryForList = (itm: ClothingItem): ClothingItem => {
+      const cat = (itm.category || itm.type || '').toString();
+      switch (cat.toLowerCase()) {
+          case 'footwear':
+          case 'shoes':
+              return { ...itm, category: 'Shoes' } as ClothingItem;
+          case 'headwear':
+          case 'head':
+          case 'hat':
+          case 'accessory':
+              return { ...itm, category: 'Accessory' } as ClothingItem;
+          case 'outerwear':
+          case 'coat':
+          case 'jacket':
+              return { ...itm, category: 'Outerwear' } as ClothingItem;
+          case 'bottom':
+          case 'pants':
+          case 'trousers':
+              return { ...itm, category: 'Bottom' } as ClothingItem;
+          case 'dress':
+              return { ...itm, category: 'Dress' } as ClothingItem;
+          case 'top':
+          default:
+              return { ...itm, category: 'Top' } as ClothingItem;
+      }
+  };
+
+  const normalizedItems = items.map(normalizeCategoryForList);
+  const coreCategoriesPresent = new Set(normalizedItems.filter(i => ['Top', 'Bottom', 'Shoes'].includes(i.category)).map(i => i.category));
+
+  if (coreCategoriesPresent.size < 3) {
       return (
           <RetroWindow title="OUTFIT_GEN.EXE" className="h-full flex items-center justify-center text-center p-6">
               <div>
-                  <h2 className="font-black text-xl mb-2">DATABASE EMPTY</h2>
-                  <p className="font-mono text-sm mb-4">Please add more items to your wardrobe to generate outfits.</p>
+                  <h2 className="font-black text-xl mb-2">NOT ENOUGH CORE ITEMS</h2>
+                  <p className="font-mono text-sm mb-4">Your wardrobe needs at least one Top, one Bottom, and one pair of Shoes to generate outfits. Found: {Array.from(coreCategoriesPresent).join(', ') || 'none'}.</p>
                   <RetroButton>GO TO WARDROBE</RetroButton>
               </div>
           </RetroWindow>
@@ -120,12 +186,23 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
 
   const { coreTop, coreBottom, coreShoes, outerwear, accessories } = displaySet;
   
-  if (!coreTop || !coreBottom || !coreShoes) return null;
+    // If a core slot is missing after all fallback attempts, show helpful message instead of rendering nothing
+    if (!coreTop || !coreBottom || !coreShoes) {
+            return (
+                <RetroWindow title="OUTFIT_GEN.EXE" className="h-full flex items-center justify-center text-center p-6">
+                        <div>
+                                <h2 className="font-black text-xl mb-2">INCOMPLETE OUTFIT SLOTS</h2>
+                                <p className="font-mono text-sm mb-4">We could not assemble a complete outfit from your items. Make sure you have at least one Top, Bottom, and Shoes.</p>
+                                <RetroButton>GO TO WARDROBE</RetroButton>
+                        </div>
+                </RetroWindow>
+            );
+    }
 
   const reasoning = suggestedOutfit?.reasoning;
   const currentItemsList = getCurrentItems();
   const swapCandidates = activeSwapCategory 
-      ? items.filter(i => i.category === activeSwapCategory && !currentItemsList.some(c => c.id === i.id))
+      ? normalizedItems.filter(i => i.category === activeSwapCategory && !currentItemsList.some(c => c.id === i.id))
       : [];
 
   return (
@@ -169,12 +246,10 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                     <div className="flex-1 flex flex-col gap-2 md:gap-3 justify-center overflow-y-auto no-scrollbar py-2">
                         {accessories.length > 0 ? accessories.map((acc, _idx) => (
                             <div key={acc.id} className="group relative cursor-pointer transition-transform hover:scale-105 hover:rotate-2 shrink-0 self-center">
-                                <Image 
+                                <RetroImage 
                                     src={acc.image_url} 
                                     alt={acc.name} 
-                                    width={80}
-                                    height={80}
-                                    className={`w-12 h-12 md:w-20 md:h-20 object-cover border-2 bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${lockedItems.includes(acc.id) ? 'border-red-500' : 'border-black'}`}
+                                    containerClassName={`w-12 h-12 md:w-20 md:h-20 bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] md:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${lockedItems.includes(acc.id) ? 'border-red-500' : 'border-black'}`}
                                 />
                                 <div 
                                     className="absolute top-0 right-0 bg-white border border-black p-0.5 z-20 hover:bg-gray-100"
@@ -206,7 +281,7 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                      >
                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-20 font-mono text-[8px] md:text-[9px] font-bold bg-[#A0C4FF] border border-black px-1 shadow-sm">CORE TOP</span>
                          <div className={`w-full aspect-square border-2 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative z-10 ${lockedItems.includes(coreTop.id) ? 'border-red-500' : 'border-black'}`}>
-                             <Image src={coreTop.image_url} alt={coreTop.name || 'Top'} fill className="w-full h-full object-cover" />
+                             <RetroImage src={coreTop.image_url} alt={coreTop.name || 'Top'} containerClassName="w-full h-full border-0" />
                              
                              {/* Lock Button */}
                              <div 
@@ -238,7 +313,7 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                      >
                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-20 font-mono text-[8px] md:text-[9px] font-bold bg-[#A0C4FF] border border-black px-1 shadow-sm">CORE BOTTOM</span>
                          <div className={`w-full aspect-[4/5] border-2 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden relative z-10 ${lockedItems.includes(coreBottom.id) ? 'border-red-500' : 'border-black'}`}>
-                             <Image src={coreBottom.image_url} alt={coreBottom.name || 'Bottom'} fill className="w-full h-full object-cover" />
+                             <RetroImage src={coreBottom.image_url} alt={coreBottom.name || 'Bottom'} containerClassName="w-full h-full border-0" />
                              
                              {/* Lock Button */}
                              <div 
@@ -275,12 +350,10 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                             <span className="absolute -top-2 md:-top-3 right-0 font-mono text-[8px] md:text-[9px] font-bold bg-white border border-black px-1 z-20">LAYER</span>
                             {outerwear ? (
                                 <>
-                                    <Image 
+                                    <RetroImage 
                                         src={outerwear.image_url} 
                                         alt={outerwear.name || 'Outerwear'}
-                                        width={96}
-                                        height={96}
-                                        className={`w-16 h-16 md:w-24 md:h-24 object-cover border-2 bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10 ${lockedItems.includes(outerwear.id) ? 'border-red-500' : 'border-black'}`} 
+                                        containerClassName={`w-16 h-16 md:w-24 md:h-24 bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10 ${lockedItems.includes(outerwear.id) ? 'border-red-500' : 'border-black'}`} 
                                     />
                                     
                                     {/* Lock Button */}
@@ -315,12 +388,10 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                         onClick={() => openSwapModal('Shoes')}
                     >
                         <span className="absolute -top-2 md:-top-3 right-0 font-mono text-[8px] md:text-[9px] font-bold bg-white border border-black px-1 z-20">FOOTWEAR</span>
-                        <Image 
+                        <RetroImage 
                             src={coreShoes.image_url} 
                             alt="Shoes"
-                            width={112}
-                            height={112}
-                            className="w-20 h-20 md:w-28 md:h-28 object-cover border-2 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10" 
+                            containerClassName="w-20 h-20 md:w-28 md:h-28 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10" 
                         />
                          <div className="absolute top-1 right-1 bg-[#FDFFB6] border-2 border-black p-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                             <RefreshCcw size={12} />
@@ -428,7 +499,7 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                             >
                                 <div className="bg-white border-2 border-black p-1 flex flex-col shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] group-hover:bg-[#CAFFBF] transition-colors">
                                     <div className="relative aspect-square border border-black mb-1 overflow-hidden">
-                                         <Image src={item.image_url} alt={item.name || 'Item'} fill className="w-full h-full object-cover" />
+                                         <RetroImage src={item.image_url} alt={item.name || 'Item'} containerClassName="w-full h-full border-0" />
                                          <div className="absolute top-1 left-1 bg-white/80 backdrop-blur px-1 border border-black text-[8px] font-mono flex items-center gap-0.5">
                                             <Thermometer size={8} /> {item.insulation_value}
                                          </div>

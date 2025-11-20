@@ -1,6 +1,5 @@
-
-import React, { useEffect } from 'react';
-import { X, Minus, Square, AlertCircle, Check, Info, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, Minus, Square, AlertCircle, Check, Info, AlertTriangle, ImageOff, Loader2 } from 'lucide-react';
 
 interface RetroBoxProps {
   children: React.ReactNode;
@@ -231,4 +230,83 @@ export const RetroToast: React.FC<RetroToastProps> = ({ message, type = 'info', 
              </div>
         </div>
     );
+};
+
+export const RetroSkeleton: React.FC<{ className?: string }> = ({ className = '' }) => {
+  return (
+    <div 
+      className={`
+        bg-[var(--bg-secondary)] 
+        border-2 border-[var(--border)] 
+        relative overflow-hidden
+        ${className}
+      `}
+    >
+      <div className="absolute inset-0 animate-pulse bg-black/5"></div>
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{ 
+          backgroundImage: 'repeating-linear-gradient(45deg, var(--border) 0, var(--border) 1px, transparent 0, transparent 10px)',
+          backgroundSize: '20px 20px'
+        }}
+      ></div>
+    </div>
+  );
+};
+
+interface RetroImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  containerClassName?: string;
+}
+
+export const RetroImage: React.FC<RetroImageProps> = ({ 
+  src, 
+  alt, 
+  className = '', 
+  containerClassName = '',
+  ...props 
+}) => {
+  const [status, setStatus] = useState<'loading' | 'error' | 'loaded'>('loading');
+
+  useEffect(() => {
+    setStatus('loading');
+  }, [src]);
+
+  return (
+    <div className={`relative overflow-hidden bg-[var(--bg-secondary)] border-2 border-[var(--border)] ${containerClassName}`}>
+      {/* Loading State */}
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-[var(--bg-secondary)]">
+           <div className="flex flex-col items-center gap-2">
+             <Loader2 className="animate-spin text-[var(--text)]" size={24} />
+             <span className="font-mono text-xs text-[var(--text)] animate-pulse">LOADING...</span>
+           </div>
+           {/* Background pattern for loading */}
+           <div className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{ backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)', backgroundSize: '8px 8px' }}>
+           </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {status === 'error' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[var(--bg-secondary)] p-4 text-center">
+          <ImageOff className="text-[var(--accent-orange)] mb-2" size={32} />
+          <span className="font-mono text-xs font-bold text-[var(--text)]">IMG_ERR</span>
+        </div>
+      )}
+
+      {/* Actual Image */}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${status === 'loaded' ? 'opacity-100' : 'opacity-0'} ${className}`}
+        onLoad={() => setStatus('loaded')}
+        onError={() => setStatus('error')}
+        {...props}
+      />
+      
+      {/* Scanline overlay (optional aesthetic) */}
+      <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+    </div>
+  );
 };

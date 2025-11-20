@@ -1,5 +1,5 @@
 import React from 'react';
-import { RetroWindow, RetroButton } from '@/components/retro-ui';
+import { RetroWindow, RetroButton, RetroImage } from '@/components/retro-ui';
 import { OutfitTemplate } from '@/types/retro';
 import { Wand2, ArrowRight, Layers, AlertCircle } from 'lucide-react';
 
@@ -44,8 +44,11 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ templates, onApply
                                 <div className="p-4 flex-1 flex flex-col gap-4">
                                     <div className="flex gap-4">
                                         <div className="w-24 h-24 shrink-0 border-2 border-[var(--border)] bg-[var(--bg-main)]">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img src={template.coverImage} alt={template.name} className="w-full h-full object-cover transition-all" />
+                                            <RetroImage 
+                                                src={template.coverImage} 
+                                                alt={template.name} 
+                                                containerClassName="w-full h-full border-0" 
+                                            />
                                         </div>
                                         <div>
                                             <h3 className="font-black text-xl uppercase leading-none mb-2 text-[var(--text)]">{template.name}</h3>

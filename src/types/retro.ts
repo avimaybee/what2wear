@@ -19,6 +19,8 @@ export interface ClothingItem {
   last_worn: string | null;
   is_favorite: boolean;
   created_at: string;
+  pattern?: string;
+  fit?: string;
 }
 
 export interface Outfit {
