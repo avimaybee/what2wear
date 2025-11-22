@@ -289,7 +289,7 @@ export async function generateAIOutfitRecommendation(
       throw new Error('Invalid AI response format');
     }
 
-    let selectedItems = wardrobeItems.filter(item =>
+    const selectedItems = wardrobeItems.filter(item =>
       aiResponse.selectedItemIds.includes(String(item.id))
     );
 
