@@ -206,13 +206,14 @@ export default function WardrobePage() {
         }
     };
 
-    const handleAnalyzeImage = async (base64: string): Promise<Partial<ClothingItem> | null> => {
+    const handleAnalyzeImage = async (base64: string, options?: { signal?: AbortSignal }): Promise<Partial<ClothingItem> | null> => {
         try {
             const { base64: payload, mimeType } = parseDataUrl(base64, "image/webp");
             const response = await fetch("/api/wardrobe/analyze", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ image: payload, mimeType })
+                body: JSON.stringify({ image: payload, mimeType }),
+                signal: options?.signal
             });
 
             if (!response.ok) throw new Error("Analysis failed");

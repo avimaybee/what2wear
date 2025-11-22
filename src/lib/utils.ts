@@ -92,7 +92,8 @@ export function dataUrlToFile(dataUrl: string, preferredFileName?: string): File
 
   const { base64, mimeType } = parseDataUrl(dataUrl, "image/webp");
   const bytes = decodeBase64ToBytes(base64);
-  const blob = new Blob([bytes], { type: mimeType });
+  const arrayBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], { type: mimeType });
 
   const extension = MIME_EXTENSION_MAP[mimeType] || "bin";
   const sanitizedName = preferredFileName

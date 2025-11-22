@@ -13,7 +13,7 @@ interface WardrobeGridProps {
     onOpenAdd: () => void;
     onCloseAdd: () => void;
     onToggleFavorite: (id: string) => void;
-    onAnalyzeImage?: (base64: string) => Promise<Partial<ClothingItem> | null>;
+    onAnalyzeImage?: (base64: string, options?: { signal?: AbortSignal }) => Promise<Partial<ClothingItem> | null>;
 }
 
 type SortMethod = 'NEWEST' | 'MOST_WORN' | 'LEAST_WORN' | 'WARMEST';

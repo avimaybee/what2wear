@@ -11,7 +11,7 @@ interface WardrobeItemFormProps {
     onClose: () => void;
     onSave: (item: Partial<ClothingItem>, file?: File) => void;
     initialItem?: ClothingItem | null;
-    onAnalyzeImage?: (base64: string) => Promise<Partial<ClothingItem> | null>;
+    onAnalyzeImage?: (base64: string, options?: { signal?: AbortSignal }) => Promise<Partial<ClothingItem> | null>;
 }
 
 export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({ 
@@ -24,6 +24,10 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [processedFile, setProcessedFile] = useState<File | null>(null);
+    const processingJobIdRef = useRef(0);
+    const analysisAbortControllerRef = useRef<AbortController | null>(null);
+    const fileReaderRef = useRef<FileReader | null>(null);
+    const isMountedRef = useRef(true);
 
     // Processing State
     const [isProcessingImage, setIsProcessingImage] = useState(false);
@@ -63,6 +67,22 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
             }
         }
     }, [isOpen, initialItem]);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+            processingJobIdRef.current += 1;
+            if (analysisAbortControllerRef.current) {
+                analysisAbortControllerRef.current.abort();
+                analysisAbortControllerRef.current = null;
+            }
+            if (fileReaderRef.current) {
+                fileReaderRef.current.abort();
+                fileReaderRef.current = null;
+            }
+        };
+    }, []);
 
     const resetForm = () => {
         setPreviewUrl(null);
@@ -124,54 +144,137 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
         e.stopPropagation();
     };
 
+    const runAnalysis = async (optimizedBase64: string, currentJobId: number) => {
+        if (!onAnalyzeImage || initialItem) return;
+
+        const controller = new AbortController();
+        analysisAbortControllerRef.current = controller;
+
+        if (!isMountedRef.current || processingJobIdRef.current !== currentJobId) {
+            return;
+        }
+
+        setIsAnalyzing(true);
+
+        try {
+            const result = await onAnalyzeImage(optimizedBase64, { signal: controller.signal });
+            if (!result || controller.signal.aborted) {
+                return;
+            }
+            if (!isMountedRef.current || processingJobIdRef.current !== currentJobId) {
+                return;
+            }
+            if (result.name) setNewItemName(result.name);
+            if (result.category) setNewItemCategory(result.category);
+            if (result.material) setNewItemMaterial(result.material as ClothingMaterial);
+            if (result.insulation_value !== undefined) setNewItemInsulation(result.insulation_value);
+            if (result.season_tags) setNewItemSeasons(result.season_tags as Season[]);
+            if (result.style_tags) setNewItemStyleTags(result.style_tags);
+            if (result.pattern) setNewItemPattern(result.pattern);
+            if (result.fit) setNewItemFit(result.fit);
+        } catch (error) {
+            if (!controller.signal.aborted) {
+                console.error('Error analyzing image:', error);
+            }
+        } finally {
+            if (analysisAbortControllerRef.current === controller) {
+                analysisAbortControllerRef.current = null;
+            }
+            if (isMountedRef.current && processingJobIdRef.current === currentJobId) {
+                setIsAnalyzing(false);
+            }
+        }
+    };
+
     const processFile = async (file: File) => {
+        const currentJobId = ++processingJobIdRef.current;
+        const originalName = file.name || 'wardrobe-item.webp';
+
+        // Cancel any ongoing analysis or file reads tied to previous uploads
+        if (analysisAbortControllerRef.current) {
+            analysisAbortControllerRef.current.abort();
+            analysisAbortControllerRef.current = null;
+            setIsAnalyzing(false);
+        }
+        if (fileReaderRef.current) {
+            fileReaderRef.current.abort();
+            fileReaderRef.current = null;
+        }
+
         setIsProcessingImage(true);
         setProcessStatus('INITIALIZING');
-        const originalName = file.name || 'wardrobe-item.webp';
+
+        const updateStatus = (status: string, percent: number) => {
+            if (!isMountedRef.current || processingJobIdRef.current !== currentJobId) {
+                return;
+            }
+            setProcessStatus(`${status} ${percent}%`);
+        };
 
         try {
             const optimizedBase64 = await processImageUpload(file, {
                 removeBackground: removeBgEnabled,
                 maxWidth: 1024,
                 quality: 0.8,
-                onProgress: (status, percent) => setProcessStatus(`${status} ${percent}%`)
+                onProgress: updateStatus
             });
+
+            if (!isMountedRef.current || processingJobIdRef.current !== currentJobId) {
+                return;
+            }
 
             setPreviewUrl(optimizedBase64);
             try {
                 const optimizedFile = dataUrlToFile(optimizedBase64, originalName);
-                setProcessedFile(optimizedFile);
+                if (isMountedRef.current && processingJobIdRef.current === currentJobId) {
+                    setProcessedFile(optimizedFile);
+                }
             } catch (conversionError) {
                 console.error('Failed to convert optimized image to file', conversionError);
-                setProcessedFile(file);
-            }
-            setIsProcessingImage(false);
-
-            // Trigger Auto-Analysis only for new items if not editing
-            if (onAnalyzeImage && optimizedBase64 && !initialItem) {
-                setIsAnalyzing(true);
-                const result = await onAnalyzeImage(optimizedBase64);
-                if (result) {
-                    if (result.name) setNewItemName(result.name);
-                    if (result.category) setNewItemCategory(result.category);
-                    if (result.material) setNewItemMaterial(result.material as ClothingMaterial);
-                    if (result.insulation_value !== undefined) setNewItemInsulation(result.insulation_value);
-                    if (result.season_tags) setNewItemSeasons(result.season_tags as Season[]);
-                    if (result.style_tags) setNewItemStyleTags(result.style_tags);
-                    if (result.pattern) setNewItemPattern(result.pattern);
-                    if (result.fit) setNewItemFit(result.fit);
+                if (isMountedRef.current && processingJobIdRef.current === currentJobId) {
+                    setProcessedFile(file);
                 }
-                setIsAnalyzing(false);
             }
+
+            if (isMountedRef.current && processingJobIdRef.current === currentJobId) {
+                setIsProcessingImage(false);
+            }
+
+            await runAnalysis(optimizedBase64, currentJobId);
 
         } catch (error) {
+            if (!isMountedRef.current || processingJobIdRef.current !== currentJobId) {
+                return;
+            }
+
             console.error(error);
             setIsProcessingImage(false);
+
             // Fallback to simple read if pipeline fails
             const reader = new FileReader();
-            reader.onload = (ev) => setPreviewUrl(ev.target?.result as string);
+            fileReaderRef.current = reader;
+            reader.onload = (ev) => {
+                if (!isMountedRef.current || processingJobIdRef.current !== currentJobId) {
+                    return;
+                }
+                setPreviewUrl(ev.target?.result as string);
+            };
+            reader.onerror = (readerError) => console.error('FileReader error:', readerError);
+            reader.onloadend = () => {
+                if (fileReaderRef.current === reader) {
+                    fileReaderRef.current = null;
+                }
+            };
             reader.readAsDataURL(file);
-            setProcessedFile(file);
+
+            if (isMountedRef.current && processingJobIdRef.current === currentJobId) {
+                setProcessedFile(file);
+            }
+        } finally {
+            if (isMountedRef.current && processingJobIdRef.current === currentJobId) {
+                setIsProcessingImage(false);
+                setProcessStatus('IDLE');
+            }
         }
     }
 
@@ -183,6 +286,16 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
         e.stopPropagation();
         setPreviewUrl(null);
         setProcessedFile(null);
+        if (fileReaderRef.current) {
+            fileReaderRef.current.abort();
+            fileReaderRef.current = null;
+        }
+        if (analysisAbortControllerRef.current) {
+            analysisAbortControllerRef.current.abort();
+            analysisAbortControllerRef.current = null;
+        }
+        processingJobIdRef.current += 1;
+        setIsAnalyzing(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
