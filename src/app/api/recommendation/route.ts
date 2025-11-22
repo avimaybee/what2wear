@@ -10,7 +10,7 @@ interface InsufficientItemsError extends Error {
 import { validateBody, recommendationRequestSchema } from '@/lib/validation';
 import { logger, generateRequestId } from '@/lib/logger';
 import { getCurrentSeason, getSeasonDescription } from '@/lib/helpers/seasonDetector';
- 
+
 // DB row type used for items fetched from Supabase
 type DBClothingRow = Partial<IClothingItem> & {
   id?: number;
@@ -32,14 +32,14 @@ const TYPE_ALIASES: Record<string, ClothingType> = {
   accessory: 'Accessory',
   accessories: 'Accessory',
   headwear: 'Headwear',
-  
+
   // Old schema ENUM values (original clothing_category enum)
   'shirt': 'Top',
   't-shirt': 'Top',
   'jacket': 'Outerwear',
   'pants': 'Bottom',
   'shoes': 'Footwear',
-  
+
   // Common variations
   shirts: 'Top',
   tee: 'Top',
@@ -217,10 +217,10 @@ const describeDetectedTypes = (items: Array<{ normalizedType: ClothingType | nul
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient();
-  
+
   // Get authenticated user
   const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
+
   if (authError || !user) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
@@ -249,13 +249,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     console.error('❌ Error generating recommendation:', errorMsg);
     logger.error('Error generating recommendation', { error });
-    
+
     // Handle special cases for empty/insufficient wardrobe
     if (error instanceof Error) {
       if (error.message === 'EMPTY_WARDROBE') {
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'EMPTY_WARDROBE',
             message: 'Your wardrobe is empty. Add some clothing items to get started!',
             needsWardrobe: true
@@ -263,12 +263,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           { status: 200 }
         );
       }
-      
+
       if (error.message === 'INSUFFICIENT_ITEMS') {
         const insufficientItemsError = error as InsufficientItemsError;
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: 'INSUFFICIENT_ITEMS',
             message: insufficientItemsError.customMessage || 'You need at least one top, one bottom, and one pair of shoes to create an outfit.',
             needsWardrobe: true
@@ -277,11 +277,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         );
       }
     }
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to generate recommendation' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to generate recommendation'
       },
       { status: 500 }
     );
@@ -400,13 +400,13 @@ async function generateRecommendation(
           updated: results.reduce((sum, r) => sum + (r.count ?? 0), 0),
         });
       }
-      
+
       // CRITICAL: Refetch the items after backfilling to get the updated types
       const { data: updatedWardrobeItems, error: refetchError } = await supabase
         .from('clothing_items')
         .select('*')
         .eq('user_id', userId);
-      
+
       if (!refetchError && updatedWardrobeItems) {
         // Re-normalize with the updated data
         normalizedWardrobeItems = (updatedWardrobeItems as DBClothingRow[]).map((item) => {
@@ -418,7 +418,7 @@ async function generateRecommendation(
             rawCategory: (item.category ?? null) as string | null,
           } as DBClothingRow & { normalizedType: ClothingType | null; rawType: string | null; rawCategory: string | null };
         });
-        
+
         if (process.env.NODE_ENV === 'development') {
           console.log('Re-fetched items after backfill:', normalizedWardrobeItems.map(item => ({
             id: item.id,
@@ -475,12 +475,11 @@ async function generateRecommendation(
   const weatherUrl = new URL('/api/weather', request.url);
   weatherUrl.searchParams.set('lat', lat.toString());
   weatherUrl.searchParams.set('lon', lon.toString());
-  weatherUrl.searchParams.set('provider', 'openWeather');
-  
+
   const weatherResponse = await fetch(weatherUrl.toString(), {
     headers: request.headers,
   });
-  
+
   if (!weatherResponse.ok) {
     throw new Error('Failed to fetch weather data');
   }
@@ -488,18 +487,18 @@ async function generateRecommendation(
   const weatherData = await weatherResponse.json();
   const weather: WeatherData = weatherData.data.weather;
   const alerts = weatherData.data.alerts;
-  
+
   // Detect current season based on date and latitude
   const currentSeason = getCurrentSeason(new Date(), lat);
   const seasonDescription = getSeasonDescription(currentSeason, new Date().getMonth());
-  
+
   // Add season context to weather data for AI recommendations
   const weatherWithSeason = {
     ...weather,
     season: currentSeason,
     season_description: seasonDescription,
   };
-  
+
   pushEvent('weather:fetched', {
     provider: 'openWeather',
     alerts: alerts?.length ?? 0,
@@ -521,10 +520,10 @@ async function generateRecommendation(
     styles: [],
     materials: [],
   };
-  
+
   if (profile?.preferences) {
     const prefs = profile.preferences as Record<string, Record<string, number>>;
-    
+
     if (prefs.colors) {
       userPreferences.colors = Object.entries(prefs.colors)
         .filter(([_, score]) => score > 0)
@@ -532,7 +531,7 @@ async function generateRecommendation(
         .slice(0, 5)
         .map(([color]) => color);
     }
-    
+
     if (prefs.styles) {
       userPreferences.styles = Object.entries(prefs.styles)
         .filter(([_, score]) => score > 0)
@@ -540,7 +539,7 @@ async function generateRecommendation(
         .slice(0, 5)
         .map(([style]) => style);
     }
-    
+
     if (prefs.materials) {
       userPreferences.materials = Object.entries(prefs.materials)
         .filter(([_, score]) => score > 0)
@@ -568,14 +567,40 @@ async function generateRecommendation(
   // Re-inject Locked Items if they were filtered out by the freshness rule
   // "Locks override logic" - User Requirement
   if (lockedItems && lockedItems.length > 0) {
-      const lockedIds = new Set(lockedItems);
-      const lockedButFiltered = availableItems.filter(item => 
-          lockedIds.has(String(item.id)) && !freshItems.some(fresh => fresh.id === item.id)
-      );
-      availableItems = [...freshItems, ...lockedButFiltered];
-  } else {
-      availableItems = freshItems;
+    const lockedIds = new Set(lockedItems);
+    const lockedButFiltered = availableItems.filter(item =>
+      lockedIds.has(String(item.id)) && !freshItems.some(fresh => fresh.id === item.id)
+    );
+    // Add locked items back
+    freshItems.push(...lockedButFiltered);
   }
+
+  // SAFETY NET: Ensure we haven't filtered out ALL items of a core category
+  // If we have, add them back (ignoring freshness) so the AI at least has options
+  const coreTypes: ClothingType[] = ['Top', 'Bottom', 'Footwear'];
+
+  for (const type of coreTypes) {
+    const hasType = freshItems.some(i => i.type === type || (type === 'Top' && i.type === 'Outerwear'));
+
+    if (!hasType) {
+      // Find items of this type from the original available list
+      const backfill = availableItems.filter(i => i.type === type || (type === 'Top' && i.type === 'Outerwear'));
+
+      if (backfill.length > 0) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`⚠️ Freshness rule depleted all ${type}s. Backfilling ${backfill.length} items.`);
+        }
+        // Add them back to freshItems
+        // We use a Set to avoid duplicates if we already added some via lockedItems
+        const currentIds = new Set(freshItems.map(i => i.id));
+        const uniqueBackfill = backfill.filter(i => !currentIds.has(i.id));
+        freshItems.push(...uniqueBackfill);
+      }
+    }
+  }
+
+  // Final assignment
+  availableItems = freshItems;
 
   // Generate the recommendation
   const filterCounts = summary.filterCounts ?? {};
@@ -584,7 +609,7 @@ async function generateRecommendation(
   // Calculate Target Insulation Score (The "Comfort Formula")
   // Formula: (Baseline 24°C - CurrentTemp) / 2.5 step
   // 24°C = Level 0-1. Every 2.5°C drop adds 1 point.
-  const targetInsulation = Math.max(1, Math.ceil((24 - weatherWithSeason.feels_like) / 2.5));
+  const targetInsulation = Math.max(1, Math.ceil((27 - weatherWithSeason.feels_like) / 2.5));
 
   // Use the new AI-powered recommendation engine
   const weatherContextString = `

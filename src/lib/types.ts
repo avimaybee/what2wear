@@ -139,43 +139,16 @@ export interface WeatherAlert {
 }
 
 // ============================================================================
-// Calendar & Activity Types (Task 2.x)
-// ============================================================================
-
-export type EventType = 'Work/Business' | 'Gym/Active' | 'Casual/Social';
-
-export interface CalendarEvent {
-  id: string;
-  title: string;
-  start_time: Date;
-  end_time: Date;
-  event_type: EventType;
-  description?: string;
-}
-
-export type ActivityLevel = 'Low' | 'Medium' | 'High';
-
-export interface HealthActivity {
-  date: Date;
-  planned_activity_level: ActivityLevel;
-  steps?: number;
-  active_minutes?: number;
-}
-
-// ============================================================================
 // Recommendation Types (Task 1.4, 2.4, 3.3)
 // ============================================================================
 
 export interface RecommendationContext {
   weather: WeatherData;
-  calendar_events?: CalendarEvent[];
-  health_activity?: HealthActivity;
   user_preferences?: UserPreferences;
 }
 
 export interface RecommendationConstraints {
   dress_code?: DressCode;
-  activity_level?: ActivityLevel;
   weather_alerts?: WeatherAlert[];
   min_days_since_worn?: number;
 }

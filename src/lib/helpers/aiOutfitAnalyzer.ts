@@ -122,10 +122,10 @@ Respond with only valid JSON (no markdown, no code blocks).
 
     const textPart = data.candidates[0].content.parts[0];
     const text = textPart.text as string;
-    
+
     // Clean up markdown if present (though we asked for none)
     const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
-    
+
     const analysis = JSON.parse(cleanText);
 
     return {
@@ -183,32 +183,32 @@ export async function generateAIOutfitRecommendation(
 }> {
   const model = getTextModel();
   const log: string[] = [];
-  
+
   log.push('🤖 Starting AI outfit recommendation (Fire Fit Engine)...');
-  
+
   const defaultPreferences: UserPreferences = {
-      gender: 'NEUTRAL',
-      preferred_silhouette: 'neutral',
-      preferred_styles: ['Streetwear', 'Vintage'],
-      preferred_color_palette: 'Neutral',
-      theme: 'RETRO'
+    gender: 'NEUTRAL',
+    preferred_silhouette: 'neutral',
+    preferred_styles: ['Streetwear', 'Vintage'],
+    preferred_color_palette: 'Neutral',
+    theme: 'RETRO'
   };
 
   const userPreferences = context.userPreferences || defaultPreferences;
   const lockedItems = context.lockedItems || [];
 
   // Prepare Wardrobe Context (Lightweight to save tokens)
-    const wardrobeContext = wardrobeItems.map(item => ({
-      id: item.id,
-      name: item.name,
-      category: item.type, // Mapping type to category
-      color: item.color,
-      style_tags: item.style_tags,
-      insulation: resolveInsulationValue(item), 
-      material: item.material,
-      fit: item.fit || 'Regular',
-      is_favorite: Boolean(item.favorite)
-    }));
+  const wardrobeContext = wardrobeItems.map(item => ({
+    id: item.id,
+    name: item.name,
+    category: item.type, // Mapping type to category
+    color: item.color,
+    style_tags: item.style_tags,
+    insulation: resolveInsulationValue(item),
+    material: item.material,
+    fit: item.fit || 'Regular',
+    is_favorite: Boolean(item.favorite)
+  }));
 
   const systemInstruction = `
       You are "SetMyFit", a world-class Stylist and Creative Director.
@@ -229,7 +229,8 @@ export async function generateAIOutfitRecommendation(
       - Gender Context: ${userPreferences.gender}.
 
       ### RULES
-      - You MUST select at least1 Top, 1 Bottom, and 1 Shoes and prefer layering.
+      - You MUST select at least 1 Top, 1 Bottom, and 1 Shoes and prefer layering.
+      - **CRITICAL SEASONAL RULE**: If the season is 'Autumn' or 'Winter', you MUST prioritize warmth (layers, hoodies, jackets) even if the temperature seems mild (e.g. 18°C - 25°C). Users in these regions feel cold easily. Do NOT suggest simple t-shirts without layers for Autumn/Winter unless it is > 25°C.
       - Outerwear and Accessories are recommended if its a cold season.
       - MANDATORY: You MUST include these locked Item IDs if provided: ${JSON.stringify(lockedItems)}.
       - Prioritize items with 'is_favorite: true' if they fit the vibe.
@@ -269,7 +270,7 @@ export async function generateAIOutfitRecommendation(
   `;
 
   log.push('🎨 Generating outfit with Gemini 2.5 Flash...');
-  
+
   try {
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: systemInstruction + "\n\n" + prompt }] }],
@@ -287,16 +288,16 @@ export async function generateAIOutfitRecommendation(
       throw new Error('Invalid AI response format');
     }
 
-    const selectedItems = wardrobeItems.filter(item => 
+    const selectedItems = wardrobeItems.filter(item =>
       aiResponse.selectedItemIds.includes(item.id)
     );
 
     // Basic validation
     const hasTop = selectedItems.some(i => ['top', 'shirt', 't-shirt', 'blouse', 'sweater', 'hoodie'].includes(i.type.toLowerCase()));
     const hasBottom = selectedItems.some(i => ['bottom', 'pants', 'jeans', 'shorts', 'skirt'].includes(i.type.toLowerCase()));
-    
+
     if (!hasTop || !hasBottom) {
-       log.push("⚠️ AI returned incomplete outfit (missing top or bottom)");
+      log.push("⚠️ AI returned incomplete outfit (missing top or bottom)");
     }
 
     log.push(`✨ Generated outfit with score ${aiResponse.reasoning?.styleScore}/10`);

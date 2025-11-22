@@ -118,7 +118,7 @@ export const StatsPage: React.FC<StatsPageProps> = ({ items, _history }) => {
             </div>
         </RetroBox>
 
-        <RetroWindow title="DATA_HEALTH.LOG">
+        <RetroWindow title="SYSTEM_STATS.LOG">
             <div className="space-y-2 font-mono text-sm p-2 text-[var(--text)]">
                 <div className="flex justify-between items-center border-b border-[var(--border)] border-dashed pb-1">
                     <span className="text-[var(--text-muted)]">Total Assets:</span>

@@ -33,7 +33,6 @@ export const CACHE_PREFIX = {
   RECOMMENDATION: 'recommendation',
   USER_PROFILE: 'user_profile',
   WARDROBE: 'wardrobe',
-  CALENDAR: 'calendar',
   AQI: 'aqi',
   GENERAL: 'general',
 } as const;

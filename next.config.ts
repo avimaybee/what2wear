@@ -13,8 +13,11 @@ const nextConfig: NextConfig = {
         hostname: "tddifonhdaloweyadnop.supabase.co",
       },
       {
-        protocol: "https",
         hostname: "placehold.co",
+      },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
       },
     ],
     // Allow data URIs for placeholder images

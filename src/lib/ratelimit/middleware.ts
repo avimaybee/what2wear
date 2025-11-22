@@ -12,7 +12,6 @@ export const RATE_LIMITS = {
   WEATHER: { requests: 100, window: '1 h' },
   RECOMMENDATION: { requests: 50, window: '1 h' },
   WARDROBE: { requests: 200, window: '1 h' },
-  CALENDAR: { requests: 300, window: '1 h' },
   GENERAL: { requests: 1000, window: '1 h' },
   AUTH: { requests: 10, window: '15 m' },
 } as const;
@@ -21,7 +20,6 @@ export type RateLimitPolicy =
   | 'weather'
   | 'recommendation'
   | 'wardrobe'
-  | 'calendar'
   | 'general'
   | 'auth';
 

@@ -23,7 +23,7 @@ type RecommendationApiResponse = {
 const mapClothingItem = (item: IClothingItem): ClothingItem => ({
   id: item.id.toString(),
   name: item.name,
-  category: item.type as ClothingType, 
+  category: item.type as ClothingType,
   type: item.category || item.type,
   color: item.color || "Unknown",
   image_url: item.image_url,
@@ -69,18 +69,22 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-      if (isAuthenticated) {
-          const fetchWardrobe = async () => {
-              const supabase = createClient();
-              const { data } = await supabase.from('clothing_items').select('*');
-                  if (data && Array.isArray(data)) {
-                    const typed = data as IClothingItem[];
-                    setRawWardrobeItems(typed);
-                    setAllWardrobeItems(typed.map(mapClothingItem));
-                  }
-          };
-          fetchWardrobe();
-      }
+    if (isAuthenticated) {
+      const fetchWardrobe = async () => {
+        try {
+          const res = await fetch('/api/wardrobe');
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            const typed = json.data as IClothingItem[];
+            setRawWardrobeItems(typed);
+            setAllWardrobeItems(typed.map(mapClothingItem));
+          }
+        } catch (e) {
+          console.error("Failed to fetch wardrobe", e);
+        }
+      };
+      fetchWardrobe();
+    }
   }, [isAuthenticated]);
 
   const emitClientLog = useCallback((message: string, context?: Record<string, unknown>) => {
@@ -126,7 +130,7 @@ export default function HomePage() {
           if (error.code === 2) errorMsg = "Location unavailable";
           if (error.code === 3) errorMsg = "Location timeout";
           emitClientLog('location:request:error', { code: error.code, message: errorMsg });
-          
+
           const defaultLocation = { lat: 40.7128, lon: -74.0060 };
           setLocation(defaultLocation);
           toast(`${errorMsg}. Using New York instead.`, { icon: "⚠️" });
@@ -168,16 +172,16 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      
+
       const data: RecommendationApiResponse = await res.json();
-      
+
       if (data.success && data.data) {
         setRecommendationData(data.data);
         sessionStorage.setItem("lastRecommendation", JSON.stringify(data.data));
       } else {
         setError(data.message || "Failed to fetch recommendation");
         if (data.needsWardrobe) {
-             // Handle needs wardrobe case
+          // Handle needs wardrobe case
         }
       }
     } catch (_err) {
@@ -232,7 +236,7 @@ export default function HomePage() {
   const weatherData: WidgetWeatherData = {
     temp: recommendationData?.weather?.temperature || 0,
     condition: recommendationData?.weather?.weather_condition || "Unknown",
-    city: recommendationData?.weather?.city || "Current Location", 
+    city: recommendationData?.weather?.city || "Current Location",
     humidity: recommendationData?.weather?.humidity || 0,
     wind: recommendationData?.weather?.wind_speed || 0,
   };
@@ -280,24 +284,24 @@ export default function HomePage() {
       // Create a base object if prev is null (e.g. starting from scratch)
       const base: RecommendationApiPayload = prev || {
         weather: {
-            temperature: 0,
-            feels_like: 0,
-            humidity: 0,
-            wind_speed: 0,
-            uv_index: 0,
-            air_quality_index: 0,
-            pollen_count: 0,
-            weather_condition: "Unknown",
-            timestamp: new Date(),
-            city: "Manual Selection"
+          temperature: 0,
+          feels_like: 0,
+          humidity: 0,
+          wind_speed: 0,
+          uv_index: 0,
+          air_quality_index: 0,
+          pollen_count: 0,
+          weather_condition: "Unknown",
+          timestamp: new Date(),
+          city: "Manual Selection"
         },
         alerts: [],
         recommendation: {
-            outfit: [],
-            confidence_score: 1,
-            reasoning: "Manual configuration active",
-            dress_code: "Casual",
-            weather_alerts: []
+          outfit: [],
+          confidence_score: 1,
+          reasoning: "Manual configuration active",
+          dress_code: "Casual",
+          weather_alerts: []
         }
       };
 
@@ -309,96 +313,96 @@ export default function HomePage() {
           reasoning: "Manual configuration active",
           // Clear detailed reasoning as it might no longer apply
           detailed_reasoning: JSON.stringify({
-             weatherMatch: "Manual Override",
-             layeringStrategy: "User selected configuration",
-             colorAnalysis: "Manual Selection",
-             occasionFit: "Manual Selection"
+            weatherMatch: "Manual Override",
+            layeringStrategy: "User selected configuration",
+            colorAnalysis: "Manual Selection",
+            occasionFit: "Manual Selection"
           })
         }
       };
-      
+
       // Persist to session storage
       sessionStorage.setItem("lastRecommendation", JSON.stringify(updated));
-      
+
       return updated;
     });
   };
 
   const handleToggleLock = (itemId: string) => {
-      setLockedItems(prev => {
-          if (prev.includes(itemId)) {
-              emitClientLog(`Unlocked item: ${itemId}`);
-              return prev.filter(id => id !== itemId);
-          } else {
-              emitClientLog(`Locked item: ${itemId}`);
-              return [...prev, itemId];
-          }
-      });
+    setLockedItems(prev => {
+      if (prev.includes(itemId)) {
+        emitClientLog(`Unlocked item: ${itemId}`);
+        return prev.filter(id => id !== itemId);
+      } else {
+        emitClientLog(`Locked item: ${itemId}`);
+        return [...prev, itemId];
+      }
+    });
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-        
-        {/* Left/Center Panel: Outfit Generator */}
-        <div className="lg:col-span-2 h-full">
-             <OutfitRecommender 
-                items={allWardrobeItems}
-                suggestedOutfit={recommendationData?.recommendation?.outfit ? {
-                    id: "generated",
-                    outfit_date: new Date().toISOString(),
-                    items: recommendationData.recommendation.outfit.map(mapClothingItem),
-                    weather_snapshot: weatherData as unknown as Record<string, unknown>,
-                    reasoning: parsedReasoning
-                } : null}
-                isGenerating={isGenerating}
-                generationProgress={0}
-                onGenerate={fetchRecommendation}
-                onLogOutfit={handleLogOutfit}
-                onOutfitChange={handleOutfitChange}
-                lockedItems={lockedItems}
-                onToggleLock={handleToggleLock}
-                isLogging={isLoggingOutfit}
-             />
+
+      {/* Left/Center Panel: Outfit Generator */}
+      <div className="lg:col-span-2 h-full">
+        <OutfitRecommender
+          items={allWardrobeItems}
+          suggestedOutfit={recommendationData?.recommendation?.outfit ? {
+            id: "generated",
+            outfit_date: new Date().toISOString(),
+            items: recommendationData.recommendation.outfit.map(mapClothingItem),
+            weather_snapshot: weatherData as unknown as Record<string, unknown>,
+            reasoning: parsedReasoning
+          } : null}
+          isGenerating={isGenerating}
+          generationProgress={0}
+          onGenerate={fetchRecommendation}
+          onLogOutfit={handleLogOutfit}
+          onOutfitChange={handleOutfitChange}
+          lockedItems={lockedItems}
+          onToggleLock={handleToggleLock}
+          isLogging={isLoggingOutfit}
+        />
+      </div>
+
+      {/* Right Panel: Widgets */}
+      <div className="flex flex-col gap-4 h-full">
+
+        {/* Weather Widget */}
+        <div className="h-48">
+          {weatherData ? (
+            <WeatherWidget data={weatherData} />
+          ) : (
+            <RetroWindow title="WEATHER_LINK" className="h-full">
+              <div className="flex items-center justify-center h-full">
+                <span className="animate-pulse font-mono text-xs">CONNECTING SAT...</span>
+              </div>
+            </RetroWindow>
+          )}
         </div>
 
-        {/* Right Panel: Widgets */}
-        <div className="flex flex-col gap-4 h-full">
-            
-            {/* Weather Widget */}
-            <div className="h-48">
-                {weatherData ? (
-                    <WeatherWidget data={weatherData} />
-                ) : (
-                    <RetroWindow title="WEATHER_LINK" className="h-full">
-                        <div className="flex items-center justify-center h-full">
-                            <span className="animate-pulse font-mono text-xs">CONNECTING SAT...</span>
-                        </div>
-                    </RetroWindow>
-                )}
-            </div>
-
-            {/* System Messages */}
-            <div className="flex-1">
-                <SystemMsg 
-                    logs={logs} 
-                    location={weatherData?.city} 
-                    season="Autumn" 
-                    itemCount={allWardrobeItems.length}
-                />
-            </div>
-
-            {/* Mission Control */}
-            <div className="flex-1 min-h-[200px]">
-                <MissionControl 
-                    selectedOccasion={selectedOccasion}
-                    onOccasionChange={(occ) => {
-                        setSelectedOccasion(occ);
-                        emitClientLog(`Mission profile updated: ${occ || 'General'}`);
-                    }}
-                    lockedCount={lockedItems.length}
-                />
-            </div>
+        {/* System Messages */}
+        <div className="flex-1">
+          <SystemMsg
+            logs={logs}
+            location={weatherData?.city}
+            season="Autumn"
+            itemCount={allWardrobeItems.length}
+          />
         </div>
+
+        {/* Mission Control */}
+        <div className="flex-1 min-h-[200px]">
+          <MissionControl
+            selectedOccasion={selectedOccasion}
+            onOccasionChange={(occ) => {
+              setSelectedOccasion(occ);
+              emitClientLog(`Mission profile updated: ${occ || 'General'}`);
+            }}
+            lockedCount={lockedItems.length}
+          />
+        </div>
+      </div>
     </div>
   );
 }
