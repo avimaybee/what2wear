@@ -3,7 +3,7 @@
 import React from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { uploadClothingImage } from '@/lib/supabase/storage';
-import { WardrobeGrid } from '@/components/wardrobe/WardrobeGrid';
+import { WardrobeItemForm } from '@/components/wardrobe/WardrobeItemForm';
 import { ClothingItem, ClothingType } from '@/types/retro';
 import { toast } from '@/components/ui/toaster';
 import { useAddItem } from '@/contexts/AddItemContext';
@@ -95,17 +95,11 @@ export const GlobalAddModal: React.FC = () => {
         }
     };
 
-    // Render WardrobeGrid with just the modal, no grid
     return (
-        <WardrobeGrid
-            items={[]} // Empty items array since we're only using the modal
-            onAddItem={handleAddItem}
-            onUpdateItem={() => { }} // Not used in global add
-            onDelete={() => { }} // Not used in global add
-            isAdding={isGlobalAddOpen}
-            onOpenAdd={() => { }} // Not used (controlled by context)
-            onCloseAdd={closeGlobalAdd}
-            onToggleFavorite={() => { }} // Not used in global add
+        <WardrobeItemForm
+            isOpen={isGlobalAddOpen}
+            onClose={closeGlobalAdd}
+            onSave={handleAddItem}
             onAnalyzeImage={handleAnalyzeImage}
         />
     );
