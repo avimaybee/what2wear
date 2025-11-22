@@ -4,6 +4,22 @@ import { UserPreferences } from '@/types/retro';
 import { config } from '@/lib/config';
 import { resolveInsulationValue } from './clothingHelpers';
 
+const toTitleCase = (value?: string) => {
+  if (!value) return undefined;
+  return value
+    .split(/[\s|_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const normalizeCategoryLabel = (category?: string) => {
+  if (!category) return 'Accessory';
+  const primary = category.split('|')[0];
+  return toTitleCase(primary) || 'Accessory';
+};
+const normalizeMaterialLabel = (material?: string) => toTitleCase(material) || 'Other';
+
 /**
  * AI-Powered Outfit Analyzer using Gemini 2.5 Flash
  * 
@@ -129,9 +145,9 @@ Respond with only valid JSON (no markdown, no code blocks).
     const analysis = JSON.parse(cleanText);
 
     return {
-      detectedType: analysis.category?.toLowerCase() || 'accessory',
+      detectedType: normalizeCategoryLabel(analysis.category),
       detectedColor: analysis.color || '#000000',
-      detectedMaterial: analysis.material?.toLowerCase() || 'unknown',
+      detectedMaterial: normalizeMaterialLabel(analysis.material),
       detectedStyleTags: analysis.style_tags || [],
       detectedPattern: analysis.pattern,
       detectedFit: analysis.fit,
@@ -146,9 +162,9 @@ Respond with only valid JSON (no markdown, no code blocks).
     }
     // Return safe defaults on error
     return {
-      detectedType: 'accessory',
+      detectedType: 'Accessory',
       detectedColor: '#808080',
-      detectedMaterial: 'unknown',
+      detectedMaterial: 'Unknown',
       detectedStyleTags: ['casual'],
     };
   }

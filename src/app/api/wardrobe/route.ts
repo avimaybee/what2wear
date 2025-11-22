@@ -123,7 +123,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       color: z.string().nullable().optional(),
       material: z.string().nullable().optional(),
       insulation_value: z.number().min(0).max(10).optional(),
-      image_url: z.string().url().optional(),
+      image_url: z.string().optional(),
       season_tags: z.array(z.string()).nullable().optional(),
       style_tags: z.array(z.string()).nullable().optional(),
       dress_code: z.array(z.string()).optional(),

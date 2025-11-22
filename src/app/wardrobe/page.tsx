@@ -8,6 +8,7 @@ import { ClothingItem, ClothingType } from "@/types/retro";
 import { IClothingItem } from "@/types";
 import { toast } from "@/components/ui/toaster";
 import { useAddItem } from "@/contexts/AddItemContext";
+import { dataUrlToFile, parseDataUrl } from "@/lib/utils";
 
 export default function WardrobePage() {
     const [items, setItems] = useState<ClothingItem[]>([]);
@@ -87,9 +88,20 @@ export default function WardrobePage() {
             }
 
             let imageUrl = item.image_url;
+            let uploadFile = file;
 
-            if (file) {
-                const uploadResult = await uploadClothingImage(file, session.user.id);
+            if (!uploadFile && imageUrl && imageUrl.startsWith("data:")) {
+                try {
+                    uploadFile = dataUrlToFile(imageUrl, "wardrobe-item.webp");
+                } catch (conversionError) {
+                    console.error("Failed to convert data URL to file", conversionError);
+                    toast.error("Unable to process image upload.");
+                    return;
+                }
+            }
+
+            if (uploadFile) {
+                const uploadResult = await uploadClothingImage(uploadFile, session.user.id);
                 if (!uploadResult.success || !uploadResult.url) {
                     throw new Error(uploadResult.error || "Failed to upload image");
                 }
@@ -106,7 +118,8 @@ export default function WardrobePage() {
                 dress_code: item.dress_code,
                 image_url: imageUrl,
                 insulation_value: item.insulation_value,
-                is_favorite: item.is_favorite
+                is_favorite: item.is_favorite,
+                style_tags: item.style_tags
             };
 
             const response = await fetch("/api/wardrobe", {
@@ -195,10 +208,11 @@ export default function WardrobePage() {
 
     const handleAnalyzeImage = async (base64: string): Promise<Partial<ClothingItem> | null> => {
         try {
+            const { base64: payload, mimeType } = parseDataUrl(base64, "image/webp");
             const response = await fetch("/api/wardrobe/analyze", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ image: base64 })
+                body: JSON.stringify({ image: payload, mimeType })
             });
 
             if (!response.ok) throw new Error("Analysis failed");

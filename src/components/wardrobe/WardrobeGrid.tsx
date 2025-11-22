@@ -58,12 +58,12 @@ export const WardrobeGrid: React.FC<WardrobeGridProps> = ({ items, onAddItem, on
       onCloseAdd();
   };
 
-  const handleFormSave = (itemPayload: Partial<ClothingItem>) => {
-    if (itemPayload.id) {
-        onUpdateItem(itemPayload);
-    } else {
-        onAddItem(itemPayload);
-    }
+    const handleFormSave = (itemPayload: Partial<ClothingItem>, file?: File) => {
+        if (itemPayload.id) {
+                onUpdateItem(itemPayload);
+        } else {
+                onAddItem(itemPayload, file);
+        }
     handleCloseModal();
   };
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { analyzeClothingImage } from '@/lib/helpers/aiOutfitAnalyzer';
 import { ClothingType } from '@/types/retro';
+import { parseDataUrl } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { image } = body; // Expecting base64 image
+    const { image, mimeType } = body;
 
     if (!image) {
       return NextResponse.json(
@@ -25,12 +26,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const analysis = await analyzeClothingImage(image);
+    const { base64: payload, mimeType: resolvedMime } =
+      image.startsWith('data:')
+        ? parseDataUrl(image, mimeType || 'image/jpeg')
+        : { base64: image, mimeType: mimeType || 'image/jpeg' };
+
+    const analysis = await analyzeClothingImage(payload, resolvedMime);
+    const category = mapCategoryToDbType(analysis.detectedType);
 
     // Map to the format expected by the frontend
     const mappedData = {
       name: analysis.detectedName || "New Item",
-      type: mapCategoryToDbType(analysis.detectedType),
+      category,
+      type: category,
       color: analysis.detectedColor,
       material: analysis.detectedMaterial,
       season_tags: analysis.detectedSeason || [],
@@ -54,6 +62,7 @@ export async function POST(request: NextRequest) {
 
 function mapCategoryToDbType(category?: string): ClothingType {
   const cat = category?.toLowerCase() ?? '';
+    if (cat.includes('accessory')) return 'Accessory';
     if (cat.includes('shoe') || cat.includes('foot')) return 'Shoes';
     if (cat.includes('head') || cat.includes('hat')) return 'Accessory';
     if (cat.includes('outer') || cat.includes('jacket') || cat.includes('coat')) return 'Outerwear';

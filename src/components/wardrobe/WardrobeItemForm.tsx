@@ -4,11 +4,12 @@ import { Upload, X, ScanLine, Loader2 } from 'lucide-react';
 import { RetroButton, RetroInput, RetroWindow, RetroSelect, RetroSlider, RetroToggle } from '@/components/retro-ui';
 import { ClothingItem, ClothingType, ClothingMaterial, Season } from '@/types/retro';
 import { processImageUpload } from '@/lib/imageProcessor';
+import { dataUrlToFile } from '@/lib/utils';
 
 interface WardrobeItemFormProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (item: Partial<ClothingItem>) => void;
+    onSave: (item: Partial<ClothingItem>, file?: File) => void;
     initialItem?: ClothingItem | null;
     onAnalyzeImage?: (base64: string) => Promise<Partial<ClothingItem> | null>;
 }
@@ -22,6 +23,7 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
 }) => {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [processedFile, setProcessedFile] = useState<File | null>(null);
 
     // Processing State
     const [isProcessingImage, setIsProcessingImage] = useState(false);
@@ -55,6 +57,7 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
                 setNewItemPattern(initialItem.pattern || '');
                 setNewItemFit(initialItem.fit || 'Regular');
                 setPreviewUrl(initialItem.image_url);
+                setProcessedFile(null);
             } else {
                 resetForm();
             }
@@ -73,6 +76,7 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
         setNewItemFit('Regular');
         setRemoveBgEnabled(true);
         setIsProcessingImage(false);
+        setProcessedFile(null);
     };
 
     const handleSaveItem = (e: React.FormEvent) => {
@@ -90,10 +94,12 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
             dress_code: ['Casual'],
         };
 
+        const resolvedFile = processedFile ?? undefined;
+
         if (initialItem) {
-            onSave({ ...itemPayload, id: initialItem.id });
+            onSave({ ...itemPayload, id: initialItem.id }, resolvedFile);
         } else {
-            onSave({ ...itemPayload, wear_count: 0, is_favorite: false, created_at: new Date().toISOString() });
+            onSave({ ...itemPayload, wear_count: 0, is_favorite: false, created_at: new Date().toISOString() }, resolvedFile);
         }
         
         onClose();
@@ -121,6 +127,7 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
     const processFile = async (file: File) => {
         setIsProcessingImage(true);
         setProcessStatus('INITIALIZING');
+        const originalName = file.name || 'wardrobe-item.webp';
 
         try {
             const optimizedBase64 = await processImageUpload(file, {
@@ -131,6 +138,13 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
             });
 
             setPreviewUrl(optimizedBase64);
+            try {
+                const optimizedFile = dataUrlToFile(optimizedBase64, originalName);
+                setProcessedFile(optimizedFile);
+            } catch (conversionError) {
+                console.error('Failed to convert optimized image to file', conversionError);
+                setProcessedFile(file);
+            }
             setIsProcessingImage(false);
 
             // Trigger Auto-Analysis only for new items if not editing
@@ -157,6 +171,7 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
             const reader = new FileReader();
             reader.onload = (ev) => setPreviewUrl(ev.target?.result as string);
             reader.readAsDataURL(file);
+            setProcessedFile(file);
         }
     }
 
@@ -167,6 +182,7 @@ export const WardrobeItemForm: React.FC<WardrobeItemFormProps> = ({
     const clearImage = (e: React.MouseEvent) => {
         e.stopPropagation();
         setPreviewUrl(null);
+        setProcessedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 

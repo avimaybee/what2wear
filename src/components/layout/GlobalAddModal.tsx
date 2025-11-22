@@ -7,6 +7,7 @@ import { WardrobeItemForm } from '@/components/wardrobe/WardrobeItemForm';
 import { ClothingItem, ClothingType } from '@/types/retro';
 import { toast } from '@/components/ui/toaster';
 import { useAddItem } from '@/contexts/AddItemContext';
+import { dataUrlToFile, parseDataUrl } from '@/lib/utils';
 
 export const GlobalAddModal: React.FC = () => {
     const { isGlobalAddOpen, closeGlobalAdd } = useAddItem();
@@ -28,9 +29,20 @@ export const GlobalAddModal: React.FC = () => {
             }
 
             let imageUrl = item.image_url;
+            let uploadFile = file;
 
-            if (file) {
-                const uploadResult = await uploadClothingImage(file, session.user.id);
+            if (!uploadFile && imageUrl && imageUrl.startsWith('data:')) {
+                try {
+                    uploadFile = dataUrlToFile(imageUrl, 'wardrobe-item.webp');
+                } catch (conversionError) {
+                    console.error('Failed to convert data URL to file', conversionError);
+                    toast.error('Unable to process image upload.');
+                    return;
+                }
+            }
+
+            if (uploadFile) {
+                const uploadResult = await uploadClothingImage(uploadFile, session.user.id);
                 if (!uploadResult.success || !uploadResult.url) {
                     throw new Error(uploadResult.error || "Failed to upload image");
                 }
@@ -75,10 +87,11 @@ export const GlobalAddModal: React.FC = () => {
 
     const handleAnalyzeImage = async (base64: string): Promise<Partial<ClothingItem> | null> => {
         try {
+            const { base64: payload, mimeType } = parseDataUrl(base64, 'image/webp');
             const response = await fetch("/api/wardrobe/analyze", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ image: base64 })
+                body: JSON.stringify({ image: payload, mimeType })
             });
 
             if (!response.ok) throw new Error("Analysis failed");
