@@ -396,14 +396,26 @@ export const OutfitRecommender: React.FC<OutfitRecommenderProps> = ({
                         {/* Shoes */}
                         <div
                             className="group relative cursor-pointer transition-transform hover:scale-105 hover:rotate-2 mt-auto w-full flex flex-col items-end"
-                            onClick={() => openSwapModal('Shoes')}
+                            onClick={() => !lockedItems.includes(coreShoes.id) && openSwapModal('Shoes')}
                         >
                             <span className="absolute -top-2 md:-top-3 right-0 font-mono text-[8px] md:text-[9px] font-bold bg-white border border-black px-1 z-20">FOOTWEAR</span>
                             <RetroImage
                                 src={coreShoes.image_url}
                                 alt="Shoes"
-                                containerClassName="w-20 h-20 md:w-28 md:h-28 border-black bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10"
+                                containerClassName={`w-20 h-20 md:w-28 md:h-28 bg-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10 ${lockedItems.includes(coreShoes.id) ? 'border-red-500' : 'border-black'}`}
                             />
+
+                            {/* Lock Button */}
+                            <div
+                                className="absolute top-1 left-1 bg-white border border-black p-1 z-30 hover:bg-gray-100"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleLock?.(coreShoes.id);
+                                }}
+                            >
+                                {lockedItems.includes(coreShoes.id) ? <Lock size={12} className="text-red-500" /> : <Unlock size={12} className="text-gray-400" />}
+                            </div>
+
                             <div className="absolute top-1 right-1 bg-[#FDFFB6] border-2 border-black p-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                                 <RefreshCcw size={12} />
                             </div>

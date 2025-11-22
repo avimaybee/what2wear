@@ -233,6 +233,7 @@ export async function generateAIOutfitRecommendation(
       - **CRITICAL SEASONAL RULE**: If the season is 'Autumn' or 'Winter', you MUST prioritize warmth (layers, hoodies, jackets) even if the temperature seems mild (e.g. 18°C - 25°C). Users in these regions feel cold easily. Do NOT suggest simple t-shirts without layers for Autumn/Winter unless it is > 25°C.
       - Outerwear and Accessories are recommended if its a cold season.
       - MANDATORY: You MUST include these locked Item IDs if provided: ${JSON.stringify(lockedItems)}.
+      - **ANCHORING RULE**: If items are locked, they are the ANCHORS. You must build the rest of the outfit specifically to match them.
       - Prioritize items with 'is_favorite: true' if they fit the vibe.
       
       Return a strictly structured JSON object.
@@ -249,7 +250,7 @@ export async function generateAIOutfitRecommendation(
       ${context.occasion}
 
       CONSTRAINTS:
-      - Locked Items (MANDATORY): ${lockedItems.length > 0 ? lockedItems.join(', ') : "None"}
+      - Locked Items (MANDATORY ANCHORS): ${lockedItems.length > 0 ? lockedItems.join(', ') : "None"}
       
       INVENTORY:
       ${JSON.stringify(wardrobeContext)}
@@ -288,12 +289,45 @@ export async function generateAIOutfitRecommendation(
       throw new Error('Invalid AI response format');
     }
 
-    const selectedItems = wardrobeItems.filter(item =>
-      aiResponse.selectedItemIds.includes(item.id)
+    let selectedItems = wardrobeItems.filter(item =>
+      aiResponse.selectedItemIds.includes(String(item.id))
     );
 
+    // --- LOCKING MECHANISM ENFORCEMENT ---
+    // The AI treats locked items as anchors, but we must guarantee their presence.
+    if (lockedItems && lockedItems.length > 0) {
+      const lockedIdsSet = new Set(lockedItems);
+      
+      // 1. Identify missing locked items
+      // Convert item.id to string for comparison since lockedItems are strings
+      const missingLockedIds = lockedItems.filter(id => !selectedItems.some(item => String(item.id) === id));
+      
+      if (missingLockedIds.length > 0) {
+        log.push(`🔒 Enforcing ${missingLockedIds.length} locked items that AI missed.`);
+        
+        for (const id of missingLockedIds) {
+          // Convert item.id to string for comparison
+          const itemToAdd = wardrobeItems.find(i => String(i.id) === id);
+          if (itemToAdd) {
+            // 2. Remove conflicting unlocked items of the same type to maintain outfit structure
+            // We only replace if there's a conflict in the same category (e.g. swapping one Top for another)
+            const conflictIndex = selectedItems.findIndex(i => 
+              i.type === itemToAdd.type && !lockedIdsSet.has(String(i.id))
+            );
+            
+            if (conflictIndex !== -1) {
+              selectedItems.splice(conflictIndex, 1);
+            }
+            
+            selectedItems.push(itemToAdd);
+          }
+        }
+      }
+    }
+    // -------------------------------------
+
     // Basic validation
-    const hasTop = selectedItems.some(i => ['top', 'shirt', 't-shirt', 'blouse', 'sweater', 'hoodie'].includes(i.type.toLowerCase()));
+    const hasTop = selectedItems.some(i => ['top', 'shirt', 't-shirt', 'blouse', 'sweater', 'hoodie', 'outerwear'].includes(i.type.toLowerCase()));
     const hasBottom = selectedItems.some(i => ['bottom', 'pants', 'jeans', 'shorts', 'skirt'].includes(i.type.toLowerCase()));
 
     if (!hasTop || !hasBottom) {

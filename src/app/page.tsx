@@ -65,8 +65,24 @@ export default function HomePage() {
         console.error("Failed to parse cached recommendation", e);
       }
     }
+    
+    // Restore locked items
+    const cachedLocks = sessionStorage.getItem("lockedItems");
+    if (cachedLocks) {
+      try {
+        setLockedItems(JSON.parse(cachedLocks));
+      } catch (e) {
+        console.error("Failed to parse cached locks", e);
+      }
+    }
+
     setIsRestored(true);
   }, []);
+
+  // Persist locked items whenever they change
+  useEffect(() => {
+    sessionStorage.setItem("lockedItems", JSON.stringify(lockedItems));
+  }, [lockedItems]);
 
   useEffect(() => {
     if (isAuthenticated) {
